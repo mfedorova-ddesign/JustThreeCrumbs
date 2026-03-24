@@ -13,7 +13,7 @@ type GeneratorState = {
   setPlanDays: (days: 1 | 3 | 7) => void;
   setOnboardingStep: (step: 1 | 2 | 3) => void;
   setConditionAndContinue: (condition: Condition) => void;
-  generatePlan: () => MealPlan;
+  generatePlan: (daysOverride?: 1 | 3 | 7) => MealPlan;
 };
 
 const defaultProfile: UserProfile = {
@@ -49,10 +49,11 @@ export const useGeneratorStore = create<GeneratorState>((set, get) => ({
       },
       onboardingStep: 3
     })),
-  generatePlan: () => {
+  generatePlan: (daysOverride) => {
     const { profile, planDays } = get();
-    const plan = generateMealPlan(profile, planDays);
-    set({ latestPlan: plan });
+    const effectiveDays = daysOverride ?? planDays;
+    const plan = generateMealPlan(profile, effectiveDays);
+    set({ latestPlan: plan, planDays: effectiveDays });
     return plan;
   }
 }));

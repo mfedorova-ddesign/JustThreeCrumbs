@@ -12,7 +12,7 @@ function MealDetail({ day, mealId, planId }: { day: DayPlan; mealId: string; pla
   if (!meal) return null;
 
   return (
-    <section className="mt-6 rounded-xl border border-brand-border bg-white p-6">
+    <section className="mt-4 rounded-xl border border-brand-border bg-white p-4 sm:mt-6 sm:p-6">
       <h3 className="text-xl font-medium text-brand-text">{meal.name}</h3>
       <p className="mt-2 text-sm text-brand-text/70">
         Ingredients: {meal.ingredients.map((i) => i.name).join(", ")}
@@ -49,9 +49,9 @@ export default function PlanPage() {
   // Next.js route includes an id parameter; for MVP we display latest in-memory plan.
   return (
     <AppShell title="Your Meal Plan" subtitle="Structured meals generated from validated nutrition templates.">
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {latestPlan.days.map((day) => (
-          <section key={day.day} className="space-y-3 rounded-2xl bg-brand-bg/50 p-2">
+          <section key={day.day} className="space-y-3 rounded-2xl bg-brand-bg/50 p-2 sm:p-3">
             <h2 className="px-2 text-xl font-semibold text-slate-900">Day {day.day}</h2>
             <MealCard meal={day.breakfast} planId={latestPlan.id} />
             <MealCard meal={day.lunch} planId={latestPlan.id} />
