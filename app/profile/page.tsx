@@ -11,6 +11,12 @@ export default function ProfilePage() {
   const { isAuthenticated, profile, setProfile } = useGeneratorStore();
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/auth");
+    }
+  }, [isAuthenticated, router]);
+
   const onNumberChange =
     (field: "age" | "weight" | "height") =>
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +47,7 @@ export default function ProfilePage() {
     setProfile({ allergies: next.filter((x) => x !== "None") });
   };
 
-  if (!isAuthenticated) router.replace("/auth");
+  if (!isAuthenticated) return null;
 
   const canContinue = isProfileComplete(profile);
 
@@ -118,6 +124,21 @@ export default function ProfilePage() {
                 className="mt-1 w-full rounded-xl border border-brand-border px-4 py-2"
               />
             </label>
+          </div>
+
+          <div className="mt-5">
+            <div className="mb-2 text-[14px] font-medium text-brand-text/80">Health Condition *</div>
+            <select
+              value={profile.condition}
+              onChange={(event) =>
+                setProfile({
+                  condition: event.target.value as typeof profile.condition
+                })
+              }
+              className="w-full rounded-xl border border-brand-border bg-white px-4 py-2 text-[15px] text-brand-text focus:outline-none focus:ring-4 focus:ring-brand-primary/20"
+            >
+              <option value="type2_diabetes">Type 2 Diabetes (available now)</option>
+            </select>
           </div>
 
           <div className="mt-5">

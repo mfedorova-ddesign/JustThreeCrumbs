@@ -4,12 +4,18 @@ import { Button } from "@/components/ui/Button";
 import { isProfileComplete } from "@/lib/generator/profile";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { useRouter } from "next/navigation";
-import { ChangeEvent } from "react";
+import { ChangeEvent, useEffect } from "react";
 
 export default function OnboardingPage() {
   const { profile, setProfile, onboardingStep, setConditionAndContinue } =
     useGeneratorStore();
   const router = useRouter();
+
+  useEffect(() => {
+    if (onboardingStep !== 1) {
+      router.replace("/profile");
+    }
+  }, [onboardingStep, router]);
 
   const onNumberChange =
     (field: "age" | "weight" | "height") =>
@@ -65,10 +71,6 @@ export default function OnboardingPage() {
       <div className="mx-auto w-full max-w-[1280px] px-4 py-8 md:px-8 md:py-14">
         {onboardingStep === 1 ? (
           <div className="text-center">
-            <div className="mx-auto inline-flex items-center rounded-full bg-[#EAF5EF] px-5 py-2 text-[14px] leading-[1.6] font-normal text-brand-primary">
-              Step 1 of 3
-            </div>
-
             <h2 className="mt-6 text-[30px] font-medium leading-tight text-brand-text sm:text-[34px] md:mt-7 md:text-[40px]">
               Select Your Health Condition
             </h2>
@@ -150,7 +152,10 @@ export default function OnboardingPage() {
                       <Button
                         type="button"
                         variant="primary"
-                        onClick={() => setConditionAndContinue("type2_diabetes")}
+                        onClick={() => {
+                          setConditionAndContinue("type2_diabetes");
+                          router.push("/profile");
+                        }}
                         className="mx-auto w-full sm:w-[310px]"
                       >
                         Continue with Type 2 Diabetes

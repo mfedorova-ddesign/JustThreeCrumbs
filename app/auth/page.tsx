@@ -106,7 +106,7 @@ export default function AuthPage() {
               className="w-full"
               onClick={() => {
                 continueAsGuest();
-                router.push("/profile");
+                router.push("/onboarding");
               }}
             >
               {mode === "register" ? "Create account" : "Sign in"}
@@ -117,7 +117,7 @@ export default function AuthPage() {
               className="mt-3 w-full rounded-xl border border-brand-border bg-white px-4 py-2 text-[14px] text-brand-text/80 hover:bg-brand-bg"
               onClick={() => {
                 continueAsGuest();
-                router.push("/profile");
+                router.push("/onboarding");
               }}
             >
               Continue as Guest
