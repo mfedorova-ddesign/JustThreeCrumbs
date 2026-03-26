@@ -43,9 +43,6 @@ export default function OnboardingPage() {
     setProfile({ allergies: next.filter((x) => x !== "None") });
   };
 
-  // MVP: keep setup active for now. Validation will be added later.
-  const isStep3Ready = true;
-
   return (
     <div className="min-h-screen bg-brand-bg">
       <header className="w-full border-b border-brand-border bg-white">
@@ -57,21 +54,19 @@ export default function OnboardingPage() {
           >
             ← Back
           </button>
-          <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-            JustThreeCrumbs
-          </div>
+          <img src="/images/logo-full.png" alt="JustThreeCrumbs" className="h-8 w-auto" />
           <div className="h-6 w-10" />
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-[1280px] px-4 py-14 md:px-8">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-8 md:px-8 md:py-14">
         {onboardingStep === 1 ? (
           <div className="text-center">
             <div className="mx-auto inline-flex items-center rounded-full bg-[#EAF5EF] px-5 py-2 text-[14px] leading-[1.6] font-normal text-brand-primary">
               Step 1 of 3
             </div>
 
-            <h2 className="mt-7 text-[40px] font-medium leading-tight text-brand-text md:text-[40px]">
+            <h2 className="mt-6 text-[30px] font-medium leading-tight text-brand-text sm:text-[34px] md:mt-7 md:text-[40px]">
               Select Your Health Condition
             </h2>
 
@@ -80,10 +75,10 @@ export default function OnboardingPage() {
               specific dietary needs
             </p>
 
-            <div className="mt-10">
-              <div className="mx-auto w-full max-w-[760px] rounded-xl border border-brand-border bg-white p-7 shadow-sm">
-                <div className="flex gap-6">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#EAF5EF]">
+            <div className="mt-8 md:mt-10">
+              <div className="mx-auto w-full max-w-[760px] rounded-xl border border-brand-border bg-white p-4 shadow-sm sm:p-6 md:p-7">
+                <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#EAF5EF] sm:h-16 sm:w-16">
                     {/* Lucide heart-pulse (medical-themed) */}
                     <svg
                       width="40"
@@ -116,7 +111,7 @@ export default function OnboardingPage() {
                       healthy weight, and support overall wellness with diabetes-friendly recipes.
                     </p>
 
-                    <ul className="mt-4 grid grid-cols-2 gap-x-10 gap-y-3">
+                    <ul className="mt-4 grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
                       {[
                         "Low glycemic index meals",
                         "Portion-controlled recipes",
@@ -153,7 +148,7 @@ export default function OnboardingPage() {
                         type="button"
                         variant="primary"
                         onClick={() => setConditionAndContinue("type2_diabetes")}
-                        className="mx-auto w-[310px]"
+                        className="mx-auto w-full sm:w-[310px]"
                       >
                         Continue with Type 2 Diabetes
                       </Button>
@@ -168,20 +163,20 @@ export default function OnboardingPage() {
             </h3>
           </div>
         ) : (
-          <div className="mx-auto w-full max-w-[1280px] px-4 pb-14 pt-10 md:px-8">
+          <div className="mx-auto w-full max-w-[1280px] px-0 pb-10 pt-6 sm:px-4 sm:pt-8 md:px-8 md:pb-14 md:pt-10">
             <div className="text-center">
               <div className="mx-auto inline-flex items-center rounded-full bg-[#EAF5EF] px-5 py-2 text-[12px] font-semibold text-brand-primary">
                 Final Step
               </div>
 
-              <h2 className="mt-5 text-[40px] font-medium leading-tight text-brand-text">
+              <h2 className="mt-4 text-[30px] font-medium leading-tight text-brand-text sm:mt-5 sm:text-[36px] md:text-[40px]">
                 Tell us about yourself
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-[14px] leading-[1.6] text-brand-text/70">
                 This helps us create your personalized meal plan tailored to your specific needs
               </p>
 
-              <div className="mx-auto mt-5 w-[260px]">
+              <div className="mx-auto mt-5 w-full max-w-[260px]">
                 <div className="relative h-4">
                   <div className="absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 bg-brand-primary" />
                   <div className="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-brand-primary" />
@@ -194,7 +189,7 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="mt-10 mx-auto w-full max-w-[760px] rounded-xl border border-brand-border bg-white p-7 shadow-sm">
+            <div className="mt-8 mx-auto w-full max-w-[760px] rounded-xl border border-brand-border bg-white p-4 shadow-sm sm:p-6 md:mt-10 md:p-7">
               <div className="pb-5">
                 <div className="flex items-center gap-2">
                   <svg
@@ -216,7 +211,7 @@ export default function OnboardingPage() {
                   </h3>
                 </div>
 
-                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="mt-5 grid grid-cols-1 gap-4 sm:mt-6 sm:grid-cols-2">
                   <label className="block text-[14px] leading-[1.6] font-medium text-brand-text/80">
                     Age <span className="text-brand-primary">*</span>
                     <input
@@ -366,7 +361,7 @@ export default function OnboardingPage() {
                       Select all that apply
                     </div>
 
-                    <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {ALLERGY_CHIPS.map((chip) => {
                         const selected = profile.allergies.includes(chip);
                         return (
