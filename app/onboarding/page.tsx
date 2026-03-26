@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { isProfileComplete } from "@/lib/generator/profile";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { useRouter } from "next/navigation";
 import { ChangeEvent } from "react";
@@ -42,6 +43,8 @@ export default function OnboardingPage() {
     // If selecting a real allergy, remove "None".
     setProfile({ allergies: next.filter((x) => x !== "None") });
   };
+
+  const canGeneratePlan = isProfileComplete(profile);
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -176,17 +179,6 @@ export default function OnboardingPage() {
                 This helps us create your personalized meal plan tailored to your specific needs
               </p>
 
-              <div className="mx-auto mt-5 w-full max-w-[260px]">
-                <div className="relative h-4">
-                  <div className="absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 bg-brand-primary" />
-                  <div className="absolute left-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-brand-primary" />
-                  <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-primary" />
-                  <div className="absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-brand-primary" />
-                </div>
-                <div className="mt-1 inline-flex items-center rounded-full border border-brand-border bg-white px-6 py-1 text-[12px] font-semibold text-brand-text/50">
-                  Step 3 of 3
-                </div>
-              </div>
             </div>
 
             <div className="mt-8 mx-auto w-full max-w-[760px] rounded-xl border border-brand-border bg-white p-4 shadow-sm sm:p-6 md:mt-10 md:p-7">
@@ -281,9 +273,8 @@ export default function OnboardingPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <path d="M4 19c0-5 4-9 8-9s8 4 8 9" />
-                    <path d="M12 10V3" />
-                    <path d="M8 7h8" />
+                    <path d="M12 8c-2.7-2.5-6.9-2.1-8.9.9-1.5 2.2-1.1 5.4.7 7.3 1.2 1.3 2.6 2.7 4.4 2.7 1 0 1.6-.4 2.4-.4s1.4.4 2.4.4c1.8 0 3.2-1.4 4.4-2.7 1.8-1.9 2.2-5.1.7-7.3-2-3-6.2-3.4-8.9-.9z" />
+                    <path d="M12 7V4.5" />
                   </svg>
                   <h3 className="text-[20px] leading-[1.6] font-medium text-brand-text">
                     Health &amp; Dietary Information
@@ -400,11 +391,24 @@ export default function OnboardingPage() {
               <div className="mt-7">
                 <button
                   type="button"
-                  className="w-full rounded-xl bg-brand-primary px-6 py-3 text-[14px] font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-4 focus:ring-brand-primary/20"
-                  onClick={() => router.push("/generator")}
+                  className={`w-full rounded-xl px-6 py-3 text-[14px] font-semibold text-white focus:outline-none focus:ring-4 focus:ring-brand-primary/20 ${
+                    canGeneratePlan
+                      ? "bg-brand-primary hover:opacity-90"
+                      : "cursor-not-allowed bg-brand-primary/50"
+                  }`}
+                  disabled={!canGeneratePlan}
+                  onClick={() => {
+                    if (!canGeneratePlan) return;
+                    router.push("/generator");
+                  }}
                 >
                   Complete Setup &amp; Generate Meal Plan &gt;
                 </button>
+                {!canGeneratePlan ? (
+                  <p className="mt-2 text-center text-[12px] text-brand-text/60">
+                    Fill in required fields and select allergies to continue.
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-6 rounded-xl border border-brand-border bg-white px-6 py-4 text-[14px] leading-[1.6] text-brand-text/70">
