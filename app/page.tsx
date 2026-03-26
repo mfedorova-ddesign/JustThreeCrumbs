@@ -8,7 +8,7 @@ export default function LandingPage() {
         <div className="mx-auto w-full max-w-[1280px] px-4 py-4 md:px-8 xl:px-12">
           <div className="flex items-center justify-between">
             <img src="/images/logo-full.png" alt="JustThreeCrumbs logo" className="h-8 w-auto" />
-            <Button href="/onboarding" variant="primary" className="px-5 py-2">
+            <Button href="/auth" variant="primary" className="px-5 py-2">
               Get Started
             </Button>
           </div>
@@ -44,7 +44,7 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-8">
-              <Button href="/onboarding">
+              <Button href="/auth">
                 Generate My Meal Plan
               </Button>
               <p className="mt-3 text-[14px] leading-[1.6] text-brand-text/60">

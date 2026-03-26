@@ -1,21 +1,208 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { INGREDIENTS } from "@/lib/ingredients/data";
+import { INGREDIENT_HEALTH_FACTS } from "@/lib/ingredients/healthFacts";
+import { INGREDIENT_SUBSTITUTIONS } from "@/lib/ingredients/substitutions";
+import { isProfileComplete } from "@/lib/generator/profile";
+import { recommendedDailyTargets } from "@/lib/generator/targets";
+import {
+  diabeticScore,
+  glycemicIndexAverage,
+  isVeganMeal,
+  isVegetarianMeal,
+  sumCalories,
+  sumFiber,
+  sumMacros
+} from "@/lib/nutrition/calc";
 import { useGeneratorStore } from "@/lib/generator/store";
+import { GeneratedMeal, Ingredient, MealPlan } from "@/types";
 import jsPDF from "jspdf";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type MealTab = "ingredients" | "instructions";
+type IngredientPickerState = { mealId: string; ingredientIndex: number } | null;
+type RemovedIngredientsState = Record<string, Record<number, boolean>>;
+
+const ingredientByName = new Map(
+  INGREDIENTS.map((ingredient) => [ingredient.name.toLowerCase(), ingredient])
+);
+
+function getSubstituteOptions(ingredientName: string): string[] {
+  const key = ingredientName.toLowerCase();
+  const options = INGREDIENT_SUBSTITUTIONS[key] ?? [];
+  return options.filter((option) => ingredientByName.has(option.toLowerCase()));
+}
+
+function getHealthFact(ingredientName: string): string | null {
+  const lower = ingredientName.toLowerCase();
+  return INGREDIENT_HEALTH_FACTS[lower] ?? null;
+}
+
+function updateMealInPlan(
+  plan: MealPlan,
+  mealId: string,
+  updater: (meal: GeneratedMeal) => GeneratedMeal
+): MealPlan {
+  return {
+    ...plan,
+    days: plan.days.map((day) => {
+      const meals = {
+        breakfast: day.breakfast,
+        lunch: day.lunch,
+        dinner: day.dinner,
+        snack: day.snack,
+        extraSnack: day.extraSnack
+      };
+
+      const nextMeals = Object.fromEntries(
+        Object.entries(meals).map(([key, meal]) => [
+          key,
+          meal && meal.id === mealId ? updater(meal) : meal
+        ])
+      ) as typeof meals;
+
+      return { ...day, ...nextMeals };
+    })
+  };
+}
+
+function recalculateMeal(meal: GeneratedMeal, removedMap: Record<number, boolean> = {}): GeneratedMeal {
+  const activeIngredients = meal.ingredients.filter((_, index) => !removedMap[index]);
+  return {
+    ...meal,
+    calories: sumCalories(activeIngredients),
+    macros: sumMacros(activeIngredients),
+    fiber: sumFiber(activeIngredients),
+    glycemicIndex: glycemicIndexAverage(activeIngredients),
+    diabeticScore: diabeticScore(activeIngredients),
+    isVegetarian: isVegetarianMeal(activeIngredients),
+    isVegan: isVeganMeal(activeIngredients)
+  };
+}
 
 export default function GeneratorPage() {
-  const { planDays, generatePlan, latestPlan } = useGeneratorStore();
+  const { profile, isAuthenticated, planDays, generatePlan, latestPlan } = useGeneratorStore();
+  const router = useRouter();
   const [selectedPlanRange, setSelectedPlanRange] = useState<1 | 3 | 7>(planDays);
   const [mealPlan, setMealPlan] = useState(latestPlan);
   const [loading, setLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(Boolean(latestPlan));
   const [activeTabs, setActiveTabs] = useState<Record<string, MealTab>>({});
-  const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>({});
+  const [activeIngredientPicker, setActiveIngredientPicker] = useState<IngredientPickerState>(null);
+  const [removedIngredients, setRemovedIngredients] = useState<RemovedIngredientsState>({});
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [openedMealId, setOpenedMealId] = useState<string | null>(null);
+  const recommendedTargets = recommendedDailyTargets(profile);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => setToastMessage(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/auth");
+      return;
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    if (isProfileComplete(profile)) return;
+    setToastMessage("Complete onboarding data before generating a meal plan.");
+    const timer = window.setTimeout(() => router.push("/profile"), 1200);
+    return () => window.clearTimeout(timer);
+  }, [profile, router]);
+
+  function onIngredientReplace(mealId: string, ingredientIndex: number, nextIngredientName: string) {
+    const replacement = ingredientByName.get(nextIngredientName.toLowerCase());
+    if (!replacement) return;
+
+    setMealPlan((previousPlan) => {
+      if (!previousPlan) return previousPlan;
+
+      return updateMealInPlan(previousPlan, mealId, (meal) => {
+        const nextIngredients = meal.ingredients.map((ingredient, index) =>
+          index === ingredientIndex
+            ? {
+                ...replacement,
+                portionGrams: ingredient.portionGrams ?? replacement.portionGrams
+              }
+            : ingredient
+        );
+        return recalculateMeal({
+          ...meal,
+          ingredients: nextIngredients
+        }, removedIngredients[mealId] ?? {});
+      });
+    });
+
+    setRemovedIngredients((previous) => ({
+      ...previous,
+      [mealId]: {
+        ...(previous[mealId] ?? {}),
+        [ingredientIndex]: false
+      }
+    }));
+
+    setToastMessage(`Replaced ${mealPlan?.days
+      .flatMap((day) => [day.breakfast, day.lunch, day.dinner, day.snack])
+      .find((meal) => meal.id === mealId)
+      ?.ingredients[ingredientIndex]?.name ?? "ingredient"} -> ${nextIngredientName}`);
+    setActiveIngredientPicker(null);
+  }
+
+  function toggleIngredientRemoved(mealId: string, ingredientIndex: number) {
+    setRemovedIngredients((previous) => {
+      const currentlyRemoved = Boolean(previous[mealId]?.[ingredientIndex]);
+      const nextRemovedForMeal: Record<number, boolean> = {
+        ...(previous[mealId] ?? {}),
+        [ingredientIndex]: !currentlyRemoved
+      };
+
+      setMealPlan((previousPlan) => {
+        if (!previousPlan) return previousPlan;
+
+        const targetMeal = previousPlan.days
+          .flatMap((day) => [day.breakfast, day.lunch, day.dinner, day.snack])
+          .find((meal) => meal.id === mealId);
+
+        if (!targetMeal) return previousPlan;
+
+        return updateMealInPlan(previousPlan, mealId, () =>
+          recalculateMeal(targetMeal, nextRemovedForMeal)
+        );
+      });
+
+      return {
+        ...previous,
+        [mealId]: nextRemovedForMeal
+      };
+    });
+  }
+
+  function getVisibleIngredients(meal: GeneratedMeal): Ingredient[] {
+    const removedMap = removedIngredients[meal.id] ?? {};
+    return meal.ingredients.filter((_, index) => !removedMap[index]);
+  }
+
+  function getIngredientRemoved(mealId: string, ingredientIndex: number): boolean {
+    return Boolean(removedIngredients[mealId]?.[ingredientIndex]);
+  }
+
+  function getMealById(mealId: string): GeneratedMeal | null {
+    if (!mealPlan) return null;
+    for (const day of mealPlan.days) {
+      for (const meal of [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack]) {
+        if (!meal) continue;
+        if (meal.id === mealId) return meal;
+      }
+    }
+    return null;
+  }
 
   function exportPlan() {
     if (!mealPlan) return;
@@ -60,16 +247,19 @@ export default function GeneratorPage() {
     y += 6;
 
     mealPlan.days.forEach((day) => {
-      const meals = [day.breakfast, day.lunch, day.dinner];
+      const meals = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(
+        Boolean
+      ) as GeneratedMeal[];
       const totals = meals.reduce(
         (acc, meal) => {
           acc.calories += meal.calories;
           acc.protein += meal.macros.protein;
           acc.fat += meal.macros.fat;
           acc.carbs += meal.macros.carbs;
+          acc.fiber += meal.fiber;
           return acc;
         },
-        { calories: 0, carbs: 0, protein: 0, fat: 0 }
+        { calories: 0, carbs: 0, protein: 0, fat: 0, fiber: 0 }
       );
 
       ensureSpace(48);
@@ -78,7 +268,7 @@ export default function GeneratorPage() {
       writeLine(
         `Summary: ${Math.round(totals.calories)} kcal | Carbs ${Math.round(totals.carbs)}g | Protein ${Math.round(
           totals.protein
-        )}g | Fat ${Math.round(totals.fat)}g`
+        )}g | Fat ${Math.round(totals.fat)}g | Fiber ${Math.round(totals.fiber)}g`
       );
       y += 4;
 
@@ -90,8 +280,9 @@ export default function GeneratorPage() {
         writeLine(
           `Calories ${Math.round(meal.calories)} | Carbs ${Math.round(meal.macros.carbs)}g | Protein ${Math.round(
             meal.macros.protein
-          )}g | Fat ${Math.round(meal.macros.fat)}g`
+          )}g | Fat ${Math.round(meal.macros.fat)}g | Fiber ${Math.round(meal.fiber)}g`
         );
+        writeLine(`GI ${meal.glycemicIndex} | Diabetes Score ${meal.diabeticScore}/10`);
         writeLine("Ingredients:");
         meal.ingredients.slice(0, 10).forEach((ing) => {
           writeParagraph(`- ${ing.name}`, 12);
@@ -111,24 +302,45 @@ export default function GeneratorPage() {
     setHasGenerated(false);
     setMealPlan(null);
     setActiveTabs({});
-    setExpandedMeals({});
+    setActiveIngredientPicker(null);
+    setRemovedIngredients({});
+    setOpenedMealId(null);
     setLoading(false);
   }
 
   async function onGenerateMealPlan() {
+    if (!isProfileComplete(profile)) {
+      setToastMessage("Complete onboarding data before generating a meal plan.");
+      router.push("/profile");
+      return;
+    }
+
     setLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1200));
-    const plan = generatePlan(selectedPlanRange);
+    let plan;
+    try {
+      plan = generatePlan(selectedPlanRange);
+    } catch (error) {
+      setLoading(false);
+      setToastMessage(
+        error instanceof Error ? error.message : "Unable to generate plan. Complete onboarding data."
+      );
+      router.push("/profile");
+      return;
+    }
     setMealPlan(plan);
     setHasGenerated(true);
     const nextTabs: Record<string, MealTab> = {};
     if (plan.days[0]) {
-      [plan.days[0].breakfast, plan.days[0].lunch, plan.days[0].dinner].forEach((meal) => {
+      [plan.days[0].breakfast, plan.days[0].lunch, plan.days[0].dinner, plan.days[0].snack].forEach((meal) => {
         nextTabs[meal.id] = "ingredients";
       });
+      if (plan.days[0].extraSnack) nextTabs[plan.days[0].extraSnack.id] = "ingredients";
     }
     setActiveTabs(nextTabs);
-    setExpandedMeals({});
+    setActiveIngredientPicker(null);
+    setRemovedIngredients({});
+    setOpenedMealId(null);
     setLoading(false);
   }
 
@@ -136,10 +348,24 @@ export default function GeneratorPage() {
     <div className="min-h-screen bg-brand-bg">
       {/* Header aligned with other pages */}
       <header className="w-full border-b border-brand-border bg-white">
-        <div className="mx-auto w-full max-w-[1280px] px-4 py-4 md:px-8">
+        <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between px-4 py-4 md:px-8">
           <Link href="/" className="inline-block">
             <img src="/images/logo-full.png" alt="JustThreeCrumbs" className="h-8 w-auto" />
           </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              title="Profile"
+              aria-label="Profile"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-border text-brand-text/75 transition-colors hover:bg-brand-bg hover:text-brand-text"
+              onClick={() => router.push("/profile")}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21a8 8 0 0 0-16 0" />
+                <circle cx="12" cy="8" r="4" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -245,6 +471,18 @@ export default function GeneratorPage() {
               Back to Start
             </Button>
           ) : null}
+
+        </div>
+
+        <div className="mt-4 rounded-xl border border-brand-border bg-[#EAF5EF] px-4 py-3">
+          <div className="text-[13px] font-semibold text-brand-primary">Recommended daily targets</div>
+          <div className="mt-2 grid grid-cols-2 gap-3 text-[13px] text-brand-text sm:grid-cols-5">
+            <div><span className="text-brand-text/60">Calories:</span> {recommendedTargets.calories} kcal</div>
+            <div><span className="text-brand-text/60">Protein:</span> {recommendedTargets.protein}g</div>
+            <div><span className="text-brand-text/60">Fat:</span> {recommendedTargets.fat}g</div>
+            <div><span className="text-brand-text/60">Carbs:</span> {recommendedTargets.carbs}g</div>
+            <div><span className="text-brand-text/60">Fiber:</span> {recommendedTargets.fiber}g</div>
+          </div>
         </div>
 
         {/* Empty state */}
@@ -287,7 +525,9 @@ export default function GeneratorPage() {
           <>
             <div className="mt-4 space-y-4">
               {mealPlan?.days.map((day) => {
-                const dayMeals = [day.breakfast, day.lunch, day.dinner];
+                const dayMeals = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(
+                  Boolean
+                ) as GeneratedMeal[];
                 const daySummary = dayMeals.reduce(
                   (acc, meal) => {
                     acc.calories += meal.calories;
@@ -351,8 +591,6 @@ export default function GeneratorPage() {
                     </div>
 
                     {dayMeals.map((meal) => {
-                      const isExpanded = Boolean(expandedMeals[meal.id]);
-
                       return (
                         <div
                           key={meal.id}
@@ -362,162 +600,103 @@ export default function GeneratorPage() {
                             role="button"
                             tabIndex={0}
                             className="cursor-pointer"
-                            onClick={() =>
-                              setExpandedMeals((state) => ({ ...state, [meal.id]: !state[meal.id] }))
-                            }
+                            onClick={() => setOpenedMealId(meal.id)}
                             onKeyDown={(event) => {
                               if (event.key === "Enter" || event.key === " ") {
                                 event.preventDefault();
-                                setExpandedMeals((state) => ({ ...state, [meal.id]: !state[meal.id] }));
+                                setOpenedMealId(meal.id);
                               }
                             }}
                           >
-                            <div className="flex flex-col gap-3 p-4 sm:flex-row sm:gap-4">
+                            <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4">
                               <div
-                                className={`flex-none rounded-xl bg-brand-bg border border-brand-border flex items-center justify-center ${
-                                  isExpanded
-                                    ? "h-[180px] w-full sm:h-[160px] sm:w-[240px]"
-                                    : "h-[110px] w-full sm:w-[160px]"
-                                }`}
+                                className="flex h-[84px] w-full flex-none items-center justify-center rounded-xl border border-brand-border bg-brand-bg sm:w-[120px]"
                               >
-                            {/* Placeholder "plug" symbol for dish image */}
-                            <svg
-                              width={isExpanded ? 56 : 40}
-                              height={isExpanded ? 56 : 40}
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              stroke="#9CA3AF"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M12 22v-5" />
-                              <path d="M9 8V2" />
-                              <path d="M15 8V2" />
-                              <path d="M5 8h14v3a7 7 0 0 1-7 7h0a7 7 0 0 1-7-7V8Z" />
-                            </svg>
-                          </div>
-
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <span className="inline-flex rounded bg-[#FFF4E8] px-2 py-1 text-[12px] leading-[1.6] font-semibold text-[#E6A756]">
-                                  {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
-                                </span>
-                                <h3 className="mt-1 text-[18px] leading-[1.5] font-medium text-brand-text">
-                                  {meal.name}
-                                </h3>
-                              </div>
-                              <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-brand-border text-brand-text/60">
                                 <svg
-                                  width="14"
-                                  height="14"
+                                  width={30}
+                                  height={30}
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   xmlns="http://www.w3.org/2000/svg"
-                                  stroke="currentColor"
+                                  stroke="#9CA3AF"
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className={`transition-transform ${isExpanded ? "rotate-180" : "rotate-0"}`}
                                 >
-                                  <path d="m6 9 6 6 6-6" />
+                                  <path d="M12 22v-5" />
+                                  <path d="M9 8V2" />
+                                  <path d="M15 8V2" />
+                                  <path d="M5 8h14v3a7 7 0 0 1-7 7h0a7 7 0 0 1-7-7V8Z" />
                                 </svg>
-                              </span>
-                            </div>
-
-                            <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                              <div>
-                                <div className="text-[12px] leading-[1.6] text-brand-text/60">Calories</div>
-                                <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-                                  {Math.round(meal.calories)}
-                                </div>
                               </div>
-                              <div>
-                                <div className="text-[12px] leading-[1.6] text-brand-text/60">Carbs</div>
-                                <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-                                  {Math.round(meal.macros.carbs)}g
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-[12px] leading-[1.6] text-brand-text/60">Protein</div>
-                                <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-                                  {Math.round(meal.macros.protein)}g
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-[12px] leading-[1.6] text-brand-text/60">Fat</div>
-                                <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-                                  {Math.round(meal.macros.fat)}g
-                                </div>
-                              </div>
-                            </div>
 
-                            <div className="mt-2 flex flex-wrap items-center gap-3 text-[12px] leading-[1.6] text-brand-text/60">
-                              <span>⏱ 25 mins</span>
-                              <span>🍽 1 serving</span>
-                            </div>
-
-                            {isExpanded ? (
-                              <>
-                                <div className="mt-3 border-t border-brand-border" />
-                                <div className="mt-3 flex items-center gap-6">
-                                  <button
-                                    type="button"
-                                    className={`text-[14px] leading-[1.6] ${
-                                      (activeTabs[meal.id] ?? "ingredients") === "ingredients"
-                                        ? "font-medium text-brand-text"
-                                        : "text-brand-text/60"
-                                    }`}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setActiveTabs((state) => ({ ...state, [meal.id]: "ingredients" }));
-                                    }}
-                                  >
-                                    Ingredients
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`text-[14px] leading-[1.6] ${
-                                      (activeTabs[meal.id] ?? "ingredients") === "instructions"
-                                        ? "font-medium text-brand-text"
-                                        : "text-brand-text/60"
-                                    }`}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setActiveTabs((state) => ({ ...state, [meal.id]: "instructions" }));
-                                    }}
-                                  >
-                                    Instructions
-                                  </button>
-                                </div>
-
-                                <div className="mt-3 grid grid-cols-1 gap-6">
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between gap-3">
                                   <div>
-                                    {(activeTabs[meal.id] ?? "ingredients") === "ingredients" ? (
-                                      <ul className="mt-1 space-y-1 list-disc pl-5 text-[14px] leading-[1.6] text-brand-text/80">
-                                        {meal.ingredients.slice(0, 6).map((ing) => (
-                                          <li key={ing.name}>{ing.name}</li>
-                                        ))}
-                                      </ul>
-                                    ) : (
-                                      <ol className="mt-1 space-y-1 list-decimal pl-5 text-[14px] leading-[1.6] text-brand-text/80">
-                                        {meal.instructions.slice(0, 5).map((step, stepIdx) => (
-                                          <li key={`${meal.id}-${stepIdx}`}>{step}</li>
-                                        ))}
-                                      </ol>
-                                    )}
+                                    <span className="inline-flex rounded bg-[#FFF4E8] px-2 py-1 text-[12px] leading-[1.6] font-semibold text-[#E6A756]">
+                                      {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
+                                    </span>
+                                    {meal.isVegan ? (
+                                      <span className="ml-2 inline-flex rounded bg-[#EAF5EF] px-2 py-1 text-[12px] leading-[1.6] font-semibold text-brand-primary">
+                                        Vegan
+                                      </span>
+                                    ) : meal.isVegetarian ? (
+                                      <span className="ml-2 inline-flex rounded bg-[#EEF2FF] px-2 py-1 text-[12px] leading-[1.6] font-semibold text-[#4F46E5]">
+                                        Vegetarian
+                                      </span>
+                                    ) : null}
+                                    <h3 className="mt-1 text-[16px] leading-[1.4] font-medium text-brand-text">
+                                      {meal.name}
+                                    </h3>
+                                  </div>
+                                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-brand-border text-brand-text/60">
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="m6 9 6 6 6-6" />
+                                    </svg>
+                                  </span>
+                                </div>
+
+                                <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                  <div>
+                                    <div className="text-[12px] leading-[1.6] text-brand-text/60">Calories</div>
+                                    <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
+                                      {Math.round(meal.calories)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[12px] leading-[1.6] text-brand-text/60">Carbs</div>
+                                    <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
+                                      {Math.round(meal.macros.carbs)}g
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[12px] leading-[1.6] text-brand-text/60">GI</div>
+                                    <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
+                                      {meal.glycemicIndex}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[12px] leading-[1.6] text-brand-text/60">Score</div>
+                                    <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
+                                      {meal.diabeticScore}/10
+                                    </div>
                                   </div>
                                 </div>
-                              </>
-                            ) : (
-                              <div className="mt-2 text-[12px] leading-[1.6] text-brand-text/55">
-                                Click card to view ingredients and instructions
                               </div>
-                            )}
-                          </div>
-                        </div>
+                            </div>
+                            <div className="mt-2 rounded-lg bg-brand-bg px-3 py-2 text-[12px] leading-[1.6] text-brand-text/60">
+                              Click card to view full recipe
+                            </div>
                           </div>
                         </div>
                       );
@@ -529,6 +708,182 @@ export default function GeneratorPage() {
           </>
         )}
       </main>
+
+      {openedMealId ? (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 animate-[fadeIn_180ms_ease-out]"
+          onClick={() => setOpenedMealId(null)}
+        >
+          <div
+            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-brand-border bg-white p-5 shadow-xl animate-[modalIn_220ms_cubic-bezier(0.16,1,0.3,1)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {(() => {
+              const meal = getMealById(openedMealId);
+              if (!meal) return null;
+
+              return (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex rounded bg-[#FFF4E8] px-2 py-1 text-[12px] font-semibold text-[#E6A756]">
+                          {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
+                        </span>
+                        {meal.isVegan ? (
+                          <span className="inline-flex rounded bg-[#EAF5EF] px-2 py-1 text-[12px] font-semibold text-brand-primary">
+                            Vegan
+                          </span>
+                        ) : meal.isVegetarian ? (
+                          <span className="inline-flex rounded bg-[#EEF2FF] px-2 py-1 text-[12px] font-semibold text-[#4F46E5]">
+                            Vegetarian
+                          </span>
+                        ) : null}
+                      </div>
+                      <h3 className="mt-2 text-[22px] font-medium text-brand-text">{meal.name}</h3>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Close recipe"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-brand-border text-brand-text/70 hover:bg-brand-bg"
+                      onClick={() => setOpenedMealId(null)}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Calories</div><div className="font-medium">{Math.round(meal.calories)}</div></div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Carbs</div><div className="font-medium">{Math.round(meal.macros.carbs)}g</div></div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Protein</div><div className="font-medium">{Math.round(meal.macros.protein)}g</div></div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Fat</div><div className="font-medium">{Math.round(meal.macros.fat)}g</div></div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Fiber</div><div className="font-medium">{Math.round(meal.fiber)}g</div></div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">GI</div><div className="font-medium">{meal.glycemicIndex}</div></div>
+                    <div className="rounded-lg border border-[#CDE7D7] bg-[#EAF5EF] px-3 py-2"><div className="text-[12px] text-brand-text/60">Diabetes Score</div><div className="font-medium text-brand-primary">{meal.diabeticScore}/10</div></div>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <section className="rounded-xl border border-brand-border bg-[#FCFCFB] p-4">
+                      <h4 className="text-[15px] font-semibold text-brand-text">Ingredients</h4>
+                      <ul className="mt-2 space-y-2 list-disc pl-5 text-[14px] leading-[1.6] text-brand-text/80">
+                        {meal.ingredients.slice(0, 10).map((ing, ingredientIndex) => {
+                          const substituteOptions = getSubstituteOptions(ing.name);
+                          const healthFact = getHealthFact(ing.name);
+                          const isRemoved = getIngredientRemoved(meal.id, ingredientIndex);
+                          const pickerOpen =
+                            activeIngredientPicker?.mealId === meal.id &&
+                            activeIngredientPicker.ingredientIndex === ingredientIndex;
+
+                          return (
+                            <li key={`${meal.id}-${ingredientIndex}-${ing.name}`}>
+                              <div className="inline-flex items-center gap-2">
+                                {healthFact ? (
+                                  <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                                    Fact
+                                  </span>
+                                ) : null}
+                                <span className={`group relative ${isRemoved ? "line-through opacity-50" : ""}`}>
+                                  {substituteOptions.length > 0 ? (
+                                    <button
+                                      type="button"
+                                      className="text-brand-primary underline underline-offset-2 hover:text-brand-primary/80"
+                                      onClick={() =>
+                                        setActiveIngredientPicker((previous) =>
+                                          previous?.mealId === meal.id && previous.ingredientIndex === ingredientIndex
+                                            ? null
+                                            : { mealId: meal.id, ingredientIndex }
+                                        )
+                                      }
+                                    >
+                                      {ing.name}
+                                    </button>
+                                  ) : (
+                                    ing.name
+                                  )}
+                                  {healthFact ? (
+                                    <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-64 rounded-md border border-brand-border bg-white p-2 text-[12px] leading-[1.4] text-brand-text shadow-md group-hover:block">
+                                      {healthFact}
+                                    </span>
+                                  ) : null}
+                                </span>
+
+                                {pickerOpen ? (
+                                  <select
+                                    value=""
+                                    className="h-8 rounded border border-brand-border bg-white px-2 text-[12px] text-brand-text"
+                                    onChange={(event) => {
+                                      if (!event.target.value) return;
+                                      onIngredientReplace(meal.id, ingredientIndex, event.target.value);
+                                    }}
+                                  >
+                                    <option value="">Replace with...</option>
+                                    {substituteOptions.map((option) => (
+                                      <option key={`${ing.name}-${option}`} value={option}>{option}</option>
+                                    ))}
+                                  </select>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  aria-label={isRemoved ? "Restore ingredient" : "Remove ingredient"}
+                                  className={`inline-flex h-6 w-6 items-center justify-center rounded border border-brand-border text-sm leading-none hover:bg-brand-bg ${
+                                    isRemoved ? "text-brand-text/40" : "text-brand-text/70"
+                                  }`}
+                                  onClick={() => toggleIngredientRemoved(meal.id, ingredientIndex)}
+                                >
+                                  {isRemoved ? "↺" : "×"}
+                                </button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <div className="mt-3 text-[12px] text-brand-text/60">
+                        Active ingredients: {getVisibleIngredients(meal).length}/{meal.ingredients.length}
+                      </div>
+                    </section>
+
+                    <section className="rounded-xl border border-brand-border bg-[#FCFCFB] p-4">
+                      <h4 className="text-[15px] font-semibold text-brand-text">Instructions</h4>
+                      <ol className="mt-2 space-y-2 list-decimal pl-5 text-[14px] leading-[1.6] text-brand-text/80">
+                        {meal.instructions.slice(0, 8).map((step, stepIdx) => (
+                          <li key={`${meal.id}-${stepIdx}`}>{step}</li>
+                        ))}
+                      </ol>
+                    </section>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      ) : null}
+
+      {toastMessage ? (
+        <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-brand-border bg-white px-3 py-2 text-[13px] text-brand-text shadow-lg">
+          {toastMessage}
+        </div>
+      ) : null}
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 }

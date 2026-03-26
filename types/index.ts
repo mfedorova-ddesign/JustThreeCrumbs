@@ -31,11 +31,15 @@ export type IngredientCategory =
 
 export type Ingredient = {
   name: string;
+  // Nutrition values are normalized per 100g.
   calories: number;
   protein: number;
   fat: number;
   carbs: number;
+  fiber?: number;
   glycemicIndex: number;
+  // Portion used in generated meal (grams). Defaults to 100g when omitted.
+  portionGrams?: number;
   category: IngredientCategory;
   vegetarian: boolean;
   allergens?: string[];
@@ -46,6 +50,7 @@ export type Template = {
   name: string;
   category: TemplateCategory;
   mealTypes: MealType[];
+  mealNamePattern: string;
   ingredientSlots: {
     protein: string[];
     vegetables: string[];
@@ -53,6 +58,14 @@ export type Template = {
     fats: string[];
     liquid: string[];
     spices: string[];
+  };
+  slotRules: {
+    protein: { min: number; max: number };
+    vegetables: { min: number; max: number };
+    carbs: { min: number; max: number };
+    fats: { min: number; max: number };
+    liquid: { min: number; max: number };
+    spices: { min: number; max: number };
   };
   constraints: {
     maxCarbs: number;
@@ -75,7 +88,11 @@ export type GeneratedMeal = {
   ingredients: Ingredient[];
   calories: number;
   macros: Macros;
+  fiber: number;
   glycemicIndex: number;
+  diabeticScore: number;
+  isVegetarian: boolean;
+  isVegan: boolean;
   instructions: string[];
 };
 
@@ -85,6 +102,7 @@ export type DayPlan = {
   lunch: GeneratedMeal;
   dinner: GeneratedMeal;
   snack: GeneratedMeal;
+  extraSnack?: GeneratedMeal;
 };
 
 export type MealPlan = {
