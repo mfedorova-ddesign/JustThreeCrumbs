@@ -284,7 +284,7 @@ export default function GeneratorPage() {
         );
         writeLine(`GI ${meal.glycemicIndex} | Diabetes Score ${meal.diabeticScore}/10`);
         writeLine("Ingredients:");
-        meal.ingredients.slice(0, 10).forEach((ing) => {
+        meal.ingredients.forEach((ing) => {
           writeParagraph(`- ${ing.name}`, 12);
         });
         writeLine("Instructions:");
@@ -766,7 +766,7 @@ export default function GeneratorPage() {
                     <section className="rounded-xl border border-brand-border bg-[#FCFCFB] p-4">
                       <h4 className="text-[15px] font-semibold text-brand-text">Ingredients</h4>
                       <ul className="mt-2 space-y-2 list-disc pl-5 text-[14px] leading-[1.6] text-brand-text/80">
-                        {meal.ingredients.slice(0, 10).map((ing, ingredientIndex) => {
+                        {meal.ingredients.map((ing, ingredientIndex) => {
                           const substituteOptions = getSubstituteOptions(ing.name);
                           const healthFact = getHealthFact(ing.name);
                           const isRemoved = getIngredientRemoved(meal.id, ingredientIndex);
@@ -818,7 +818,9 @@ export default function GeneratorPage() {
                                   >
                                     <option value="">Replace with...</option>
                                     {substituteOptions.map((option) => (
-                                      <option key={`${ing.name}-${option}`} value={option}>{option}</option>
+                                      <option key={`${ing.name}-${option}`} value={option}>
+                                        {option}
+                                      </option>
                                     ))}
                                   </select>
                                 ) : null}

@@ -67,7 +67,7 @@ export function isVegetarianMeal(ingredients: Ingredient[]): boolean {
 }
 
 export function isVeganMeal(ingredients: Ingredient[]): boolean {
-  const nonVeganNames = new Set(["eggs", "egg whites", "greek yogurt"]);
+  const nonVeganNames = new Set(["eggs", "egg whites", "greek yogurt", "cottage cheese", "feta cheese"]);
   return ingredients.every(
     (ingredient) => ingredient.vegetarian && !nonVeganNames.has(ingredient.name.toLowerCase())
   );

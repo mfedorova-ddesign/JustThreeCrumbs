@@ -11,31 +11,47 @@ import {
 } from "@/lib/nutrition/calc";
 import { recommendedDailyTargets } from "@/lib/generator/targets";
 import { TEMPLATES } from "@/lib/templates/data";
-import { DayPlan, DietType, GeneratedMeal, Ingredient, MealPlan, MealType, Template, UserProfile } from "@/types";
+import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType, Template, UserProfile } from "@/types";
 
 const templateSequenceByMealType: Record<MealType, string[]> = {
-  breakfast: ["egg-dish-template", "chia-pudding-template"],
+  breakfast: [
+    "author-shakshuka-toast",
+    "author-chia-pudding-berries",
+    "author-savory-oatmeal-eggs",
+    "author-yogurt-berries-nuts",
+    "author-protein-salad-plate"
+  ],
   lunch: [
-    "curry-template",
-    "legume-soup-template",
-    "grain-bowl-template",
-    "warm-bowl-template",
-    "fish-sauce-template",
-    "baked-chicken-template"
+    "author-green-curry",
+    "author-legume-soup",
+    "author-protein-salad-plate",
+    "author-buckwheat-skillet",
+    "author-lemon-herb-chicken",
+    "author-herb-baked-fish",
+    "author-tuna-salad-corn",
+    "author-baked-eggplant-tomato",
+    "author-borscht-style"
   ],
   dinner: [
-    "warm-bowl-template",
-    "curry-template",
-    "legume-soup-template",
-    "fish-sauce-template",
-    "baked-chicken-template",
-    "grain-bowl-template"
+    "author-buckwheat-skillet",
+    "author-green-curry",
+    "author-legume-soup",
+    "author-herb-baked-fish",
+    "author-lemon-herb-chicken",
+    "author-tuna-salad-corn",
+    "author-baked-eggplant-tomato",
+    "author-borscht-style",
+    "author-protein-salad-plate"
   ],
   snack: [
-    "protein-yogurt-snack-template",
-    "savory-chickpea-snack-template",
-    "veggie-dip-snack-template",
-    "chia-pudding-template"
+    "author-snack-tuna-yogurt",
+    "author-snack-egg-cucumber",
+    "author-snack-hummus-veggies",
+    "author-snack-yogurt-berry-chia",
+    "author-snack-apple-cottage",
+    "author-snack-chocolate-nuts",
+    "author-chia-pudding-berries",
+    "author-protein-salad-plate"
   ]
 };
 
@@ -45,21 +61,33 @@ const glycemicIndexThresholdByLevel = {
   high: 100
 } as const;
 
-function isTemplateAllowed(template: Template, dietType: DietType): boolean {
-  if (dietType === "regular") return true;
-  const includesAnimalProtein = template.ingredientSlots.protein.some((name) =>
-    ["chicken breast", "salmon", "cod", "trout", "turkey"].includes(name)
-  );
-  return !includesAnimalProtein;
+const slotKeys = ["protein", "vegetables", "carbs", "fats", "liquid", "spices"] as const;
+
+function isTemplateAllowed(template: Template, user: UserProfile): boolean {
+  for (const key of slotKeys) {
+    const rules = template.slotRules[key];
+    if (rules.min === 0) continue;
+    const names = template.ingredientSlots[key];
+    const candidates = names
+      .map((name) => INGREDIENTS.find((ingredient) => ingredient.name === name))
+      .filter((ingredient): ingredient is Ingredient => Boolean(ingredient))
+      .filter((ingredient) => isIngredientAllowed(ingredient, user))
+      .filter((ingredient) => user.dietType !== "vegetarian" || ingredient.vegetarian);
+    if (candidates.length < rules.min) return false;
+  }
+  return true;
 }
 
 function isIngredientAllowed(ingredient: Ingredient, user: UserProfile): boolean {
   if (user.dietType === "vegetarian" && !ingredient.vegetarian) return false;
-  const allergySet = new Set(
-    user.allergies
-      .map((allergy) => allergy.toLowerCase().trim())
-      .filter((allergy) => allergy && allergy !== "none")
-  );
+  const allergySet = new Set<string>();
+  for (const raw of user.allergies.map((a) => a.toLowerCase().trim()).filter((a) => a && a !== "none")) {
+    allergySet.add(raw);
+    if (raw === "milk") allergySet.add("dairy");
+    if (raw === "dairy") allergySet.add("milk");
+    if (raw === "tree nut") allergySet.add("tree nuts");
+    if (raw === "tree nuts") allergySet.add("tree nut");
+  }
   if (!ingredient.allergens?.length) return true;
   return !ingredient.allergens.some((allergen) => allergySet.has(allergen.toLowerCase()));
 }
@@ -129,7 +157,25 @@ function getIngredientPortionGrams(ingredient: Ingredient, mealType: MealType): 
     garlic: 5,
     oregano: 2,
     vanilla: 2,
-    berries: mealType === "snack" ? 60 : 80
+    berries: mealType === "snack" ? 60 : 80,
+    oats: mealType === "snack" ? 35 : 55,
+    "sourdough bread": 45,
+    "brown rice": mealType === "snack" ? 50 : 80,
+    tuna: mealType === "snack" ? 90 : 120,
+    hummus: mealType === "snack" ? 45 : 55,
+    "cottage cheese": mealType === "snack" ? 90 : 110,
+    apple: mealType === "snack" ? 70 : 90,
+    corn: mealType === "snack" ? 50 : 70,
+    "dark chocolate": mealType === "snack" ? 18 : 22,
+    almonds: mealType === "snack" ? 22 : 30,
+    tempeh: 85,
+    onion: 55,
+    carrot: 65,
+    celery: 85,
+    cabbage: 110,
+    beets: 85,
+    "feta cheese": 35,
+    ginger: 4
   };
 
   return byName[ingredient.name] ?? byCategory[ingredient.category];
@@ -241,6 +287,63 @@ function fitMealToTarget(
   return current;
 }
 
+function buildMealFromIngredients(
+  template: Template,
+  mealType: MealType,
+  dayIndex: number,
+  ingredients: Ingredient[]
+): GeneratedMeal {
+  const calories = sumCalories(ingredients);
+  const macros = sumMacros(ingredients);
+  const fiber = sumFiber(ingredients);
+  const glycemicIndex = glycemicIndexAverage(ingredients);
+  const score = diabeticScore(ingredients);
+  const isVegetarian = isVegetarianMeal(ingredients);
+  const isVegan = isVeganMeal(ingredients);
+  const selectedByCategory = {
+    protein: ingredients
+      .filter((ingredient) => ingredient.category === "protein")
+      .map((ingredient) => ingredient.name)
+      .join(", "),
+    vegetables: ingredients
+      .filter((ingredient) => ingredient.category === "vegetables")
+      .map((ingredient) => ingredient.name)
+      .join(", "),
+    carbs: ingredients
+      .filter((ingredient) => ingredient.category === "carbs")
+      .map((ingredient) => ingredient.name)
+      .join(", "),
+    fats: ingredients
+      .filter((ingredient) => ingredient.category === "fats")
+      .map((ingredient) => ingredient.name)
+      .join(", "),
+    liquid: ingredients
+      .filter((ingredient) => ingredient.category === "liquid")
+      .map((ingredient) => ingredient.name)
+      .join(", "),
+    spices: ingredients
+      .filter((ingredient) => ingredient.category === "spices")
+      .map((ingredient) => ingredient.name)
+      .join(", ")
+  };
+
+  return {
+    id: `${template.id}-${mealType}-${dayIndex}`,
+    name: composeMealName(template, selectedByCategory),
+    templateId: template.id,
+    mealType,
+    ingredients,
+    calories,
+    macros,
+    fiber,
+    glycemicIndex,
+    diabeticScore: score,
+    isVegetarian,
+    isVegan,
+    instructions: template.cookingSteps.map((step) => applyStepTokens(step, selectedByCategory))
+  };
+}
+
 function rebalanceDayMeals(
   day: DayPlan,
   targets: { calories: number; protein: number; fat: number; carbs: number; fiber: number }
@@ -261,9 +364,9 @@ function rebalanceDayMeals(
       boundedRatio
     );
     return buildMealFromIngredients(
-      TEMPLATES.find((template) => template.id === meal.templateId) ?? TEMPLATES[0],
+      TEMPLATES.find((t) => t.id === meal.templateId) ?? TEMPLATES[0],
       meal.mealType,
-      Number(meal.id.split("-").at(-1) ?? 0),
+      Number(meal.id.split("-").at(-1) ?? 0) || 0,
       boosted
     );
   };
@@ -328,74 +431,11 @@ function applyStepTokens(step: string, selectedByCategory: Record<string, string
   });
 }
 
-function composeMealName(
-  template: Template,
-  selectedByCategory: Record<string, string>,
-  mealType: MealType
-): string {
-  const withPattern = template.mealNamePattern.replace(
+function composeMealName(template: Template, selectedByCategory: Record<string, string>): string {
+  return template.mealNamePattern.replace(
     /\{(protein|vegetables|carbs|fats|liquid|spices)\}/g,
     (_, key: string) => selectedByCategory[key] ?? "ingredients"
   );
-
-  return `${withPattern} (${mealType})`;
-}
-
-function buildMealFromIngredients(
-  template: Template,
-  mealType: MealType,
-  dayIndex: number,
-  ingredients: Ingredient[]
-): GeneratedMeal {
-  const calories = sumCalories(ingredients);
-  const macros = sumMacros(ingredients);
-  const fiber = sumFiber(ingredients);
-  const glycemicIndex = glycemicIndexAverage(ingredients);
-  const score = diabeticScore(ingredients);
-  const isVegetarian = isVegetarianMeal(ingredients);
-  const isVegan = isVeganMeal(ingredients);
-  const selectedByCategory = {
-    protein: ingredients
-      .filter((ingredient) => ingredient.category === "protein")
-      .map((ingredient) => ingredient.name)
-      .join(", "),
-    vegetables: ingredients
-      .filter((ingredient) => ingredient.category === "vegetables")
-      .map((ingredient) => ingredient.name)
-      .join(", "),
-    carbs: ingredients
-      .filter((ingredient) => ingredient.category === "carbs")
-      .map((ingredient) => ingredient.name)
-      .join(", "),
-    fats: ingredients
-      .filter((ingredient) => ingredient.category === "fats")
-      .map((ingredient) => ingredient.name)
-      .join(", "),
-    liquid: ingredients
-      .filter((ingredient) => ingredient.category === "liquid")
-      .map((ingredient) => ingredient.name)
-      .join(", "),
-    spices: ingredients
-      .filter((ingredient) => ingredient.category === "spices")
-      .map((ingredient) => ingredient.name)
-      .join(", ")
-  };
-
-  return {
-    id: `${template.id}-${mealType}-${dayIndex}`,
-    name: composeMealName(template, selectedByCategory, mealType),
-    templateId: template.id,
-    mealType,
-    ingredients,
-    calories,
-    macros,
-    fiber,
-    glycemicIndex,
-    diabeticScore: score,
-    isVegetarian,
-    isVegan,
-    instructions: template.cookingSteps.map((step) => applyStepTokens(step, selectedByCategory))
-  };
 }
 
 export function selectTemplate(
@@ -410,14 +450,14 @@ export function selectTemplate(
     .map((id) => TEMPLATES.find((template) => template.id === id))
     .filter((template): template is Template => Boolean(template))
     .filter((template) => template.mealTypes.includes(mealType))
-    .filter((template) => isTemplateAllowed(template, user.dietType))
+    .filter((template) => isTemplateAllowed(template, user))
     .filter((template) => !excludedTemplateIds.includes(template.id));
 
   const fallbackTemplates = orderedIds
     .map((id) => TEMPLATES.find((template) => template.id === id))
     .filter((template): template is Template => Boolean(template))
     .filter((template) => template.mealTypes.includes(mealType))
-    .filter((template) => isTemplateAllowed(template, user.dietType));
+    .filter((template) => isTemplateAllowed(template, user));
 
   if (matchingTemplates.length === 0 && fallbackTemplates.length === 0) {
     throw new Error(`No template available for ${mealType}`);
@@ -484,14 +524,7 @@ export function generateMeal(
   );
 
   let ingredients = withPortions(
-    [
-    ...proteins,
-    ...vegetables,
-    ...carbs,
-    ...fats,
-    ...liquid,
-    ...spices
-    ],
+    [...proteins, ...vegetables, ...carbs, ...fats, ...liquid, ...spices],
     mealType
   );
   ingredients = scaleIngredientsToCalorieTarget(ingredients, mealType, mealCalorieTarget);
@@ -554,7 +587,6 @@ function dayLoss(
   const rel = (actual: number, target: number) => Math.abs(actual - target) / Math.max(1, target);
   const overshoot = (actual: number, target: number) => Math.max(0, actual - target) / Math.max(1, target);
 
-  // Symmetric closeness to target; slight extra penalty for overshooting carbs/fat.
   const calorieTerm = rel(totals.calories, targets.calories);
   const proteinTerm = rel(totals.protein, targets.protein);
   const fatTerm = rel(totals.fat, targets.fat) + overshoot(totals.fat, targets.fat) * 0.35;

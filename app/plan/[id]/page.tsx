@@ -48,7 +48,7 @@ export default function PlanPage() {
 
   // Next.js route includes an id parameter; for MVP we display latest in-memory plan.
   return (
-    <AppShell title="Your Meal Plan" subtitle="Structured meals generated from validated nutrition templates.">
+    <AppShell title="Your Meal Plan" subtitle="Structured meals from your diabetes-friendly recipe templates.">
       <div className="space-y-5 sm:space-y-6">
         {latestPlan.days.map((day) => (
           <section key={day.day} className="space-y-3 rounded-2xl bg-brand-bg/50 p-2 sm:p-3">

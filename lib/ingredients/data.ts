@@ -330,6 +330,17 @@ export const INGREDIENTS: Ingredient[] = [
     vegetarian: true
   },
   {
+    name: "ginger",
+    calories: 8,
+    protein: 0.2,
+    fat: 0.1,
+    carbs: 1.8,
+    fiber: 0.2,
+    glycemicIndex: 15,
+    category: "spices",
+    vegetarian: true
+  },
+  {
     name: "oregano",
     calories: 3,
     protein: 0.1,
@@ -482,5 +493,198 @@ export const INGREDIENTS: Ingredient[] = [
     glycemicIndex: 25,
     category: "vegetables",
     vegetarian: true
+  },
+  {
+    name: "oats",
+    calories: 389,
+    protein: 16.9,
+    fat: 6.9,
+    carbs: 66.3,
+    fiber: 10.6,
+    glycemicIndex: 55,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "sourdough bread",
+    calories: 250,
+    protein: 8.9,
+    fat: 2.1,
+    carbs: 49,
+    fiber: 2.7,
+    glycemicIndex: 54,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "brown rice",
+    calories: 112,
+    protein: 2.6,
+    fat: 0.9,
+    carbs: 23,
+    fiber: 1.8,
+    glycemicIndex: 68,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "carrot",
+    calories: 41,
+    protein: 0.9,
+    fat: 0.2,
+    carbs: 9.6,
+    fiber: 2.8,
+    glycemicIndex: 35,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "celery",
+    calories: 16,
+    protein: 0.7,
+    fat: 0.2,
+    carbs: 3,
+    fiber: 1.6,
+    glycemicIndex: 15,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "onion",
+    calories: 40,
+    protein: 1.1,
+    fat: 0.1,
+    carbs: 9.3,
+    fiber: 1.7,
+    glycemicIndex: 15,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "cabbage",
+    calories: 25,
+    protein: 1.3,
+    fat: 0.1,
+    carbs: 5.8,
+    fiber: 2.5,
+    glycemicIndex: 15,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "beets",
+    calories: 43,
+    protein: 1.6,
+    fat: 0.2,
+    carbs: 9.6,
+    fiber: 2.8,
+    glycemicIndex: 64,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "cottage cheese",
+    calories: 98,
+    protein: 11.1,
+    fat: 4.3,
+    carbs: 3.4,
+    fiber: 0,
+    glycemicIndex: 30,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "apple",
+    calories: 52,
+    protein: 0.3,
+    fat: 0.2,
+    carbs: 13.8,
+    fiber: 2.4,
+    glycemicIndex: 36,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "corn",
+    calories: 86,
+    protein: 3.3,
+    fat: 1.2,
+    carbs: 18.7,
+    fiber: 2,
+    glycemicIndex: 52,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "hummus",
+    calories: 166,
+    protein: 7.9,
+    fat: 9.6,
+    carbs: 14,
+    fiber: 6,
+    glycemicIndex: 38,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["sesame"]
+  },
+  {
+    name: "tuna",
+    calories: 116,
+    protein: 25.5,
+    fat: 0.8,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    category: "protein",
+    vegetarian: false,
+    allergens: ["fish"]
+  },
+  {
+    name: "dark chocolate",
+    calories: 598,
+    protein: 7.8,
+    fat: 52.4,
+    carbs: 28.4,
+    fiber: 11,
+    glycemicIndex: 23,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "tempeh",
+    calories: 193,
+    protein: 19,
+    fat: 11.4,
+    carbs: 9.4,
+    fiber: 8,
+    glycemicIndex: 15,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["soy"]
+  },
+  {
+    name: "almonds",
+    calories: 579,
+    protein: 21.2,
+    fat: 49.9,
+    carbs: 21.6,
+    fiber: 12.5,
+    glycemicIndex: 15,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["tree nuts"]
+  },
+  {
+    name: "feta cheese",
+    calories: 264,
+    protein: 14.2,
+    fat: 21.3,
+    carbs: 4.1,
+    fiber: 0,
+    glycemicIndex: 27,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["dairy"]
   }
 ];

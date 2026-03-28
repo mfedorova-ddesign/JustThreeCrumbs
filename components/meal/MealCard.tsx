@@ -12,7 +12,7 @@ export function MealCard({ meal, planId }: MealCardProps) {
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:gap-4">
         <div>
           <h3 className="text-lg font-medium text-brand-text sm:text-xl">{meal.name}</h3>
-          <p className="text-sm text-brand-text/70">
+          <p className="text-sm text-brand-text/70 line-clamp-3">
             {meal.ingredients.map((i) => i.name).join(", ")}
           </p>
         </div>
