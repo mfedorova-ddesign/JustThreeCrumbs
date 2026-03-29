@@ -388,6 +388,7 @@ function needsExtraSnack(
   const meals = [day.breakfast, day.lunch, day.dinner, day.snack];
   const totals = meals.reduce(
     (acc, meal) => {
+      if (meal.skipped) return acc;
       acc.calories += meal.calories;
       acc.protein += meal.macros.protein;
       acc.fat += meal.macros.fat;
@@ -560,6 +561,52 @@ export function generateMeal(
   return meal;
 }
 
+export type RegenerateSingleMealOptions = {
+  excludedTemplateIds?: string[];
+  /** Use smaller targets for the optional extra snack row (same as full-plan generation). */
+  isExtraSnack?: boolean;
+};
+
+/** Build one new meal for a slot (e.g. user clicked “Regenerate” on a single dish). */
+export function regenerateSingleMeal(
+  user: UserProfile,
+  mealType: MealType,
+  dayIndex: number,
+  variationSeed: number,
+  options: RegenerateSingleMealOptions = {}
+): GeneratedMeal {
+  const dailyTargets = recommendedDailyTargets(user);
+  const excluded = options.excludedTemplateIds ?? [];
+  const template = selectTemplate(mealType, user, dayIndex, variationSeed, excluded);
+
+  let mealCalorieTarget: number;
+  let mealMacroTarget: { protein: number; fat: number; carbs: number; fiber: number };
+
+  if (options.isExtraSnack) {
+    mealCalorieTarget = dailyTargets.calories * 0.12;
+    mealMacroTarget = {
+      protein: dailyTargets.protein * 0.14,
+      fat: dailyTargets.fat * 0.12,
+      carbs: dailyTargets.carbs * 0.1,
+      fiber: dailyTargets.fiber * 0.18
+    };
+  } else {
+    mealCalorieTarget = dailyTargets.calories * mealCalorieShare(mealType);
+    mealMacroTarget = mealTargetFromDaily(dailyTargets, mealType);
+  }
+
+  const meal = generateMeal(
+    template,
+    mealType,
+    user,
+    dayIndex,
+    variationSeed,
+    mealCalorieTarget,
+    mealMacroTarget
+  );
+  return { ...meal, skipped: false };
+}
+
 function dayTotals(day: DayPlan): { calories: number; protein: number; fat: number; carbs: number; fiber: number } {
   const meals = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(
     Boolean
@@ -567,6 +614,7 @@ function dayTotals(day: DayPlan): { calories: number; protein: number; fat: numb
 
   return meals.reduce(
     (acc, meal) => {
+      if (meal.skipped) return acc;
       acc.calories += meal.calories;
       acc.protein += meal.macros.protein;
       acc.fat += meal.macros.fat;
@@ -595,7 +643,12 @@ function dayLoss(
 
   const scorePenalty = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack]
     .filter(Boolean)
-    .reduce((acc, meal) => acc + (meal!.diabeticScore < 7 ? (7 - meal!.diabeticScore) * 0.06 : 0), 0);
+    .reduce(
+      (acc, meal) =>
+        acc +
+        (meal!.skipped ? 0 : meal!.diabeticScore < 7 ? (7 - meal!.diabeticScore) * 0.06 : 0),
+      0
+    );
 
   return calorieTerm * 2.2 + proteinTerm * 1.9 + fatTerm * 1.1 + carbsTerm * 1.3 + fiberTerm * 1.6 + scorePenalty;
 }

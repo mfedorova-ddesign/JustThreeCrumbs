@@ -3,12 +3,16 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { MealCard } from "@/components/meal/MealCard";
 import { useGeneratorStore } from "@/lib/generator/store";
-import { DayPlan } from "@/types";
+import { DayPlan, GeneratedMeal } from "@/types";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+function mealsOnDay(day: DayPlan) {
+  return [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(Boolean) as GeneratedMeal[];
+}
+
 function MealDetail({ day, mealId, planId }: { day: DayPlan; mealId: string; planId: string }) {
-  const meal = [day.breakfast, day.lunch, day.dinner, day.snack].find((entry) => entry.id === mealId);
+  const meal = mealsOnDay(day).find((entry) => entry.id === mealId);
   if (!meal) return null;
 
   return (
@@ -53,10 +57,19 @@ export default function PlanPage() {
         {latestPlan.days.map((day) => (
           <section key={day.day} className="space-y-3 rounded-2xl bg-brand-bg/50 p-2 sm:p-3">
             <h2 className="px-2 text-xl font-semibold text-slate-900">Day {day.day}</h2>
-            <MealCard meal={day.breakfast} planId={latestPlan.id} />
-            <MealCard meal={day.lunch} planId={latestPlan.id} />
-            <MealCard meal={day.dinner} planId={latestPlan.id} />
-            <MealCard meal={day.snack} planId={latestPlan.id} />
+            {[day.breakfast, day.lunch, day.dinner, day.snack, ...(day.extraSnack ? [day.extraSnack] : [])].map(
+              (meal) =>
+                meal.skipped ? (
+                  <div
+                    key={meal.id}
+                    className="rounded-xl border border-dashed border-brand-border/80 bg-white/80 px-4 py-3 text-sm text-brand-text/60"
+                  >
+                    One meal removed from this day&apos;s menu — use the generator to restore or replace it.
+                  </div>
+                ) : (
+                  <MealCard key={meal.id} meal={meal} planId={latestPlan.id} />
+                )
+            )}
             {selectedMealId ? (
               <MealDetail day={day} mealId={selectedMealId} planId={latestPlan.id} />
             ) : null}

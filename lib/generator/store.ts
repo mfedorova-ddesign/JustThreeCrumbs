@@ -16,6 +16,7 @@ type GeneratorState = {
   setPlanDays: (days: 1 | 3 | 7) => void;
   setOnboardingStep: (step: 1 | 2 | 3) => void;
   setConditionAndContinue: (condition: Condition) => void;
+  setLatestPlan: (plan: MealPlan | null) => void;
   generatePlan: (daysOverride?: 1 | 3 | 7) => MealPlan;
 };
 
@@ -58,6 +59,7 @@ export const useGeneratorStore = create<GeneratorState>((set, get) => ({
       },
       onboardingStep: 3
     })),
+  setLatestPlan: (plan) => set({ latestPlan: plan }),
   generatePlan: (daysOverride) => {
     const { profile, planDays, isAuthenticated } = get();
     if (!isAuthenticated) {

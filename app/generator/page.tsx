@@ -15,8 +15,9 @@ import {
   sumFiber,
   sumMacros
 } from "@/lib/nutrition/calc";
+import { regenerateSingleMeal } from "@/lib/generator/engine";
 import { useGeneratorStore } from "@/lib/generator/store";
-import { GeneratedMeal, Ingredient, MealPlan } from "@/types";
+import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType } from "@/types";
 import jsPDF from "jspdf";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,6 +26,58 @@ import { useEffect, useState } from "react";
 type MealTab = "ingredients" | "instructions";
 type IngredientPickerState = { mealId: string; ingredientIndex: number } | null;
 type RemovedIngredientsState = Record<string, Record<number, boolean>>;
+
+type DayMealSlot = "breakfast" | "lunch" | "dinner" | "snack" | "extraSnack";
+
+function getOtherTemplateIdsOnDay(day: DayPlan, slot: DayMealSlot): string[] {
+  const order: DayMealSlot[] = ["breakfast", "lunch", "dinner", "snack", "extraSnack"];
+  const ids: string[] = [];
+  for (const s of order) {
+    if (s === slot) continue;
+    const m = day[s];
+    if (m && !m.skipped) ids.push(m.templateId);
+  }
+  return ids;
+}
+
+function replaceMealInDaySlot(
+  plan: MealPlan,
+  dayNumber: number,
+  slot: DayMealSlot,
+  meal: GeneratedMeal
+): MealPlan {
+  return {
+    ...plan,
+    days: plan.days.map((d) => (d.day === dayNumber ? { ...d, [slot]: meal } : d))
+  };
+}
+
+function findMealSlotMeta(
+  plan: MealPlan,
+  mealId: string
+): { dayNumber: number; slot: DayMealSlot; mealType: MealType; isExtraSnack: boolean } | null {
+  for (const d of plan.days) {
+    const rows: { slot: DayMealSlot; mealType: MealType; isExtraSnack?: boolean }[] = [
+      { slot: "breakfast", mealType: "breakfast" },
+      { slot: "lunch", mealType: "lunch" },
+      { slot: "dinner", mealType: "dinner" },
+      { slot: "snack", mealType: "snack" }
+    ];
+    if (d.extraSnack) rows.push({ slot: "extraSnack", mealType: "snack", isExtraSnack: true });
+    for (const r of rows) {
+      const m = d[r.slot];
+      if (m?.id === mealId) {
+        return {
+          dayNumber: d.day,
+          slot: r.slot,
+          mealType: r.mealType,
+          isExtraSnack: Boolean(r.isExtraSnack)
+        };
+      }
+    }
+  }
+  return null;
+}
 
 const ingredientByName = new Map(
   INGREDIENTS.map((ingredient) => [ingredient.name.toLowerCase(), ingredient])
@@ -84,7 +137,8 @@ function recalculateMeal(meal: GeneratedMeal, removedMap: Record<number, boolean
 }
 
 export default function GeneratorPage() {
-  const { profile, isAuthenticated, planDays, generatePlan, latestPlan } = useGeneratorStore();
+  const { profile, isAuthenticated, planDays, generatePlan, latestPlan, setLatestPlan } =
+    useGeneratorStore();
   const router = useRouter();
   const [selectedPlanRange, setSelectedPlanRange] = useState<1 | 3 | 7>(planDays);
   const [mealPlan, setMealPlan] = useState(latestPlan);
@@ -96,6 +150,58 @@ export default function GeneratorPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [openedMealId, setOpenedMealId] = useState<string | null>(null);
   const recommendedTargets = recommendedDailyTargets(profile);
+
+  function commitPlan(updater: (prev: MealPlan) => MealPlan) {
+    setMealPlan((prev) => {
+      if (!prev) return prev;
+      const next = updater(prev);
+      // Zustand must not update during React's setState updater (same render cycle).
+      queueMicrotask(() => setLatestPlan(next));
+      return next;
+    });
+  }
+
+  function removeMealFromMenu(mealId: string) {
+    commitPlan((p) => updateMealInPlan(p, mealId, (m) => ({ ...m, skipped: true })));
+    setOpenedMealId((open) => (open === mealId ? null : open));
+    setToastMessage("Removed from menu");
+  }
+
+  function restoreMealToMenu(mealId: string) {
+    commitPlan((p) => updateMealInPlan(p, mealId, (m) => ({ ...m, skipped: false })));
+    setToastMessage("Restored to menu");
+  }
+
+  function regenerateMealSlot(
+    dayNumber: number,
+    slot: DayMealSlot,
+    mealType: MealType,
+    isExtraSnack: boolean
+  ) {
+    let previousMealId: string | undefined;
+    commitPlan((p) => {
+      const day = p.days.find((d) => d.day === dayNumber);
+      if (!day) return p;
+      const current = day[slot];
+      if (current) previousMealId = current.id;
+      const excluded = getOtherTemplateIdsOnDay(day, slot);
+      const dayIndex = dayNumber - 1;
+      const seed = (Date.now() % 500_000) + Math.floor(Math.random() * 500_000);
+      const newMeal = regenerateSingleMeal(profile, mealType, dayIndex, seed, {
+        excludedTemplateIds: excluded,
+        isExtraSnack
+      });
+      return replaceMealInDaySlot(p, dayNumber, slot, newMeal);
+    });
+    if (previousMealId) {
+      setRemovedIngredients((prev) => {
+        const { [previousMealId!]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+    setOpenedMealId(null);
+    setToastMessage("Dish regenerated");
+  }
 
   useEffect(() => {
     if (!toastMessage) return;
@@ -121,10 +227,8 @@ export default function GeneratorPage() {
     const replacement = ingredientByName.get(nextIngredientName.toLowerCase());
     if (!replacement) return;
 
-    setMealPlan((previousPlan) => {
-      if (!previousPlan) return previousPlan;
-
-      return updateMealInPlan(previousPlan, mealId, (meal) => {
+    commitPlan((previousPlan) =>
+      updateMealInPlan(previousPlan, mealId, (meal) => {
         const nextIngredients = meal.ingredients.map((ingredient, index) =>
           index === ingredientIndex
             ? {
@@ -133,12 +237,15 @@ export default function GeneratorPage() {
               }
             : ingredient
         );
-        return recalculateMeal({
-          ...meal,
-          ingredients: nextIngredients
-        }, removedIngredients[mealId] ?? {});
-      });
-    });
+        return recalculateMeal(
+          {
+            ...meal,
+            ingredients: nextIngredients
+          },
+          removedIngredients[mealId] ?? {}
+        );
+      })
+    );
 
     setRemovedIngredients((previous) => ({
       ...previous,
@@ -163,9 +270,7 @@ export default function GeneratorPage() {
         [ingredientIndex]: !currentlyRemoved
       };
 
-      setMealPlan((previousPlan) => {
-        if (!previousPlan) return previousPlan;
-
+      commitPlan((previousPlan) => {
         const targetMeal = previousPlan.days
           .flatMap((day) => [day.breakfast, day.lunch, day.dinner, day.snack])
           .find((meal) => meal.id === mealId);
@@ -250,7 +355,8 @@ export default function GeneratorPage() {
       const meals = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(
         Boolean
       ) as GeneratedMeal[];
-      const totals = meals.reduce(
+      const activeMeals = meals.filter((m) => !m.skipped);
+      const totals = activeMeals.reduce(
         (acc, meal) => {
           acc.calories += meal.calories;
           acc.protein += meal.macros.protein;
@@ -272,7 +378,7 @@ export default function GeneratorPage() {
       );
       y += 4;
 
-      meals.forEach((meal) => {
+      activeMeals.forEach((meal) => {
         ensureSpace(64);
         writeLine(`${meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}: ${meal.name}`, {
           bold: true
@@ -301,6 +407,7 @@ export default function GeneratorPage() {
   function backToGeneratorStart() {
     setHasGenerated(false);
     setMealPlan(null);
+    setLatestPlan(null);
     setActiveTabs({});
     setActiveIngredientPicker(null);
     setRemovedIngredients({});
@@ -525,19 +632,35 @@ export default function GeneratorPage() {
           <>
             <div className="mt-4 space-y-4">
               {mealPlan?.days.map((day) => {
-                const dayMeals = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(
-                  Boolean
-                ) as GeneratedMeal[];
-                const daySummary = dayMeals.reduce(
-                  (acc, meal) => {
-                    acc.calories += meal.calories;
-                    acc.protein += meal.macros.protein;
-                    acc.fat += meal.macros.fat;
-                    acc.carbs += meal.macros.carbs;
-                    return acc;
-                  },
-                  { calories: 0, carbs: 0, protein: 0, fat: 0 }
-                );
+                const slotRows: {
+                  slot: DayMealSlot;
+                  mealType: MealType;
+                  isExtraSnack?: boolean;
+                }[] = [
+                  { slot: "breakfast", mealType: "breakfast" },
+                  { slot: "lunch", mealType: "lunch" },
+                  { slot: "dinner", mealType: "dinner" },
+                  { slot: "snack", mealType: "snack" }
+                ];
+                if (day.extraSnack) {
+                  slotRows.push({ slot: "extraSnack", mealType: "snack", isExtraSnack: true });
+                }
+
+                const dayMealsAll = slotRows
+                  .map((r) => day[r.slot])
+                  .filter(Boolean) as GeneratedMeal[];
+                const daySummary = dayMealsAll
+                  .filter((m) => !m.skipped)
+                  .reduce(
+                    (acc, meal) => {
+                      acc.calories += meal.calories;
+                      acc.protein += meal.macros.protein;
+                      acc.fat += meal.macros.fat;
+                      acc.carbs += meal.macros.carbs;
+                      return acc;
+                    },
+                    { calories: 0, carbs: 0, protein: 0, fat: 0 }
+                  );
 
                 return (
                   <section key={day.day} className="space-y-3 rounded-xl border border-brand-border bg-[#FAFAF8] p-4">
@@ -590,7 +713,48 @@ export default function GeneratorPage() {
                       </div>
                     </div>
 
-                    {dayMeals.map((meal) => {
+                    {slotRows.map(({ slot, mealType, isExtraSnack }) => {
+                      const meal = day[slot];
+                      if (!meal) return null;
+
+                      if (meal.skipped) {
+                        return (
+                          <div
+                            key={meal.id}
+                            className="rounded-xl border border-dashed border-brand-border/80 bg-white/80 p-4"
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <span className="inline-flex rounded bg-slate-100 px-2 py-1 text-[12px] leading-[1.6] font-semibold text-slate-600">
+                                  {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
+                                </span>
+                                <p className="mt-2 text-[14px] leading-[1.6] text-brand-text/70">
+                                  Removed from menu
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-[13px] font-medium text-brand-text hover:bg-brand-bg"
+                                  onClick={() => restoreMealToMenu(meal.id)}
+                                >
+                                  Restore
+                                </button>
+                                <button
+                                  type="button"
+                                  className="rounded-lg border border-brand-primary bg-brand-primary px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90"
+                                  onClick={() =>
+                                    regenerateMealSlot(day.day, slot, mealType, Boolean(isExtraSnack))
+                                  }
+                                >
+                                  New dish
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div
                           key={meal.id}
@@ -698,6 +862,28 @@ export default function GeneratorPage() {
                               Click card to view full recipe
                             </div>
                           </div>
+                          <div className="flex flex-wrap gap-2 border-t border-brand-border px-3 py-2">
+                            <button
+                              type="button"
+                              className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-[12px] font-medium text-brand-text hover:bg-brand-bg"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                regenerateMealSlot(day.day, slot, mealType, Boolean(isExtraSnack));
+                              }}
+                            >
+                              Regenerate
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-lg border border-brand-border px-3 py-1.5 text-[12px] font-medium text-red-700 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeMealFromMenu(meal.id);
+                              }}
+                            >
+                              Remove from menu
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
@@ -761,6 +947,38 @@ export default function GeneratorPage() {
                     <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">GI</div><div className="font-medium">{meal.glycemicIndex}</div></div>
                     <div className="rounded-lg border border-[#CDE7D7] bg-[#EAF5EF] px-3 py-2"><div className="text-[12px] text-brand-text/60">Diabetes Score</div><div className="font-medium text-brand-primary">{meal.diabeticScore}/10</div></div>
                   </div>
+
+                  {mealPlan && !meal.skipped
+                    ? (() => {
+                        const meta = findMealSlotMeta(mealPlan, meal.id);
+                        if (!meta) return null;
+                        return (
+                          <div className="mt-4 flex flex-wrap gap-2 border-t border-brand-border pt-4">
+                            <button
+                              type="button"
+                              className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-[13px] font-medium text-brand-text hover:bg-brand-bg"
+                              onClick={() =>
+                                regenerateMealSlot(
+                                  meta.dayNumber,
+                                  meta.slot,
+                                  meta.mealType,
+                                  meta.isExtraSnack
+                                )
+                              }
+                            >
+                              Regenerate dish
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-lg border border-brand-border px-3 py-1.5 text-[13px] font-medium text-red-700 hover:bg-red-50"
+                              onClick={() => removeMealFromMenu(meal.id)}
+                            >
+                              Remove from menu
+                            </button>
+                          </div>
+                        );
+                      })()
+                    : null}
 
                   <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <section className="rounded-xl border border-brand-border bg-[#FCFCFB] p-4">

@@ -86,6 +86,8 @@ export type GeneratedMeal = {
   templateId: string;
   mealType: MealType;
   ingredients: Ingredient[];
+  /** Hidden from menu and summaries until restored or replaced. */
+  skipped?: boolean;
   calories: number;
   macros: Macros;
   fiber: number;
