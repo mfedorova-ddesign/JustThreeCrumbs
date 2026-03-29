@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { ReactNode } from "react";
 
 type CommonProps = {
   children: ReactNode;
   className?: string;
+  disabled?: boolean;
 };
 
 type ButtonProps =
@@ -35,12 +35,12 @@ export function Button(props: EnhancedButtonProps) {
 
   if ("href" in props && props.href) {
     return (
-      <Link
+      <a
         href={props.href}
         className={`${baseClass} ${variantClass} ${props.className ?? ""}`.trim()}
       >
         {props.children}
-      </Link>
+      </a>
     );
   }
 
@@ -48,6 +48,7 @@ export function Button(props: EnhancedButtonProps) {
     <button
       type={props.type ?? "button"}
       onClick={props.onClick}
+      disabled={props.disabled}
       className={`${baseClass} ${variantClass} ${props.className ?? ""}`.trim()}
     >
       {props.children}

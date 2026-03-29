@@ -15,15 +15,26 @@ import {
   sumFiber,
   sumMacros
 } from "@/lib/nutrition/calc";
-import { regenerateSingleMeal } from "@/lib/generator/engine";
+import { generateMealPlanAsync, regenerateSingleMeal } from "@/lib/generator/engine";
+import { persistPlanToSession } from "@/lib/planStorage";
 import { useGeneratorStore } from "@/lib/generator/store";
+import { mealImageUrlForId } from "@/lib/design/mealImages";
 import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType } from "@/types";
-import jsPDF from "jspdf";
+import {
+  ChevronRight,
+  Download,
+  RefreshCw,
+  RotateCcw,
+  Sparkles,
+  Trash2,
+  User,
+  UtensilsCrossed,
+  X
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type MealTab = "ingredients" | "instructions";
 type IngredientPickerState = { mealId: string; ingredientIndex: number } | null;
 type RemovedIngredientsState = Record<string, Record<number, boolean>>;
 
@@ -137,14 +148,13 @@ function recalculateMeal(meal: GeneratedMeal, removedMap: Record<number, boolean
 }
 
 export default function GeneratorPage() {
-  const { profile, isAuthenticated, planDays, generatePlan, latestPlan, setLatestPlan } =
+  const { profile, isAuthenticated, planDays, latestPlan, setLatestPlan, setPlanDays } =
     useGeneratorStore();
   const router = useRouter();
   const [selectedPlanRange, setSelectedPlanRange] = useState<1 | 3 | 7>(planDays);
   const [mealPlan, setMealPlan] = useState(latestPlan);
   const [loading, setLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(Boolean(latestPlan));
-  const [activeTabs, setActiveTabs] = useState<Record<string, MealTab>>({});
   const [activeIngredientPicker, setActiveIngredientPicker] = useState<IngredientPickerState>(null);
   const [removedIngredients, setRemovedIngredients] = useState<RemovedIngredientsState>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -156,7 +166,10 @@ export default function GeneratorPage() {
       if (!prev) return prev;
       const next = updater(prev);
       // Zustand must not update during React's setState updater (same render cycle).
-      queueMicrotask(() => setLatestPlan(next));
+      queueMicrotask(() => {
+        setLatestPlan(next);
+        persistPlanToSession(next);
+      });
       return next;
     });
   }
@@ -195,8 +208,9 @@ export default function GeneratorPage() {
     });
     if (previousMealId) {
       setRemovedIngredients((prev) => {
-        const { [previousMealId!]: _, ...rest } = prev;
-        return rest;
+        const next = { ...prev };
+        delete next[previousMealId!];
+        return next;
       });
     }
     setOpenedMealId(null);
@@ -217,11 +231,12 @@ export default function GeneratorPage() {
   }, [isAuthenticated, router]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     if (isProfileComplete(profile)) return;
     setToastMessage("Complete onboarding data before generating a meal plan.");
     const timer = window.setTimeout(() => router.push("/profile"), 1200);
     return () => window.clearTimeout(timer);
-  }, [profile, router]);
+  }, [isAuthenticated, profile, router]);
 
   function onIngredientReplace(mealId: string, ingredientIndex: number, nextIngredientName: string) {
     const replacement = ingredientByName.get(nextIngredientName.toLowerCase());
@@ -309,9 +324,10 @@ export default function GeneratorPage() {
     return null;
   }
 
-  function exportPlan() {
+  async function exportPlan() {
     if (!mealPlan) return;
 
+    const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -408,7 +424,6 @@ export default function GeneratorPage() {
     setHasGenerated(false);
     setMealPlan(null);
     setLatestPlan(null);
-    setActiveTabs({});
     setActiveIngredientPicker(null);
     setRemovedIngredients({});
     setOpenedMealId(null);
@@ -422,11 +437,21 @@ export default function GeneratorPage() {
       return;
     }
 
+    if (!isAuthenticated) {
+      setToastMessage("Please sign in or continue as guest first.");
+      router.push("/auth");
+      return;
+    }
+
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    let plan;
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    let plan: MealPlan;
     try {
-      plan = generatePlan(selectedPlanRange);
+      plan = await generateMealPlanAsync(profile, selectedPlanRange);
+      setLatestPlan(plan);
+      setPlanDays(selectedPlanRange);
+      persistPlanToSession(plan);
     } catch (error) {
       setLoading(false);
       setToastMessage(
@@ -437,200 +462,143 @@ export default function GeneratorPage() {
     }
     setMealPlan(plan);
     setHasGenerated(true);
-    const nextTabs: Record<string, MealTab> = {};
-    if (plan.days[0]) {
-      [plan.days[0].breakfast, plan.days[0].lunch, plan.days[0].dinner, plan.days[0].snack].forEach((meal) => {
-        nextTabs[meal.id] = "ingredients";
-      });
-      if (plan.days[0].extraSnack) nextTabs[plan.days[0].extraSnack.id] = "ingredients";
-    }
-    setActiveTabs(nextTabs);
     setActiveIngredientPicker(null);
     setRemovedIngredients({});
     setOpenedMealId(null);
     setLoading(false);
+    requestAnimationFrame(() => {
+      document.getElementById("plan-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   return (
     <div className="min-h-screen bg-brand-bg">
       {/* Header aligned with other pages */}
-      <header className="w-full border-b border-brand-border bg-white">
-        <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between px-4 py-4 md:px-8">
+      <header className="w-full border-b border-brand-border/90 bg-white">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3.5 md:max-w-[1280px] md:px-8">
           <Link href="/" className="inline-block">
             <img src="/images/logo-full.png" alt="JustThreeCrumbs" className="h-8 w-auto" />
           </Link>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              title="Profile"
-              aria-label="Profile"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-border text-brand-text/75 transition-colors hover:bg-brand-bg hover:text-brand-text"
-              onClick={() => router.push("/profile")}
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21a8 8 0 0 0-16 0" />
-                <circle cx="12" cy="8" r="4" />
-              </svg>
-            </button>
-          </div>
+          <button
+            type="button"
+            title="Profile"
+            aria-label="Profile"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-brand-border/90 text-brand-text/80 transition-colors hover:bg-brand-bg hover:text-brand-text"
+            onClick={() => router.push("/profile")}
+          >
+            <User className="size-[18px]" strokeWidth={2} />
+          </button>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1280px] px-4 pb-10 pt-4 md:px-8 md:pb-14">
-        <h1 className="text-[30px] leading-[1.3] font-medium text-brand-text sm:text-[36px] md:text-[40px] md:leading-[1.6]">
-          Generate Your Meal Plan
+      <main className="mx-auto w-full max-w-3xl px-4 pb-12 pt-5 md:max-w-[1280px] md:px-8 md:pb-16 md:pt-6">
+        <h1 className="text-2xl font-semibold leading-tight tracking-tight text-brand-text sm:text-3xl">
+          Meal plan generator
         </h1>
-        <p className="mt-2 text-[14px] leading-[1.6] text-brand-text/70">
-          Create personalized, diabetes-friendly meals for the week
+        <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-brand-text/65 sm:text-[15px]">
+          Personalized, diabetes-aware meals — pick a length, generate once, then open recipes or fine-tune.
         </p>
 
-        {/* Controls row */}
-        <div className="mt-4 flex flex-wrap items-center justify-start gap-3">
-          <div className="inline-flex items-center gap-3">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-brand-bg">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                stroke="#066835"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+        <section className="mt-6 rounded-2xl border border-brand-border/90 bg-white p-4 shadow-soft sm:p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">Plan length</p>
+          <div className="mt-3 flex rounded-xl bg-brand-bg p-1">
+            {([1, 3, 7] as const).map((d) => (
+              <button
+                key={d}
+                type="button"
+                disabled={loading}
+                onClick={() => setSelectedPlanRange(d)}
+                className={`flex-1 rounded-lg py-2.5 text-center text-[13px] font-medium transition sm:text-sm ${
+                  selectedPlanRange === d
+                    ? "bg-white text-brand-text shadow-sm"
+                    : "text-brand-text/50 hover:text-brand-text/80"
+                }`}
               >
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            </span>
-
-            <select
-              value={selectedPlanRange}
-              onChange={(e) => setSelectedPlanRange(Number(e.target.value) as 1 | 3 | 7)}
-              disabled={loading}
-              className="h-9 min-w-[120px] rounded-xl border border-brand-border bg-white px-3 text-[14px] leading-[1.6] text-brand-text focus:outline-none focus:ring-4 focus:ring-brand-primary/20"
-            >
-              <option value={1}>1 day</option>
-              <option value={3}>3 days</option>
-              <option value={7}>1 week</option>
-            </select>
+                {d === 1 ? "1 day" : d === 3 ? "3 days" : "1 week"}
+              </button>
+            ))}
           </div>
 
           <Button
             type="button"
             variant="primary"
-            className="h-9"
+            className="mt-4 h-12 w-full rounded-xl text-[15px] font-semibold shadow-soft"
             onClick={onGenerateMealPlan}
+            disabled={loading}
           >
-            <span className="inline-flex items-center gap-2">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2l1.5 6L20 10l-6.5 2L12 18l-1.5-6L4 10l6.5-2L12 2z" />
-              </svg>
-              {loading ? "Generating..." : "Generate Meal Plan"}
+            <span className="inline-flex items-center justify-center gap-2">
+              <Sparkles className="size-[18px]" strokeWidth={2} />
+              {loading ? "Generating…" : "Generate meal plan"}
             </span>
           </Button>
 
           {hasGenerated ? (
-            <button
-              type="button"
-              className="inline-flex h-11 items-center gap-2 rounded-[14px] border border-[#D9D9D4] bg-[#F1F1EF] px-5 text-[14px] leading-[1.2] font-medium text-brand-text transition-colors hover:bg-[#ECECE8] focus:outline-none focus:ring-4 focus:ring-brand-primary/15"
-              onClick={exportPlan}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-brand-text/85"
+            <div className="mt-4 grid gap-2 border-t border-brand-border/70 pt-4 sm:grid-cols-2">
+              <button
+                type="button"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-brand-border/90 bg-white text-[14px] font-medium text-brand-text transition hover:bg-brand-bg"
+                onClick={() => void exportPlan()}
               >
-                <path d="M12 3v12" />
-                <path d="m7 10 5 5 5-5" />
-                <path d="M5 21h14" />
-              </svg>
-              Export Plan
-            </button>
+                <Download className="size-4" strokeWidth={2} />
+                Export PDF
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-transparent bg-brand-bg text-[14px] font-medium text-brand-text/90 transition hover:bg-brand-border/30"
+                onClick={backToGeneratorStart}
+              >
+                <RotateCcw className="size-4" strokeWidth={2} />
+                Start over
+              </button>
+            </div>
           ) : null}
+        </section>
 
-          {hasGenerated ? (
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-9"
-              onClick={backToGeneratorStart}
-            >
-              Back to Start
-            </Button>
-          ) : null}
-
-        </div>
-
-        <div className="mt-4 rounded-xl border border-brand-border bg-[#EAF5EF] px-4 py-3">
-          <div className="text-[13px] font-semibold text-brand-primary">Recommended daily targets</div>
-          <div className="mt-2 grid grid-cols-2 gap-3 text-[13px] text-brand-text sm:grid-cols-5">
-            <div><span className="text-brand-text/60">Calories:</span> {recommendedTargets.calories} kcal</div>
-            <div><span className="text-brand-text/60">Protein:</span> {recommendedTargets.protein}g</div>
-            <div><span className="text-brand-text/60">Fat:</span> {recommendedTargets.fat}g</div>
-            <div><span className="text-brand-text/60">Carbs:</span> {recommendedTargets.carbs}g</div>
-            <div><span className="text-brand-text/60">Fiber:</span> {recommendedTargets.fiber}g</div>
+        <div className="mt-5 rounded-2xl border border-brand-border/80 bg-[#EAF5EF]/90 px-3 py-3 sm:px-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-primary/90">
+            Your daily targets
+          </p>
+          <div className="scrollbar-none mt-2 flex gap-2 overflow-x-auto pb-0.5 sm:grid sm:grid-cols-5 sm:overflow-visible">
+            {[
+              { label: "Cal", value: `${recommendedTargets.calories} kcal` },
+              { label: "Protein", value: `${recommendedTargets.protein}g` },
+              { label: "Fat", value: `${recommendedTargets.fat}g` },
+              { label: "Carbs", value: `${recommendedTargets.carbs}g` },
+              { label: "Fiber", value: `${recommendedTargets.fiber}g` }
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="shrink-0 rounded-xl border border-brand-primary/15 bg-white/80 px-3 py-2 text-[12px] sm:text-center"
+              >
+                <div className="text-[10px] font-medium uppercase tracking-wide text-brand-text/45">{row.label}</div>
+                <div className="mt-0.5 font-semibold text-brand-text">{row.value}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Empty state */}
         {!hasGenerated && !loading ? (
-          <div className="mt-6 rounded-xl border border-brand-border bg-white p-8 sm:p-14">
-            <div className="flex items-center justify-center">
-              <svg
-                width="64"
-                height="64"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                stroke="#9CA3AF"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 18h12" />
-                <path d="M18 18v-3a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v3" />
-                <path d="M13 12a4 4 0 1 0-6 0" />
-                <path d="M5 15a3 3 0 0 1 0-6 4 4 0 0 1 7-2" />
-                <path d="M19 9a3 3 0 0 1 0 6" />
-              </svg>
+          <div className="mt-6 rounded-2xl border border-dashed border-brand-border/90 bg-white/80 p-8 text-center sm:p-10">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-bg">
+              <UtensilsCrossed className="size-7 text-brand-primary/80" strokeWidth={1.75} />
             </div>
-            <h3 className="mt-4 text-[24px] leading-[1.6] font-medium text-brand-text text-center">
-              Ready to create your meal plan?
+            <h3 className="mt-4 text-lg font-semibold tracking-tight text-brand-text sm:text-xl">
+              Your plan will appear here
             </h3>
-            <p className="mt-4 text-[14px] leading-[1.6] text-brand-text/70 text-center">
-              Click &quot;Generate Meal Plan&quot; to get started with your personalized daily meals
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-brand-text/60">
+              Choose a length above, then generate a full day of balanced meals tailored to your profile.
             </p>
           </div>
         ) : loading ? (
-          <div className="mt-6 space-y-4">
-            <div className="h-[120px] animate-pulse rounded-xl border border-brand-border bg-[#EAF5EF]" />
-            <div className="h-[220px] animate-pulse rounded-xl border border-brand-border bg-white" />
-            <div className="h-[220px] animate-pulse rounded-xl border border-brand-border bg-white" />
-            <div className="h-[220px] animate-pulse rounded-xl border border-brand-border bg-white" />
+          <div className="mt-6 space-y-3">
+            <div className="h-24 animate-pulse rounded-2xl bg-brand-bg" />
+            <div className="h-24 animate-pulse rounded-2xl bg-white shadow-soft" />
+            <div className="h-24 animate-pulse rounded-2xl bg-white shadow-soft" />
+            <div className="h-24 animate-pulse rounded-2xl bg-white shadow-soft" />
           </div>
         ) : (
           <>
-            <div className="mt-4 space-y-4">
+            <div id="plan-results" className="mt-6 space-y-5 scroll-mt-4">
               {mealPlan?.days.map((day) => {
                 const slotRows: {
                   slot: DayMealSlot;
@@ -663,54 +631,37 @@ export default function GeneratorPage() {
                   );
 
                 return (
-                  <section key={day.day} className="space-y-3 rounded-xl border border-brand-border bg-[#FAFAF8] p-4">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-[24px] leading-[1.6] font-medium text-brand-text">
-                        Day {day.day}
-                      </h2>
-                      <div className="text-[14px] leading-[1.6] text-brand-text/70">
-                        {Math.round(daySummary.calories)} kcal
+                  <section
+                    key={day.day}
+                    className="space-y-3 rounded-2xl border border-brand-border/90 bg-white p-4 shadow-soft sm:p-5"
+                  >
+                    <div className="flex flex-wrap items-end justify-between gap-2 border-b border-brand-border/60 pb-3">
+                      <div>
+                        <h2 className="text-lg font-semibold tracking-tight text-brand-text sm:text-xl">
+                          Day {day.day}
+                        </h2>
+                        <p className="mt-0.5 text-[11px] text-brand-text/45">Visible meals only</p>
                       </div>
+                      <p className="text-sm font-semibold text-brand-primary">
+                        {Math.round(daySummary.calories)} kcal
+                      </p>
                     </div>
 
-                    <div className="rounded-xl bg-[#DDEFE8] px-4 py-4 sm:px-5">
-                      <div className="text-[14px] leading-[1.6] font-medium text-brand-text/70">
-                        Nutrition Summary (Day {day.day})
-                      </div>
-                      <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
-                        <div>
-                          <div className="text-[12px] leading-[1.6] font-medium text-brand-text/60">
-                            Calories
-                          </div>
-                          <div className="mt-1 text-[14px] leading-[1.6] font-medium text-brand-text">
-                            {Math.round(daySummary.calories)}
-                          </div>
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      {[
+                        { k: "Cal", v: Math.round(daySummary.calories) },
+                        { k: "C", v: `${Math.round(daySummary.carbs)}g` },
+                        { k: "P", v: `${Math.round(daySummary.protein)}g` },
+                        { k: "F", v: `${Math.round(daySummary.fat)}g` }
+                      ].map((cell) => (
+                        <div
+                          key={cell.k}
+                          className="rounded-lg bg-brand-bg/80 py-2 text-[11px] sm:text-xs"
+                        >
+                          <div className="font-medium text-brand-text/45">{cell.k}</div>
+                          <div className="mt-0.5 font-semibold text-brand-text">{cell.v}</div>
                         </div>
-                        <div>
-                          <div className="text-[12px] leading-[1.6] font-medium text-brand-text/60">
-                            Carbs
-                          </div>
-                          <div className="mt-1 text-[14px] leading-[1.6] font-medium text-brand-text">
-                            {Math.round(daySummary.carbs)}g
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[12px] leading-[1.6] font-medium text-brand-text/60">
-                            Proteins
-                          </div>
-                          <div className="mt-1 text-[14px] leading-[1.6] font-medium text-brand-text">
-                            {Math.round(daySummary.protein)}g
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[12px] leading-[1.6] font-medium text-brand-text/60">
-                            Fat
-                          </div>
-                          <div className="mt-1 text-[14px] leading-[1.6] font-medium text-brand-text">
-                            {Math.round(daySummary.fat)}g
-                          </div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
 
                     {slotRows.map(({ slot, mealType, isExtraSnack }) => {
@@ -721,28 +672,26 @@ export default function GeneratorPage() {
                         return (
                           <div
                             key={meal.id}
-                            className="rounded-xl border border-dashed border-brand-border/80 bg-white/80 p-4"
+                            className="rounded-xl border border-dashed border-brand-border/90 bg-brand-surface/50 p-3 sm:p-4"
                           >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                               <div>
-                                <span className="inline-flex rounded bg-slate-100 px-2 py-1 text-[12px] leading-[1.6] font-semibold text-slate-600">
+                                <span className="inline-flex rounded bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-brand-text/55">
                                   {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
                                 </span>
-                                <p className="mt-2 text-[14px] leading-[1.6] text-brand-text/70">
-                                  Removed from menu
-                                </p>
+                                <p className="mt-2 text-sm text-brand-text/60">Removed from menu</p>
                               </div>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex gap-2">
                                 <button
                                   type="button"
-                                  className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-[13px] font-medium text-brand-text hover:bg-brand-bg"
+                                  className="rounded-lg border border-brand-border/90 bg-white px-3 py-2 text-[13px] font-medium text-brand-text hover:bg-brand-bg"
                                   onClick={() => restoreMealToMenu(meal.id)}
                                 >
                                   Restore
                                 </button>
                                 <button
                                   type="button"
-                                  className="rounded-lg border border-brand-primary bg-brand-primary px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90"
+                                  className="rounded-lg bg-brand-primary px-3 py-2 text-[13px] font-medium text-white hover:opacity-90"
                                   onClick={() =>
                                     regenerateMealSlot(day.day, slot, mealType, Boolean(isExtraSnack))
                                   }
@@ -755,15 +704,17 @@ export default function GeneratorPage() {
                         );
                       }
 
+                      const imgUrl = mealImageUrlForId(meal.id);
+
                       return (
                         <div
                           key={meal.id}
-                          className="rounded-xl border border-brand-border bg-white p-0 overflow-hidden transition-shadow hover:shadow-sm"
+                          className="overflow-hidden rounded-xl border border-brand-border/80 bg-white shadow-soft transition-shadow hover:shadow-md"
                         >
                           <div
                             role="button"
                             tabIndex={0}
-                            className="cursor-pointer"
+                            className="flex cursor-pointer text-left"
                             onClick={() => setOpenedMealId(meal.id)}
                             onKeyDown={(event) => {
                               if (event.key === "Enter" || event.key === " ") {
@@ -772,116 +723,69 @@ export default function GeneratorPage() {
                               }
                             }}
                           >
-                            <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4">
-                              <div
-                                className="flex h-[84px] w-full flex-none items-center justify-center rounded-xl border border-brand-border bg-brand-bg sm:w-[120px]"
-                              >
-                                <svg
-                                  width={30}
-                                  height={30}
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  stroke="#9CA3AF"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M12 22v-5" />
-                                  <path d="M9 8V2" />
-                                  <path d="M15 8V2" />
-                                  <path d="M5 8h14v3a7 7 0 0 1-7 7h0a7 7 0 0 1-7-7V8Z" />
-                                </svg>
-                              </div>
-
-                              <div className="flex-1">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <span className="inline-flex rounded bg-[#FFF4E8] px-2 py-1 text-[12px] leading-[1.6] font-semibold text-[#E6A756]">
-                                      {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
-                                    </span>
-                                    {meal.isVegan ? (
-                                      <span className="ml-2 inline-flex rounded bg-[#EAF5EF] px-2 py-1 text-[12px] leading-[1.6] font-semibold text-brand-primary">
-                                        Vegan
-                                      </span>
-                                    ) : meal.isVegetarian ? (
-                                      <span className="ml-2 inline-flex rounded bg-[#EEF2FF] px-2 py-1 text-[12px] leading-[1.6] font-semibold text-[#4F46E5]">
-                                        Vegetarian
-                                      </span>
-                                    ) : null}
-                                    <h3 className="mt-1 text-[16px] leading-[1.4] font-medium text-brand-text">
-                                      {meal.name}
-                                    </h3>
-                                  </div>
-                                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-brand-border text-brand-text/60">
-                                    <svg
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <path d="m6 9 6 6 6-6" />
-                                    </svg>
-                                  </span>
-                                </div>
-
-                                <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                  <div>
-                                    <div className="text-[12px] leading-[1.6] text-brand-text/60">Calories</div>
-                                    <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-                                      {Math.round(meal.calories)}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[12px] leading-[1.6] text-brand-text/60">Carbs</div>
-                                    <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-                                      {Math.round(meal.macros.carbs)}g
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[12px] leading-[1.6] text-brand-text/60">GI</div>
-                                    <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-                                      {meal.glycemicIndex}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[12px] leading-[1.6] text-brand-text/60">Score</div>
-                                    <div className="text-[14px] leading-[1.6] font-medium text-brand-text">
-                                      {meal.diabeticScore}/10
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
+                            <div className="relative h-[100px] w-[88px] shrink-0 sm:h-[108px] sm:w-[100px]">
+                              <img
+                                src={imgUrl}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
                             </div>
-                            <div className="mt-2 rounded-lg bg-brand-bg px-3 py-2 text-[12px] leading-[1.6] text-brand-text/60">
-                              Click card to view full recipe
+                            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-3 py-2.5">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="inline-flex rounded-md bg-[#FFF4E8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-accent">
+                                  {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
+                                </span>
+                                {meal.isVegan ? (
+                                  <span className="inline-flex rounded-md bg-[#EAF5EF] px-2 py-0.5 text-[10px] font-semibold text-brand-primary">
+                                    Vegan
+                                  </span>
+                                ) : meal.isVegetarian ? (
+                                  <span className="inline-flex rounded-md bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
+                                    Vegetarian
+                                  </span>
+                                ) : null}
+                              </div>
+                              <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-brand-text sm:text-base">
+                                {meal.name}
+                              </h3>
+                              <div className="scrollbar-none flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-brand-text/55"> 
+                                <span>{Math.round(meal.calories)} kcal</span>
+                                <span>·</span>
+                                <span>GI {meal.glycemicIndex}</span>
+                                <span>·</span>
+                                <span>Score {meal.diabeticScore}/10</span>
+                              </div>
+                              <p className="text-[11px] text-brand-primary/60">Tap for recipe</p>
+                            </div>
+                            <div className="flex shrink-0 items-center pr-2 text-brand-text/35">
+                              <ChevronRight className="size-5" strokeWidth={2} />
                             </div>
                           </div>
-                          <div className="flex flex-wrap gap-2 border-t border-brand-border px-3 py-2">
+                          <div className="flex items-center justify-end gap-1 border-t border-brand-border/70 bg-brand-bg/40 px-2 py-1.5">
                             <button
                               type="button"
-                              className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-[12px] font-medium text-brand-text hover:bg-brand-bg"
+                              title="Regenerate dish"
+                              aria-label="Regenerate dish"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-text/70 transition hover:bg-white hover:text-brand-text"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 regenerateMealSlot(day.day, slot, mealType, Boolean(isExtraSnack));
                               }}
                             >
-                              Regenerate
+                              <RefreshCw className="size-4" strokeWidth={2} />
                             </button>
                             <button
                               type="button"
-                              className="rounded-lg border border-brand-border px-3 py-1.5 text-[12px] font-medium text-red-700 hover:bg-red-50"
+                              title="Remove from menu"
+                              aria-label="Remove from menu"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-600/80 transition hover:bg-red-50"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 removeMealFromMenu(meal.id);
                               }}
                             >
-                              Remove from menu
+                              <Trash2 className="size-4" strokeWidth={2} />
                             </button>
                           </div>
                         </div>
@@ -897,48 +801,53 @@ export default function GeneratorPage() {
 
       {openedMealId ? (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 animate-[fadeIn_180ms_ease-out]"
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4 animate-[fadeIn_180ms_ease-out]"
           onClick={() => setOpenedMealId(null)}
         >
           <div
-            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-brand-border bg-white p-5 shadow-xl animate-[modalIn_220ms_cubic-bezier(0.16,1,0.3,1)]"
+            className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-t-2xl border border-brand-border/90 bg-white shadow-2xl animate-[modalIn_220ms_cubic-bezier(0.16,1,0.3,1)] sm:rounded-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             {(() => {
               const meal = getMealById(openedMealId);
               if (!meal) return null;
+              const modalImg = mealImageUrlForId(meal.id);
 
               return (
                 <>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex rounded bg-[#FFF4E8] px-2 py-1 text-[12px] font-semibold text-[#E6A756]">
-                          {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
-                        </span>
-                        {meal.isVegan ? (
-                          <span className="inline-flex rounded bg-[#EAF5EF] px-2 py-1 text-[12px] font-semibold text-brand-primary">
-                            Vegan
-                          </span>
-                        ) : meal.isVegetarian ? (
-                          <span className="inline-flex rounded bg-[#EEF2FF] px-2 py-1 text-[12px] font-semibold text-[#4F46E5]">
-                            Vegetarian
-                          </span>
-                        ) : null}
-                      </div>
-                      <h3 className="mt-2 text-[22px] font-medium text-brand-text">{meal.name}</h3>
-                    </div>
+                  <div className="relative h-40 w-full shrink-0 overflow-hidden sm:h-40">
+                    <img src={modalImg} alt="" className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <button
                       type="button"
                       aria-label="Close recipe"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-brand-border text-brand-text/70 hover:bg-brand-bg"
+                      className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-brand-text shadow"
                       onClick={() => setOpenedMealId(null)}
                     >
-                      ×
+                      <X className="size-5" strokeWidth={2} />
                     </button>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex rounded-md bg-[#FFF4E8] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-brand-accent">
+                        {meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}
+                      </span>
+                      {meal.isVegan ? (
+                        <span className="inline-flex rounded-md bg-[#EAF5EF] px-2 py-0.5 text-[11px] font-semibold text-brand-primary">
+                          Vegan
+                        </span>
+                      ) : meal.isVegetarian ? (
+                        <span className="inline-flex rounded-md bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-semibold text-[#4F46E5]">
+                          Vegetarian
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="mt-2 text-xl font-semibold leading-snug tracking-tight text-brand-text sm:text-2xl">
+                      {meal.name}
+                    </h3>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                     <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Calories</div><div className="font-medium">{Math.round(meal.calories)}</div></div>
                     <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Carbs</div><div className="font-medium">{Math.round(meal.macros.carbs)}g</div></div>
                     <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Protein</div><div className="font-medium">{Math.round(meal.macros.protein)}g</div></div>
@@ -953,10 +862,10 @@ export default function GeneratorPage() {
                         const meta = findMealSlotMeta(mealPlan, meal.id);
                         if (!meta) return null;
                         return (
-                          <div className="mt-4 flex flex-wrap gap-2 border-t border-brand-border pt-4">
+                          <div className="mt-4 flex flex-wrap gap-2 border-t border-brand-border/80 pt-4">
                             <button
                               type="button"
-                              className="rounded-lg border border-brand-border bg-white px-3 py-1.5 text-[13px] font-medium text-brand-text hover:bg-brand-bg"
+                              className="inline-flex items-center gap-2 rounded-xl border border-brand-border/90 bg-white px-4 py-2.5 text-[13px] font-medium text-brand-text hover:bg-brand-bg"
                               onClick={() =>
                                 regenerateMealSlot(
                                   meta.dayNumber,
@@ -966,14 +875,16 @@ export default function GeneratorPage() {
                                 )
                               }
                             >
-                              Regenerate dish
+                              <RefreshCw className="size-4 shrink-0" strokeWidth={2} />
+                              Regenerate
                             </button>
                             <button
                               type="button"
-                              className="rounded-lg border border-brand-border px-3 py-1.5 text-[13px] font-medium text-red-700 hover:bg-red-50"
+                              className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50/80 px-4 py-2.5 text-[13px] font-medium text-red-700 hover:bg-red-100"
                               onClick={() => removeMealFromMenu(meal.id)}
                             >
-                              Remove from menu
+                              <Trash2 className="size-4 shrink-0" strokeWidth={2} />
+                              Remove
                             </button>
                           </div>
                         );
@@ -1071,6 +982,7 @@ export default function GeneratorPage() {
                       </ol>
                     </section>
                   </div>
+                  </div>
                 </>
               );
             })()}
@@ -1079,7 +991,7 @@ export default function GeneratorPage() {
       ) : null}
 
       {toastMessage ? (
-        <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-brand-border bg-white px-3 py-2 text-[13px] text-brand-text shadow-lg">
+        <div className="fixed bottom-5 left-1/2 z-50 max-w-[min(100vw-2rem,20rem)] -translate-x-1/2 rounded-xl border border-brand-border/90 bg-white px-4 py-2.5 text-center text-[13px] font-medium text-brand-text shadow-soft sm:bottom-6">
           {toastMessage}
         </div>
       ) : null}

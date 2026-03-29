@@ -432,11 +432,27 @@ function applyStepTokens(step: string, selectedByCategory: Record<string, string
   });
 }
 
+/** Cleans template artifacts: trailing ", and", empty list tails, dangling "and -". */
+export function finalizeMealTitle(raw: string): string {
+  let s = raw.replace(/\s+/g, " ").trim();
+  s = s.replace(/,\s*,+/g, ", ");
+  s = s.replace(/,\s*and\s*-\s*$/i, "");
+  s = s.replace(/\s+and\s*-\s*$/i, "");
+  s = s.replace(/,\s*and\s*$/i, "");
+  s = s.replace(/\s+and\s*$/i, "");
+  s = s.replace(/,\s*-\s*$/g, "");
+  s = s.replace(/,\s*$/g, "");
+  s = s.replace(/^\s*,\s*/g, "");
+  return s.trim();
+}
+
 function composeMealName(template: Template, selectedByCategory: Record<string, string>): string {
-  return template.mealNamePattern.replace(
+  const raw = template.mealNamePattern.replace(
     /\{(protein|vegetables|carbs|fats|liquid|spices)\}/g,
-    (_, key: string) => selectedByCategory[key] ?? "ingredients"
+    (_, key: string) => selectedByCategory[key] ?? ""
   );
+  const finalized = finalizeMealTitle(raw);
+  return finalized.length > 0 ? finalized : template.name;
 }
 
 export function selectTemplate(
@@ -739,7 +755,8 @@ function generateDayPlan(user: UserProfile, dayIndex: number, planSeed: number):
 
 function generateOptimizedDayPlan(user: UserProfile, dayIndex: number, basePlanSeed: number): DayPlan {
   const targets = recommendedDailyTargets(user);
-  const attempts = 16;
+  /** Fewer attempts keeps the main thread responsive in the browser (was 16 × days). */
+  const attempts = 5;
   let bestDay = generateDayPlan(user, dayIndex, basePlanSeed);
   let bestLoss = dayLoss(bestDay, targets);
 
@@ -754,6 +771,59 @@ function generateOptimizedDayPlan(user: UserProfile, dayIndex: number, basePlanS
   }
 
   return bestDay;
+}
+
+/** Lets the browser paint / handle input between heavy work (avoids tab freeze). */
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+async function generateOptimizedDayPlanAsync(
+  user: UserProfile,
+  dayIndex: number,
+  basePlanSeed: number
+): Promise<DayPlan> {
+  const targets = recommendedDailyTargets(user);
+  const attempts = 5;
+  await yieldToMain();
+  let bestDay = generateDayPlan(user, dayIndex, basePlanSeed);
+  let bestLoss = dayLoss(bestDay, targets);
+
+  for (let i = 1; i < attempts; i += 1) {
+    await yieldToMain();
+    const candidateSeed = basePlanSeed + i * 9973 + dayIndex * 389;
+    const candidate = generateDayPlan(user, dayIndex, candidateSeed);
+    const candidateLoss = dayLoss(candidate, targets);
+    if (candidateLoss < bestLoss) {
+      bestDay = candidate;
+      bestLoss = candidateLoss;
+    }
+  }
+
+  return bestDay;
+}
+
+/**
+ * Same as {@link generateMealPlan} but yields to the main thread between days and
+ * optimization attempts so the tab stays responsive during long runs in the browser.
+ */
+export async function generateMealPlanAsync(user: UserProfile, days: number): Promise<MealPlan> {
+  const normalizedDays = [1, 3, 7].includes(days) ? days : 1;
+  const planSeed = Math.floor(Math.random() * 1_000_000);
+  const dayPlans: DayPlan[] = [];
+  for (let dayIndex = 0; dayIndex < normalizedDays; dayIndex += 1) {
+    await yieldToMain();
+    dayPlans.push(await generateOptimizedDayPlanAsync(user, dayIndex, planSeed + dayIndex * 1237));
+  }
+
+  return {
+    id: `plan-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    userProfile: user,
+    days: dayPlans
+  };
 }
 
 export function generateMealPlan(user: UserProfile, days: number): MealPlan {

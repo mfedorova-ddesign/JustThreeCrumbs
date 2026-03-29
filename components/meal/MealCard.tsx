@@ -1,4 +1,6 @@
+import { mealImageUrlForId } from "@/lib/design/mealImages";
 import { GeneratedMeal } from "@/types";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 type MealCardProps = {
@@ -7,31 +9,44 @@ type MealCardProps = {
 };
 
 export function MealCard({ meal, planId }: MealCardProps) {
+  const imageUrl = mealImageUrlForId(meal.id);
+
   return (
-    <div className="rounded-xl border border-brand-border bg-white p-4 transition-shadow hover:shadow-sm sm:p-6">
-      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:gap-4">
-        <div>
-          <h3 className="text-lg font-medium text-brand-text sm:text-xl">{meal.name}</h3>
-          <p className="text-sm text-brand-text/70 line-clamp-3">
-            {meal.ingredients.map((i) => i.name).join(", ")}
-          </p>
+    <article className="overflow-hidden rounded-2xl border border-brand-border/90 bg-white shadow-soft transition-shadow hover:shadow-md">
+      <div className="flex gap-0 sm:gap-1">
+        <div className="relative h-[100px] w-[88px] shrink-0 sm:h-[112px] sm:w-[100px]">
+          <img
+            src={imageUrl}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
         </div>
-        <span className="rounded-full bg-brand-bg px-3 py-1 text-sm font-medium text-brand-primary">
-          GI {meal.glycemicIndex}
-        </span>
+        <div className="flex min-w-0 flex-1 flex-col justify-between p-3 pr-2 sm:p-4 sm:pr-4">
+          <div>
+            <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-brand-text sm:text-base">
+              {meal.name}
+            </h3>
+            <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-brand-text/60 sm:text-[13px]">
+              {meal.ingredients.map((i) => i.name).join(", ")}
+            </p>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-brand-text/65 sm:text-xs">
+            <span>{Math.round(meal.calories)} kcal</span>
+            <span className="text-brand-text/35">·</span>
+            <span>GI {meal.glycemicIndex}</span>
+            <span className="text-brand-text/35">·</span>
+            <span>P {meal.macros.protein}g</span>
+          </div>
+        </div>
+        <Link
+          href={`/plan/${planId}?meal=${meal.id}`}
+          className="flex shrink-0 items-center self-stretch px-2 text-brand-primary hover:bg-brand-bg/80 sm:px-3"
+          aria-label="View full recipe"
+        >
+          <ChevronRight className="size-5 sm:size-6" strokeWidth={2} />
+        </Link>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-brand-text/80 sm:grid-cols-4">
-        <p>{meal.calories} kcal</p>
-        <p>P {meal.macros.protein}g</p>
-        <p>F {meal.macros.fat}g</p>
-        <p>C {meal.macros.carbs}g</p>
-      </div>
-      <Link
-        href={`/plan/${planId}?meal=${meal.id}`}
-        className="mt-4 inline-block text-sm font-medium text-brand-primary underline"
-      >
-        View full recipe
-      </Link>
-    </div>
+    </article>
   );
 }

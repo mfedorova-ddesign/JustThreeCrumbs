@@ -190,7 +190,7 @@ export const TEMPLATES: Template[] = [
     name: "Balanced low-GI protein salad",
     category: "salad",
     mealTypes: ["breakfast", "lunch", "snack"],
-    mealNamePattern: "Protein salad with {protein}, {vegetables}, and {carbs}",
+    mealNamePattern: "Protein salad with {protein} and {vegetables}",
     ingredientSlots: {
       protein: [
         "chicken breast",

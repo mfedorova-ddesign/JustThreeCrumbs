@@ -2,10 +2,12 @@
 
 import { AppShell } from "@/components/layout/AppShell";
 import { MealCard } from "@/components/meal/MealCard";
+import { readPlanFromSession } from "@/lib/planStorage";
 import { useGeneratorStore } from "@/lib/generator/store";
-import { DayPlan, GeneratedMeal } from "@/types";
+import { DayPlan, GeneratedMeal, MealPlan } from "@/types";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo } from "react";
 
 function mealsOnDay(day: DayPlan) {
   return [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(Boolean) as GeneratedMeal[];
@@ -33,14 +35,33 @@ function MealDetail({ day, mealId, planId }: { day: DayPlan; mealId: string; pla
   );
 }
 
-export default function PlanPage() {
-  const { latestPlan } = useGeneratorStore();
+function PlanPageInner() {
+  const params = useParams();
+  const planId = typeof params?.id === "string" ? params.id : "";
+  const { latestPlan, setLatestPlan } = useGeneratorStore();
   const searchParams = useSearchParams();
   const selectedMealId = searchParams.get("meal");
 
-  if (!latestPlan) {
+  const sessionPlan = useMemo(
+    () => (planId ? readPlanFromSession(planId) : null),
+    [planId]
+  );
+  const plan: MealPlan | null = useMemo(() => {
+    if (!planId) return null;
+    if (latestPlan?.id === planId) return latestPlan;
+    if (sessionPlan?.id === planId) return sessionPlan;
+    return null;
+  }, [planId, latestPlan, sessionPlan]);
+
+  useEffect(() => {
+    if (plan && plan.id === planId && latestPlan?.id !== planId) {
+      setLatestPlan(plan);
+    }
+  }, [plan, planId, latestPlan?.id, setLatestPlan]);
+
+  if (!planId) {
     return (
-      <AppShell title="Plan not found" subtitle="Generate a meal plan first to view results.">
+      <AppShell title="Plan not found" subtitle="This link is invalid.">
         <div className="rounded-2xl bg-white p-6 shadow-sm">
           <Link href="/generator" className="text-brand-primary underline">
             Go to generator
@@ -50,11 +71,31 @@ export default function PlanPage() {
     );
   }
 
-  // Next.js route includes an id parameter; for MVP we display latest in-memory plan.
+  if (!plan) {
+    return (
+      <AppShell title="Plan not found" subtitle="Generate a meal plan first, or open it from the same browser session.">
+        <div className="rounded-2xl bg-white p-6 shadow-sm">
+          <Link href="/generator" className="text-brand-primary underline">
+            Go to generator
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell title="Your Meal Plan" subtitle="Structured meals from your diabetes-friendly recipe templates.">
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <Link
+          href="/generator"
+          className="inline-flex items-center rounded-xl border border-brand-border/90 bg-white px-4 py-2.5 text-sm font-medium text-brand-text shadow-soft transition hover:bg-brand-bg"
+        >
+          ← Edit in generator
+        </Link>
+        <span className="text-sm text-brand-text/55">Swap ingredients, regenerate meals, export PDF</span>
+      </div>
       <div className="space-y-5 sm:space-y-6">
-        {latestPlan.days.map((day) => (
+        {plan.days.map((day) => (
           <section key={day.day} className="space-y-3 rounded-2xl bg-brand-bg/50 p-2 sm:p-3">
             <h2 className="px-2 text-xl font-semibold text-slate-900">Day {day.day}</h2>
             {[day.breakfast, day.lunch, day.dinner, day.snack, ...(day.extraSnack ? [day.extraSnack] : [])].map(
@@ -67,15 +108,35 @@ export default function PlanPage() {
                     One meal removed from this day&apos;s menu — use the generator to restore or replace it.
                   </div>
                 ) : (
-                  <MealCard key={meal.id} meal={meal} planId={latestPlan.id} />
+                  <MealCard key={meal.id} meal={meal} planId={plan.id} />
                 )
             )}
             {selectedMealId ? (
-              <MealDetail day={day} mealId={selectedMealId} planId={latestPlan.id} />
+              <MealDetail day={day} mealId={selectedMealId} planId={plan.id} />
             ) : null}
           </section>
         ))}
       </div>
     </AppShell>
+  );
+}
+
+function PlanLoadingFallback() {
+  return (
+    <AppShell title="Your Meal Plan" subtitle="Loading…">
+      <div className="space-y-4">
+        <div className="h-10 max-w-md animate-pulse rounded-xl bg-brand-bg" />
+        <div className="h-32 animate-pulse rounded-2xl bg-brand-bg" />
+        <div className="h-32 animate-pulse rounded-2xl bg-brand-bg" />
+      </div>
+    </AppShell>
+  );
+}
+
+export default function PlanPage() {
+  return (
+    <Suspense fallback={<PlanLoadingFallback />}>
+      <PlanPageInner />
+    </Suspense>
   );
 }

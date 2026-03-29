@@ -48,7 +48,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <header className="w-full border-b border-brand-border bg-white">
+      <header className="relative z-50 w-full border-b border-brand-border bg-white">
         <div className="mx-auto w-full max-w-[1280px] px-4 py-4 md:px-8 xl:px-12">
           <div className="flex items-center justify-between">
             <img src="/images/logo-full.png" alt="JustThreeCrumbs logo" className="h-8 w-auto" />
@@ -63,9 +63,9 @@ export default function LandingPage() {
         <section className="grid items-start gap-8 lg:grid-cols-2 lg:items-center lg:gap-10">
           <div>
             <h1 className="text-[34px] font-medium leading-[1.1] text-brand-text sm:text-[44px] lg:text-[56px]">
-              <span>It's not just a diet.</span>
+              <span>It&apos;s not just a diet.</span>
               <br />
-              <span>It's food you'll</span>
+              <span>It&apos;s food you&apos;ll</span>
               <br />
               <span className="text-brand-primary">actually enjoy.</span>
             </h1>
@@ -97,12 +97,12 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative isolate">
             <div className="overflow-hidden rounded-[22px] bg-brand-bg shadow-sm ring-1 ring-black/5 sm:rounded-[28px]">
               <img src="/images/hero.png" alt="Meal plan preview" className="block h-auto w-full" />
             </div>
 
-            <div className="mt-3 grid w-full grid-cols-1 gap-3 sm:absolute sm:inset-x-0 sm:bottom-[-18px] sm:z-10 sm:mt-0 sm:px-2 sm:grid-cols-3">
+            <div className="mt-3 grid w-full grid-cols-1 gap-3 sm:absolute sm:inset-x-0 sm:bottom-[-18px] sm:z-0 sm:mt-0 sm:px-2 sm:grid-cols-3">
               <div className="group flex items-center gap-3 rounded-xl border border-brand-border bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md sm:px-6 sm:py-4">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-bg">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

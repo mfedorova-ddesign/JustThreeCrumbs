@@ -17,6 +17,14 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, router]);
 
+  const canContinue = isProfileComplete(profile);
+
+  useEffect(() => {
+    if (canContinue && warningMessage) {
+      setWarningMessage(null);
+    }
+  }, [canContinue, warningMessage]);
+
   const onNumberChange =
     (field: "age" | "weight" | "height") =>
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -48,14 +56,6 @@ export default function ProfilePage() {
   };
 
   if (!isAuthenticated) return null;
-
-  const canContinue = isProfileComplete(profile);
-
-  useEffect(() => {
-    if (canContinue && warningMessage) {
-      setWarningMessage(null);
-    }
-  }, [canContinue, warningMessage]);
 
   return (
     <div className="min-h-screen bg-brand-bg">

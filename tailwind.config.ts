@@ -9,14 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: [
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          '"Segoe UI"',
-          "Roboto",
-          "sans-serif"
-        ]
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"]
+      },
+      borderRadius: {
+        "2xl": "1rem",
+        "3xl": "1.25rem"
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06)"
       },
       colors: {
         brand: {
@@ -25,7 +25,9 @@ const config: Config = {
           accent: "#E6A756",
           text: "#1F2933",
           border: "#E5E7EB",
-          card: "#FFFFFF"
+          card: "#FFFFFF",
+          muted: "#64748B",
+          surface: "#FAFAF8"
         }
       }
     }
