@@ -11,6 +11,8 @@
     "dev:alt": "next dev -p 3001 --turbopack",
     "dev:clean": "npm run clean && npm run kill:next && next dev -p 3000 --turbopack",
     "dev:clean:alt": "npm run clean && npm run kill:next && next dev -p 3001 --turbopack",
+    "recipes:import": "node --import tsx scripts/import-recipes.ts",
+    "validate:generation": "node --import tsx scripts/validate-generation.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -32,6 +34,7 @@
     "eslint-config-next": "15.2.0",
     "postcss": "8.5.3",
     "tailwindcss": "3.4.17",
+    "tsx": "^4.21.0",
     "typescript": "5.8.2"
   }
 }

@@ -44,6 +44,47 @@ export default function ProfilePage() {
     "None"
   ] as const;
 
+  const randomFrom = <T,>(items: readonly T[]): T => items[Math.floor(Math.random() * items.length)];
+
+  const applyDefaultProfile = () => {
+    setProfile({
+      age: 34,
+      gender: "female",
+      weight: 68,
+      height: 168,
+      condition: "type2_diabetes",
+      dietType: "regular",
+      allergies: ["None"],
+      additionalPreferences: "No spicy food in the evening."
+    });
+    setWarningMessage(null);
+  };
+
+  const applyRandomTestProfile = () => {
+    const genders = ["female", "male", "other"] as const;
+    const dietTypes = ["regular", "vegetarian"] as const;
+    const nonNoneAllergies = ALLERGY_CHIPS.filter((chip) => chip !== "None");
+
+    const selectedAllergies =
+      Math.random() < 0.45
+        ? ["None"]
+        : [randomFrom(nonNoneAllergies), ...(Math.random() < 0.35 ? [randomFrom(nonNoneAllergies)] : [])].filter(
+            (value, index, array) => array.indexOf(value) === index
+          );
+
+    setProfile({
+      age: Math.floor(Math.random() * 43) + 24, // 24..66
+      gender: randomFrom(genders),
+      weight: Math.floor(Math.random() * 55) + 50, // 50..104
+      height: Math.floor(Math.random() * 36) + 150, // 150..185
+      condition: "type2_diabetes",
+      dietType: randomFrom(dietTypes),
+      allergies: selectedAllergies,
+      additionalPreferences: ""
+    });
+    setWarningMessage(null);
+  };
+
   const toggleAllergyChip = (chip: (typeof ALLERGY_CHIPS)[number]) => {
     const current = profile.allergies ?? [];
     const hasChip = current.includes(chip);
@@ -78,6 +119,22 @@ export default function ProfilePage() {
         <p className="mt-2 text-[14px] text-brand-text/70">
           These values are used directly for personalized meal targets and generation.
         </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={applyDefaultProfile}
+            className="rounded-xl border border-brand-primary/25 bg-[#EAF5EF] px-3 py-2 text-[13px] font-medium text-brand-primary hover:bg-[#dff0e7]"
+          >
+            Use defaults (test)
+          </button>
+          <button
+            type="button"
+            onClick={applyRandomTestProfile}
+            className="rounded-xl border border-brand-border bg-white px-3 py-2 text-[13px] font-medium text-brand-text/80 hover:bg-brand-bg"
+          >
+            Randomize test data
+          </button>
+        </div>
 
         <div className="mt-6 rounded-xl border border-brand-border bg-white p-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

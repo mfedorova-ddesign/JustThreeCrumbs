@@ -45,6 +45,27 @@ export type Ingredient = {
   allergens?: string[];
 };
 
+export type RecipeIngredientRule = {
+  category: IngredientCategory;
+  primary: string;
+  alternatives?: string[];
+  optional?: boolean;
+  adjustable?: boolean;
+};
+
+export type Recipe = {
+  id: string;
+  name: string;
+  source?: "default" | "custom";
+  mealTypes: MealType[];
+  ingredients: RecipeIngredientRule[];
+  constraints: {
+    maxCarbs: number;
+    glycemicIndex: "low" | "medium" | "high";
+  };
+  instructions: string[];
+};
+
 export type Template = {
   id: string;
   name: string;

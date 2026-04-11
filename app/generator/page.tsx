@@ -17,6 +17,7 @@ import {
 } from "@/lib/nutrition/calc";
 import { generateMealPlanAsync, regenerateSingleMeal } from "@/lib/generator/engine";
 import { persistPlanToSession } from "@/lib/planStorage";
+import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { mealImageUrlForId } from "@/lib/design/mealImages";
 import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType } from "@/types";
@@ -148,8 +149,17 @@ function recalculateMeal(meal: GeneratedMeal, removedMap: Record<number, boolean
 }
 
 export default function GeneratorPage() {
-  const { profile, isAuthenticated, planDays, latestPlan, setLatestPlan, setPlanDays } =
-    useGeneratorStore();
+  const {
+    profile,
+    isAuthenticated,
+    planDays,
+    latestPlan,
+    setLatestPlan,
+    setPlanDays,
+    customRecipes,
+    favoriteRecipeIds,
+    skippedRecipeIds
+  } = useGeneratorStore();
   const router = useRouter();
   const [selectedPlanRange, setSelectedPlanRange] = useState<1 | 3 | 7>(planDays);
   const [mealPlan, setMealPlan] = useState(latestPlan);
@@ -202,7 +212,12 @@ export default function GeneratorPage() {
       const seed = (Date.now() % 500_000) + Math.floor(Math.random() * 500_000);
       const newMeal = regenerateSingleMeal(profile, mealType, dayIndex, seed, {
         excludedTemplateIds: excluded,
-        isExtraSnack
+        isExtraSnack,
+        selection: {
+          recipes: [...FIXED_RECIPES, ...customRecipes],
+          favoriteRecipeIds,
+          skippedRecipeIds
+        }
       });
       return replaceMealInDaySlot(p, dayNumber, slot, newMeal);
     });
@@ -448,7 +463,11 @@ export default function GeneratorPage() {
 
     let plan: MealPlan;
     try {
-      plan = await generateMealPlanAsync(profile, selectedPlanRange);
+      plan = await generateMealPlanAsync(profile, selectedPlanRange, {
+        recipes: [...FIXED_RECIPES, ...customRecipes],
+        favoriteRecipeIds,
+        skippedRecipeIds
+      });
       setLatestPlan(plan);
       setPlanDays(selectedPlanRange);
       persistPlanToSession(plan);
@@ -498,6 +517,20 @@ export default function GeneratorPage() {
         <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-brand-text/65 sm:text-[15px]">
           Personalized, diabetes-aware meals — pick a length, generate once, then open recipes or fine-tune.
         </p>
+        <div className="mt-5">
+          <div className="inline-flex items-end">
+            <span className="relative -mb-px rounded-t-xl border border-brand-border bg-white px-5 py-2.5 text-sm font-semibold text-brand-text">
+              Generator
+            </span>
+            <Link
+              href="/recipes"
+              className="rounded-t-xl border border-brand-border border-b-brand-border bg-brand-bg/40 px-5 py-2.5 text-sm font-medium text-brand-text/70 transition hover:bg-white hover:text-brand-text"
+            >
+              Recipes
+            </Link>
+          </div>
+          <div className="h-px w-full bg-brand-border" />
+        </div>
 
         <section className="mt-6 rounded-2xl border border-brand-border/90 bg-white p-4 shadow-soft sm:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">Plan length</p>
