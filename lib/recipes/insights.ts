@@ -15,11 +15,12 @@ function defaultPortionByCategory(category: Ingredient["category"]): number {
 
 export function resolveRecipeBaseIngredients(recipe: Recipe): Ingredient[] {
   return recipe.ingredients
+    .filter((rule) => !rule.optional)
     .map((rule) => ingredientByName.get(rule.primary.toLowerCase()))
     .filter((ingredient): ingredient is Ingredient => Boolean(ingredient))
     .map((ingredient) => ({
       ...ingredient,
-      portionGrams: defaultPortionByCategory(ingredient.category)
+      portionGrams: ingredient.portionGrams ?? defaultPortionByCategory(ingredient.category)
     }));
 }
 

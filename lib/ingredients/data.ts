@@ -46,6 +46,28 @@ export const INGREDIENTS: Ingredient[] = [
     vegetarian: true
   },
   {
+    name: "red beans",
+    calories: 127,
+    protein: 8.7,
+    fat: 0.5,
+    carbs: 22.8,
+    fiber: 6.4,
+    glycemicIndex: 29,
+    category: "protein",
+    vegetarian: true
+  },
+  {
+    name: "black beans",
+    calories: 132,
+    protein: 8.9,
+    fat: 0.5,
+    carbs: 23.7,
+    fiber: 8.7,
+    glycemicIndex: 30,
+    category: "protein",
+    vegetarian: true
+  },
+  {
     name: "tofu",
     calories: 76,
     protein: 8,
@@ -67,6 +89,41 @@ export const INGREDIENTS: Ingredient[] = [
     glycemicIndex: 0,
     category: "protein",
     vegetarian: false
+  },
+  {
+    name: "turkey breast",
+    calories: 157,
+    protein: 29,
+    fat: 3.2,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    category: "protein",
+    vegetarian: false
+  },
+  {
+    name: "mushrooms",
+    calories: 22,
+    protein: 3.1,
+    fat: 0.3,
+    carbs: 3.3,
+    fiber: 1,
+    glycemicIndex: 10,
+    portionGrams: 150,
+    category: "protein",
+    vegetarian: true
+  },
+  {
+    name: "dill",
+    calories: 43,
+    protein: 3.5,
+    fat: 1.1,
+    carbs: 7,
+    fiber: 2.1,
+    glycemicIndex: 5,
+    portionGrams: 5,
+    category: "spices",
+    vegetarian: true
   },
   {
     name: "salmon",
@@ -111,6 +168,7 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 19.9,
     fiber: 2.7,
     glycemicIndex: 49,
+    portionGrams: 100,
     category: "carbs",
     vegetarian: true
   },
@@ -144,6 +202,7 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 1.1,
     fiber: 0,
     glycemicIndex: 0,
+    portionGrams: 90,
     category: "protein",
     vegetarian: true,
     allergens: ["egg"]
@@ -218,6 +277,31 @@ export const INGREDIENTS: Ingredient[] = [
     vegetarian: true
   },
   {
+    name: "cream",
+    calories: 340,
+    protein: 2.8,
+    fat: 36,
+    carbs: 2.6,
+    fiber: 0,
+    glycemicIndex: 15,
+    portionGrams: 50,
+    category: "liquid",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "plant-based cream",
+    calories: 110,
+    protein: 1.5,
+    fat: 7,
+    carbs: 9,
+    fiber: 0,
+    glycemicIndex: 40,
+    portionGrams: 50,
+    category: "liquid",
+    vegetarian: true
+  },
+  {
     name: "unsweetened almond milk",
     calories: 17,
     protein: 0.6,
@@ -249,6 +333,7 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 1,
     fiber: 0.1,
     glycemicIndex: 20,
+    portionGrams: 15,
     category: "liquid",
     vegetarian: true
   },
@@ -293,6 +378,63 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 0.9,
     fiber: 0.4,
     glycemicIndex: 0,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "coriander",
+    calories: 25,
+    protein: 2.1,
+    fat: 0.9,
+    carbs: 4.3,
+    fiber: 2.8,
+    glycemicIndex: 0,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "curry powder",
+    calories: 22,
+    protein: 1.6,
+    fat: 0.9,
+    carbs: 4.1,
+    fiber: 2.6,
+    glycemicIndex: 0,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "garam masala",
+    calories: 25,
+    protein: 1.3,
+    fat: 1,
+    carbs: 4.5,
+    fiber: 2.4,
+    glycemicIndex: 0,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "asafoetida",
+    calories: 297,
+    protein: 4,
+    fat: 1.1,
+    carbs: 67.8,
+    fiber: 4.1,
+    glycemicIndex: 0,
+    portionGrams: 1,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "cilantro",
+    calories: 23,
+    protein: 2.1,
+    fat: 0.5,
+    carbs: 3.7,
+    fiber: 2.8,
+    glycemicIndex: 5,
+    portionGrams: 5,
     category: "spices",
     vegetarian: true
   },
@@ -352,6 +494,75 @@ export const INGREDIENTS: Ingredient[] = [
     vegetarian: true
   },
   {
+    name: "thyme",
+    calories: 3,
+    protein: 0.1,
+    fat: 0.1,
+    carbs: 0.7,
+    fiber: 0.5,
+    glycemicIndex: 0,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "basil",
+    calories: 2,
+    protein: 0.2,
+    fat: 0,
+    carbs: 0.3,
+    fiber: 0.2,
+    glycemicIndex: 0,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "bay leaf",
+    calories: 3,
+    protein: 0.1,
+    fat: 0.1,
+    carbs: 0.7,
+    fiber: 0.5,
+    glycemicIndex: 0,
+    portionGrams: 1,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "smoked paprika",
+    calories: 6,
+    protein: 0.3,
+    fat: 0.3,
+    carbs: 1.1,
+    fiber: 0.7,
+    glycemicIndex: 0,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "parsley",
+    calories: 36,
+    protein: 3,
+    fat: 0.8,
+    carbs: 6.3,
+    fiber: 3.3,
+    glycemicIndex: 5,
+    portionGrams: 5,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "shallot",
+    calories: 72,
+    protein: 2.5,
+    fat: 0.1,
+    carbs: 16.8,
+    fiber: 3.2,
+    glycemicIndex: 15,
+    portionGrams: 30,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
     name: "vanilla",
     calories: 2,
     protein: 0,
@@ -374,6 +585,30 @@ export const INGREDIENTS: Ingredient[] = [
     vegetarian: true
   },
   {
+    name: "banana",
+    calories: 89,
+    protein: 1.1,
+    fat: 0.3,
+    carbs: 23,
+    fiber: 2.6,
+    glycemicIndex: 51,
+    portionGrams: 60,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "protein powder",
+    calories: 400,
+    protein: 80,
+    fat: 5,
+    carbs: 10,
+    fiber: 0,
+    glycemicIndex: 35,
+    portionGrams: 20,
+    category: "protein",
+    vegetarian: true
+  },
+  {
     name: "zucchini",
     calories: 17,
     protein: 1.2,
@@ -392,6 +627,56 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 6,
     fiber: 3,
     glycemicIndex: 15,
+    portionGrams: 200,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "feta cheese",
+    calories: 264,
+    protein: 14.2,
+    fat: 21.3,
+    carbs: 4.1,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 50,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "honey",
+    calories: 304,
+    protein: 0.3,
+    fat: 0,
+    carbs: 82.4,
+    fiber: 0,
+    glycemicIndex: 55,
+    portionGrams: 7,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "mint",
+    calories: 70,
+    protein: 3.8,
+    fat: 0.9,
+    carbs: 14.9,
+    fiber: 8,
+    glycemicIndex: 5,
+    portionGrams: 5,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "pomegranate seeds",
+    calories: 83,
+    protein: 1.7,
+    fat: 1.2,
+    carbs: 18.7,
+    fiber: 4,
+    glycemicIndex: 35,
+    portionGrams: 20,
     category: "vegetables",
     vegetarian: true
   },
@@ -484,6 +769,18 @@ export const INGREDIENTS: Ingredient[] = [
     vegetarian: true
   },
   {
+    name: "tomato paste",
+    calories: 82,
+    protein: 4.3,
+    fat: 0.5,
+    carbs: 18.9,
+    fiber: 4.1,
+    glycemicIndex: 35,
+    portionGrams: 15,
+    category: "liquid",
+    vegetarian: true
+  },
+  {
     name: "berries",
     calories: 57,
     protein: 0.7,
@@ -502,7 +799,83 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 66.3,
     fiber: 10.6,
     glycemicIndex: 55,
+    portionGrams: 50,
     category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "water",
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 200,
+    category: "liquid",
+    vegetarian: true
+  },
+  {
+    name: "milk",
+    calories: 52,
+    protein: 3.4,
+    fat: 2,
+    carbs: 4.8,
+    fiber: 0,
+    glycemicIndex: 27,
+    portionGrams: 100,
+    category: "liquid",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "flax seeds",
+    calories: 534,
+    protein: 18.3,
+    fat: 42.2,
+    carbs: 28.9,
+    fiber: 27.3,
+    glycemicIndex: 35,
+    portionGrams: 10,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "butter",
+    calories: 717,
+    protein: 0.9,
+    fat: 81.1,
+    carbs: 0.1,
+    fiber: 0,
+    glycemicIndex: 14,
+    portionGrams: 5,
+    category: "fats",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "soft cheese",
+    calories: 105,
+    protein: 12,
+    fat: 5,
+    carbs: 2,
+    fiber: 0,
+    glycemicIndex: 30,
+    portionGrams: 30,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "fresh herbs",
+    calories: 40,
+    protein: 3,
+    fat: 0.6,
+    carbs: 6,
+    fiber: 3,
+    glycemicIndex: 10,
+    portionGrams: 10,
+    category: "spices",
     vegetarian: true
   },
   {
@@ -513,6 +886,30 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 49,
     fiber: 2.7,
     glycemicIndex: 54,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "whole grain bread",
+    calories: 247,
+    protein: 8.8,
+    fat: 3.4,
+    carbs: 43.1,
+    fiber: 6.8,
+    glycemicIndex: 49,
+    portionGrams: 40,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "crackers",
+    calories: 400,
+    protein: 10,
+    fat: 10,
+    carbs: 68,
+    fiber: 10,
+    glycemicIndex: 65,
+    portionGrams: 20,
     category: "carbs",
     vegetarian: true
   },
@@ -579,7 +976,44 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 9.6,
     fiber: 2.8,
     glycemicIndex: 64,
+    portionGrams: 150,
     category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "beef",
+    calories: 198,
+    protein: 26,
+    fat: 10,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    category: "protein",
+    vegetarian: false
+  },
+  {
+    name: "sour cream",
+    calories: 193,
+    protein: 3.2,
+    fat: 19,
+    carbs: 3.2,
+    fiber: 0,
+    glycemicIndex: 15,
+    portionGrams: 30,
+    category: "fats",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "vinegar",
+    calories: 22,
+    protein: 0,
+    fat: 0,
+    carbs: 0.9,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 10,
+    category: "spices",
     vegetarian: true
   },
   {
@@ -641,6 +1075,76 @@ export const INGREDIENTS: Ingredient[] = [
     allergens: ["fish"]
   },
   {
+    name: "lettuce",
+    calories: 15,
+    protein: 1.4,
+    fat: 0.2,
+    carbs: 2.9,
+    fiber: 1.3,
+    glycemicIndex: 10,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "radish",
+    calories: 16,
+    protein: 0.7,
+    fat: 0.1,
+    carbs: 3.4,
+    fiber: 1.6,
+    glycemicIndex: 15,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "olives",
+    calories: 115,
+    protein: 0.8,
+    fat: 10.9,
+    carbs: 6.3,
+    fiber: 3.2,
+    glycemicIndex: 15,
+    portionGrams: 20,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "croutons",
+    calories: 395,
+    protein: 11.1,
+    fat: 14.9,
+    carbs: 55,
+    fiber: 2.4,
+    glycemicIndex: 70,
+    portionGrams: 15,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "mustard",
+    calories: 66,
+    protein: 4,
+    fat: 3.3,
+    carbs: 5.8,
+    fiber: 3.3,
+    glycemicIndex: 15,
+    portionGrams: 5,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "soy sauce",
+    calories: 53,
+    protein: 5.6,
+    fat: 0,
+    carbs: 4.9,
+    fiber: 0.8,
+    glycemicIndex: 15,
+    portionGrams: 15,
+    category: "liquid",
+    vegetarian: true
+  },
+  {
     name: "dark chocolate",
     calories: 598,
     protein: 7.8,
@@ -671,20 +1175,33 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 21.6,
     fiber: 12.5,
     glycemicIndex: 15,
+    portionGrams: 15,
     category: "protein",
     vegetarian: true,
     allergens: ["tree nuts"]
   },
   {
-    name: "feta cheese",
-    calories: 264,
-    protein: 14.2,
-    fat: 21.3,
-    carbs: 4.1,
-    fiber: 0,
-    glycemicIndex: 27,
-    category: "protein",
-    vegetarian: true,
-    allergens: ["dairy"]
-  }
+    name: "coconut flakes",
+    calories: 660,
+    protein: 6.9,
+    fat: 64,
+    carbs: 23.7,
+    fiber: 16.3,
+    glycemicIndex: 45,
+    portionGrams: 10,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "sugar-free jam",
+    calories: 40,
+    protein: 0.3,
+    fat: 0,
+    carbs: 10,
+    fiber: 0.5,
+    glycemicIndex: 15,
+    portionGrams: 15,
+    category: "spices",
+    vegetarian: true
+  },
 ];

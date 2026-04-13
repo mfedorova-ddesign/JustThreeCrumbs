@@ -48,6 +48,8 @@ export type Ingredient = {
 export type RecipeIngredientRule = {
   category: IngredientCategory;
   primary: string;
+  /** Display label — overrides primary name in the UI (e.g. for named spice sets). */
+  label?: string;
   alternatives?: string[];
   optional?: boolean;
   adjustable?: boolean;

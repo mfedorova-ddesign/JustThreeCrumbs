@@ -8,6 +8,7 @@ function ing(
   return {
     category,
     primary,
+    ...(options?.label ? { label: options.label } : {}),
     alternatives: options?.alternatives ?? [],
     optional: options?.optional ?? false,
     adjustable: options?.adjustable ?? true
@@ -20,22 +21,26 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Vegetable shakshuka with toast",
     mealTypes: ["breakfast"],
     ingredients: [
-      ing("protein", "eggs", { alternatives: ["tofu", "egg whites"] }),
-      ing("vegetables", "tomato", { alternatives: ["bell pepper", "spinach"] }),
-      ing("vegetables", "zucchini", { alternatives: ["eggplant"] }),
-      ing("carbs", "sourdough bread", { optional: true, alternatives: ["quinoa", "buckwheat"] }),
+      ing("protein", "eggs", { alternatives: ["tofu", "chickpeas"] }),
+      ing("vegetables", "tomato", { alternatives: ["canned tomatoes"] }),
+      ing("vegetables", "bell pepper", { alternatives: ["zucchini"] }),
+      ing("vegetables", "onion"),
       ing("fats", "olive oil"),
-      ing("liquid", "lemon juice", { optional: true }),
-      ing("spices", "cumin"),
-      ing("spices", "paprika"),
-      ing("spices", "garlic", { optional: true })
+      ing("liquid", "tomato paste", { optional: true }),
+      ing("carbs", "whole grain bread", { optional: true, alternatives: ["sourdough bread"] }),
+      ing("spices", "paprika", { alternatives: ["smoked paprika"] }),
+      ing("spices", "cumin", { alternatives: ["coriander"] }),
+      ing("spices", "chili", { optional: true }),
+      ing("spices", "garlic"),
+      ing("spices", "parsley", { optional: true, alternatives: ["cilantro"] })
     ],
-    constraints: { maxCarbs: 45, glycemicIndex: "low" },
+    constraints: { maxCarbs: 20, glycemicIndex: "low" },
     instructions: [
-      "Warm olive oil in a pan and bloom cumin, paprika, and garlic.",
-      "Add tomato and zucchini, cook until soft.",
-      "Add eggs (or tofu), cover and cook until set.",
-      "Finish with lemon juice and serve with optional toast."
+      "Sauté onion and bell pepper in olive oil over medium heat until soft, 5–8 minutes.",
+      "Add garlic, paprika, cumin, and chili — cook for 30 seconds until fragrant.",
+      "Add tomatoes and tomato paste, simmer for 10–15 minutes until thickened.",
+      "Make wells in the sauce and crack in the eggs. Cover and cook to desired doneness.",
+      "Garnish with fresh parsley or cilantro and serve with optional bread."
     ]
   },
   {
@@ -43,15 +48,15 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "High-protein chia pudding with berries",
     mealTypes: ["breakfast", "snack"],
     ingredients: [
-      ing("protein", "greek yogurt", { alternatives: ["cottage cheese", "tofu"] }),
+      ing("protein", "greek yogurt", { alternatives: ["coconut milk", "almond milk"] }),
       ing("vegetables", "berries"),
       ing("carbs", "chia seeds"),
-      ing("fats", "almond butter", { optional: true, alternatives: ["tahini"] }),
-      ing("liquid", "unsweetened almond milk", { alternatives: ["light coconut milk"] }),
+      ing("carbs", "banana", { optional: true, alternatives: ["dried fruit"] }),
+      ing("fats", "almond butter", { alternatives: ["mixed nuts", "pumpkin seeds"] }),
       ing("spices", "cinnamon"),
       ing("spices", "vanilla", { optional: true })
     ],
-    constraints: { maxCarbs: 35, glycemicIndex: "low" },
+    constraints: { maxCarbs: 55, glycemicIndex: "low" },
     instructions: [
       "Mix chia seeds with almond milk and spices.",
       "Fold in yogurt and chill until thick.",
@@ -60,22 +65,25 @@ export const FIXED_RECIPES: Recipe[] = [
   },
   {
     id: "recipe-savory-oats-eggs",
-    name: "Savory high-protein oats with greens",
+    name: "Savory oatmeal with flax seeds and eggs",
     mealTypes: ["breakfast"],
     ingredients: [
-      ing("protein", "eggs", { alternatives: ["cottage cheese", "tofu"] }),
-      ing("vegetables", "spinach", { alternatives: ["zucchini"] }),
-      ing("carbs", "oats", { alternatives: ["quinoa", "buckwheat"] }),
-      ing("fats", "olive oil", { optional: true }),
-      ing("liquid", "unsweetened almond milk", { alternatives: ["vegetable broth"] }),
-      ing("spices", "black pepper"),
-      ing("spices", "turmeric", { optional: true })
+      ing("protein", "eggs", { alternatives: ["fried eggs", "tofu"] }),
+      ing("protein", "protein powder", { optional: true }),
+      ing("carbs", "oats", { alternatives: ["quinoa"] }),
+      ing("liquid", "water"),
+      ing("fats", "flax seeds"),
+      ing("fats", "butter", { optional: true, alternatives: ["milk"] }),
+      ing("vegetables", "fresh herbs", { optional: true }),
+      ing("spices", "black pepper")
     ],
-    constraints: { maxCarbs: 50, glycemicIndex: "low" },
+    constraints: { maxCarbs: 55, glycemicIndex: "low" },
     instructions: [
-      "Cook oats in milk or broth.",
-      "Stir in spinach and spices.",
-      "Top with cooked eggs or tofu and finish with optional olive oil."
+      "Cook oats in water over medium heat, stirring occasionally.",
+      "In the last minute, stir in flax seeds — add a splash more water if needed.",
+      "Season with black pepper; optionally stir in protein powder, a knob of butter, or a splash of milk.",
+      "Boil eggs (2 per serving), fry them, or use pan-fried / baked tofu instead.",
+      "Top oatmeal with halved eggs and any vegetables or fresh herbs you like."
     ]
   },
   {
@@ -83,40 +91,52 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Greek yogurt bowl with berries and nuts",
     mealTypes: ["breakfast"],
     ingredients: [
-      ing("protein", "greek yogurt", { alternatives: ["cottage cheese"] }),
+      ing("protein", "greek yogurt"),
       ing("vegetables", "berries"),
-      ing("carbs", "chia seeds", { optional: true }),
-      ing("fats", "almonds", { alternatives: ["almond butter"] }),
-      ing("spices", "cinnamon", { optional: true })
+      ing("vegetables", "banana", { optional: true, alternatives: ["fresh fruit"] }),
+      ing("fats", "almonds", { alternatives: ["coconut flakes", "mixed nuts"] }),
+      ing("spices", "sugar-free jam", { optional: true })
     ],
-    constraints: { maxCarbs: 30, glycemicIndex: "low" },
+    constraints: { maxCarbs: 25, glycemicIndex: "low" },
     instructions: [
-      "Spoon yogurt into a bowl.",
-      "Top with berries, nuts, and optional chia.",
-      "Finish with cinnamon."
+      "Slice berries and any optional fruit into a bowl.",
+      "Spoon greek yogurt on top.",
+      "Sprinkle with almonds, coconut flakes, or mixed nuts.",
+      "Add a couple teaspoons of sugar-free jam if desired."
     ]
   },
   {
     id: "recipe-green-curry",
-    name: "Balanced green curry",
+    name: "Balanced vegetable curry",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "chicken breast", { alternatives: ["tofu", "tempeh", "chickpeas"] }),
-      ing("vegetables", "broccoli", { alternatives: ["cauliflower", "zucchini"] }),
-      ing("vegetables", "bell pepper", { alternatives: ["green beans", "carrot"] }),
-      ing("carbs", "sweet potato", { optional: true, alternatives: ["pumpkin", "potato"] }),
+      ing("protein", "chickpeas", { alternatives: ["chicken breast", "lentils", "tofu", "tempeh"] }),
+      ing("vegetables", "cauliflower", { alternatives: ["broccoli", "potato", "sweet potato", "pumpkin"] }),
+      ing("vegetables", "carrot", { alternatives: ["zucchini", "eggplant", "bell pepper"] }),
+      ing("vegetables", "green peas", { optional: true, alternatives: ["green beans"] }),
+      ing("vegetables", "onion", { alternatives: ["asafoetida"] }),
       ing("fats", "olive oil"),
-      ing("liquid", "light coconut milk", { alternatives: ["vegetable broth"] }),
-      ing("spices", "turmeric"),
+      ing("liquid", "tomato paste"),
+      ing("liquid", "light coconut milk", { alternatives: ["vegetable broth", "cream", "plant-based cream"] }),
+      ing("spices", "curry powder"),
       ing("spices", "cumin"),
-      ing("spices", "ginger", { optional: true })
+      ing("spices", "coriander"),
+      ing("spices", "turmeric"),
+      ing("spices", "paprika"),
+      ing("spices", "ginger"),
+      ing("spices", "chili", { optional: true }),
+      ing("spices", "garlic"),
+      ing("spices", "garam masala"),
+      ing("spices", "cilantro", { optional: true })
     ],
-    constraints: { maxCarbs: 48, glycemicIndex: "low" },
+    constraints: { maxCarbs: 65, glycemicIndex: "low" },
     instructions: [
-      "Warm oil and spices until fragrant.",
-      "Cook vegetables and protein briefly.",
-      "Add coconut milk and simmer until tender.",
-      "Serve with optional sweet potato."
+      "Heat olive oil in a pan and fry cumin, coriander, turmeric, paprika, ginger, and chili for 30 seconds until fragrant.",
+      "Add onion and garlic (or a pinch of asafoetida instead) and cook until soft.",
+      "Add chopped vegetables and a spoonful of tomato paste, stir to coat.",
+      "Add the pre-cooked protein (boiled chickpeas or lentils, pan-fried or baked chicken, tofu, or tempeh) and pour in coconut milk, broth, or cream.",
+      "Season with salt, pepper, and curry powder. Stir well, cover, and simmer 3–4 minutes until tender.",
+      "Stir in garam masala at the very end. Garnish with fresh cilantro if desired."
     ]
   },
   {
@@ -124,20 +144,34 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Balanced legume vegetable soup",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "lentils", { alternatives: ["chickpeas", "white beans"] }),
-      ing("vegetables", "celery", { alternatives: ["zucchini", "bell pepper"] }),
-      ing("vegetables", "onion", { alternatives: ["tomato", "carrot"] }),
+      ing("protein", "red beans", { alternatives: ["lentils", "chickpeas", "white beans", "black beans"] }),
+      ing("vegetables", "onion", { alternatives: ["shallot", "asafoetida"] }),
+      ing("vegetables", "bell pepper", { alternatives: ["carrot", "zucchini"] }),
+      ing("vegetables", "tomato", { alternatives: ["carrot"] }),
       ing("fats", "olive oil"),
-      ing("liquid", "vegetable broth"),
-      ing("spices", "cumin"),
-      ing("spices", "oregano"),
-      ing("spices", "garlic", { optional: true })
+      ing("liquid", "tomato paste", { optional: true }),
+      ing("liquid", "water", { alternatives: ["vegetable broth"] }),
+      ing("spices", "garlic", { optional: true }),
+      ing("spices", "cumin", {
+        label: "Eastern spice mix (cumin, coriander, turmeric, black pepper, paprika)",
+        alternatives: [
+          "Mediterranean spice mix (oregano, thyme, paprika, bay leaf, basil)",
+          "Mexican spice mix (cumin, chili, smoked paprika, oregano)"
+        ]
+      }),
+      ing("spices", "black pepper"),
+      ing("spices", "parsley", { optional: true, alternatives: ["cilantro"] }),
+      ing("spices", "lemon juice", { optional: true })
     ],
     constraints: { maxCarbs: 45, glycemicIndex: "low" },
     instructions: [
-      "Saute onion, celery, and spices in olive oil.",
-      "Add legumes and broth, simmer until tender.",
-      "Adjust seasoning and serve hot."
+      "Soak legumes for 2+ hours (up to overnight), rinse well. Pre-boil if needed, or use canned (rinsed).",
+      "Heat olive oil and fry onion, garlic (or asafoetida) until soft. For Eastern/Mexican variants, add cumin, coriander, and turmeric here.",
+      "Add chopped vegetables and optional tomato paste. Sauté for 2 minutes.",
+      "Add the legumes, season with salt, and cover with water or broth.",
+      "Cover and simmer on low heat until legumes are tender.",
+      "In the last few minutes add remaining spices — Mediterranean: oregano, thyme, basil, bay leaf / Mexican: smoked paprika, chili, oregano.",
+      "Finish with fresh parsley or cilantro and a squeeze of lemon juice if desired."
     ]
   },
   {
@@ -163,23 +197,29 @@ export const FIXED_RECIPES: Recipe[] = [
   },
   {
     id: "recipe-buckwheat-skillet",
-    name: "Buckwheat skillet with vegetables",
+    name: "Buckwheat with vegetables and chicken or mushrooms",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "chicken breast", { alternatives: ["tofu", "tempeh", "lentils"] }),
-      ing("vegetables", "onion", { alternatives: ["zucchini", "bell pepper"] }),
-      ing("vegetables", "carrot", { alternatives: ["spinach"] }),
-      ing("carbs", "buckwheat"),
+      ing("protein", "chicken breast", { alternatives: ["turkey breast", "tofu", "lentils"] }),
+      ing("protein", "mushrooms", { optional: true }),
+      ing("vegetables", "onion"),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "zucchini", { optional: true, alternatives: ["bell pepper", "spinach"] }),
+      ing("carbs", "buckwheat", { alternatives: ["quinoa", "brown rice"] }),
       ing("fats", "olive oil"),
-      ing("liquid", "vegetable broth", { optional: true }),
+      ing("spices", "garlic"),
       ing("spices", "black pepper"),
-      ing("spices", "paprika", { optional: true })
+      ing("spices", "dill", { optional: true, alternatives: ["parsley"] })
     ],
-    constraints: { maxCarbs: 50, glycemicIndex: "low" },
+    constraints: { maxCarbs: 45, glycemicIndex: "low" },
     instructions: [
-      "Cook buckwheat in broth.",
-      "Saute vegetables and protein with spices.",
-      "Combine everything and simmer briefly."
+      "Rinse buckwheat, add water in a 1:2 ratio and cook until half-done.",
+      "In a separate pan, cook chicken pieces with salt and pepper until lightly browned — or sauté mushrooms until golden.",
+      "In a pot, heat olive oil and sauté onion, carrot, and garlic until soft. Add optional zucchini or bell pepper.",
+      "Add the partially cooked buckwheat to the vegetables and stir.",
+      "Add the protein component (chicken, mushrooms, or both) and mix well.",
+      "Add a small splash of water, cover, and simmer until buckwheat is fully cooked.",
+      "Season with salt, pepper, and spices to taste. Finish with fresh dill or parsley."
     ]
   },
   {
@@ -228,82 +268,114 @@ export const FIXED_RECIPES: Recipe[] = [
   },
   {
     id: "recipe-tuna-salad",
-    name: "Yogurt-dressed tuna salad",
+    name: "Yogurt and corn salad",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "tuna", { alternatives: ["chicken breast", "tofu"] }),
-      ing("vegetables", "spinach", { alternatives: ["cucumber", "celery"] }),
-      ing("vegetables", "tomato", { alternatives: ["carrot"] }),
-      ing("carbs", "corn", { optional: true, alternatives: ["quinoa"] }),
-      ing("fats", "olive oil", { optional: true }),
-      ing("liquid", "greek yogurt", { alternatives: ["lemon juice"] }),
+      ing("protein", "tuna", { alternatives: ["chicken breast", "chickpeas"] }),
+      ing("vegetables", "lettuce"),
+      ing("vegetables", "cucumber"),
+      ing("vegetables", "radish"),
+      ing("vegetables", "carrot", { optional: true }),
+      ing("carbs", "corn"),
+      ing("carbs", "croutons", { optional: true }),
+      ing("fats", "olives", { optional: true }),
+      ing("liquid", "greek yogurt"),
+      ing("liquid", "soy sauce"),
+      ing("spices", "mustard"),
+      ing("spices", "lemon juice"),
       ing("spices", "paprika"),
       ing("spices", "black pepper")
     ],
     constraints: { maxCarbs: 40, glycemicIndex: "low" },
     instructions: [
-      "Combine vegetables with tuna.",
-      "Whisk yogurt, lemon, oil, and spices.",
-      "Toss and add optional corn or quinoa."
+      "Combine lettuce, cucumber, radish, corn, and optional carrot in a bowl.",
+      "Add drained canned tuna, cooked chicken breast, or chickpeas.",
+      "Optionally add olives and a few croutons.",
+      "Whisk together greek yogurt, mustard, soy sauce, lemon juice, paprika, salt and pepper.",
+      "Pour dressing over the salad and toss well."
     ]
   },
   {
     id: "recipe-baked-eggplant",
-    name: "Baked eggplant with tomato and yogurt",
+    name: "Baked eggplant with feta and yogurt-tahini sauce",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "greek yogurt", { alternatives: ["tofu", "feta cheese"] }),
+      ing("protein", "feta cheese"),
       ing("vegetables", "eggplant"),
-      ing("vegetables", "tomato", { alternatives: ["onion"] }),
+      ing("vegetables", "pomegranate seeds", { optional: true }),
       ing("fats", "olive oil"),
-      ing("liquid", "lemon juice", { optional: true }),
-      ing("spices", "oregano"),
+      ing("fats", "tahini"),
+      ing("liquid", "greek yogurt"),
+      ing("liquid", "lemon juice"),
+      ing("spices", "garlic"),
+      ing("spices", "honey"),
       ing("spices", "black pepper"),
-      ing("spices", "paprika", { optional: true })
+      ing("spices", "mint", { optional: true, alternatives: ["parsley"] })
     ],
-    constraints: { maxCarbs: 35, glycemicIndex: "low" },
+    constraints: { maxCarbs: 25, glycemicIndex: "low" },
     instructions: [
-      "Roast eggplant and tomato with olive oil.",
-      "Top with yogurt or tofu layer and bake briefly.",
-      "Finish with lemon and spices."
+      "Halve eggplants lengthwise, score the flesh in a crosshatch pattern.",
+      "Brush with olive oil, season with salt and pepper. Roast at 200°C for 30–40 minutes until soft and golden.",
+      "Make the sauce: whisk together greek yogurt, tahini, lemon juice, minced garlic, and honey until smooth and creamy.",
+      "Crumble feta over the roasted eggplant halves.",
+      "Drizzle the yogurt-tahini sauce on top.",
+      "Finish with pomegranate seeds and fresh mint or parsley."
     ]
   },
   {
     id: "recipe-borscht-style",
-    name: "Low-GI borscht-style bowl",
+    name: "Borscht",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "lentils", { alternatives: ["chickpeas", "tofu", "chicken breast"], optional: true }),
+      ing("protein", "beef", { alternatives: ["chicken breast", "white beans", "red beans"] }),
       ing("vegetables", "beets"),
+      ing("vegetables", "potato"),
       ing("vegetables", "cabbage"),
-      ing("vegetables", "carrot", { alternatives: ["onion", "tomato"] }),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "onion"),
       ing("fats", "olive oil"),
-      ing("liquid", "vegetable broth"),
-      ing("spices", "paprika"),
+      ing("liquid", "vegetable broth", { alternatives: ["water"] }),
+      ing("liquid", "tomato paste", { optional: true }),
       ing("spices", "garlic"),
-      ing("spices", "black pepper", { optional: true })
+      ing("spices", "black pepper"),
+      ing("spices", "bay leaf", { optional: true }),
+      ing("spices", "vinegar", { optional: true, alternatives: ["lemon juice"] }),
+      ing("fats", "sour cream", { optional: true, alternatives: ["greek yogurt"] }),
+      ing("spices", "dill", { optional: true }),
+      ing("spices", "parsley", { optional: true })
     ],
-    constraints: { maxCarbs: 48, glycemicIndex: "medium" },
+    constraints: { maxCarbs: 60, glycemicIndex: "medium" },
     instructions: [
-      "Cook vegetables in stages with olive oil and spices.",
-      "Add broth and simmer until tender.",
-      "Add optional protein and simmer briefly."
+      "Bring vegetable or meat broth to a boil. Add diced potato and cook until almost tender.",
+      "Add julienned or grated beets and continue cooking until they lighten slightly in colour.",
+      "Meanwhile, sauté diced onion, garlic, and julienned carrot in olive oil until golden. Stir in tomato paste and cook 2–3 minutes.",
+      "Add the sauté to the pot along with shredded cabbage, a splash of vinegar or lemon juice, bay leaf, and black pepper.",
+      "Add pre-cooked sliced meat or rinsed canned beans.",
+      "Simmer for 3 minutes, then turn off the heat and let rest for a few minutes.",
+      "Serve with a dollop of sour cream or greek yogurt and freshly chopped dill and parsley."
     ]
   },
   {
     id: "recipe-snack-tuna-cup",
-    name: "Mini tuna yogurt cup",
-    mealTypes: ["snack"],
+    name: "Simple Tuna Salad on toast",
+    mealTypes: ["lunch", "snack"],
     ingredients: [
-      ing("protein", "tuna", { alternatives: ["tofu", "chickpeas"] }),
-      ing("liquid", "greek yogurt", { alternatives: ["lemon juice"] }),
+      ing("protein", "tuna", { alternatives: ["chickpeas"] }),
+      ing("carbs", "whole grain bread", { alternatives: ["crackers"] }),
+      ing("vegetables", "lettuce"),
+      ing("vegetables", "cucumber"),
+      ing("liquid", "greek yogurt"),
+      ing("spices", "mustard", { optional: true }),
+      ing("spices", "lemon juice"),
       ing("spices", "black pepper"),
       ing("spices", "paprika", { optional: true })
     ],
-    constraints: { maxCarbs: 15, glycemicIndex: "low" },
+    constraints: { maxCarbs: 30, glycemicIndex: "low" },
     instructions: [
-      "Mix tuna with yogurt or lemon dressing.",
-      "Season with spices and chill briefly."
+      "Mix drained tuna with greek yogurt, lemon juice, black pepper, and optional mustard and paprika.",
+      "Toast whole grain bread or lay out crackers.",
+      "Place a lettuce leaf and cucumber slices on top of the toast.",
+      "Spoon the tuna salad over the top and serve."
     ]
   },
   {

@@ -346,7 +346,7 @@ export default function RecipesPage() {
                         <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-brand-text/80">
                           {recipe.ingredients.map((rule, idx) => (
                             <li key={`${recipe.id}-ing-${idx}`}>
-                              <span className="font-medium">{rule.primary}</span>
+                              <span className="font-medium">{rule.label ?? rule.primary}</span>
                               {rule.alternatives?.length ? ` (alt: ${rule.alternatives.join(", ")})` : ""}
                               {rule.optional ? " [optional]" : ""}
                             </li>
