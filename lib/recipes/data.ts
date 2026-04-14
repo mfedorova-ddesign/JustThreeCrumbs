@@ -468,5 +468,35 @@ export const FIXED_RECIPES: Recipe[] = [
       "Fold in chopped almonds and optional cinnamon.",
       "Portion into bites and chill."
     ]
+  },
+  {
+    id: "recipe-broccoli-cheddar-soup",
+    name: "Broccoli cheddar cream soup",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("vegetables", "broccoli"),
+      ing("protein", "cheddar"),
+      ing("liquid", "cream"),
+      ing("liquid", "chicken broth", { alternatives: ["vegetable broth"] }),
+      ing("fats", "butter"),
+      ing("vegetables", "onion"),
+      ing("spices", "garlic"),
+      ing("spices", "black pepper"),
+      ing("spices", "nutmeg"),
+      ing("spices", "dijon mustard"),
+      ing("fats", "pumpkin seeds", { alternatives: ["sunflower seeds"], optional: true }),
+      ing("spices", "smoked paprika", { optional: true }),
+      ing("protein", "parmesan", { optional: true })
+    ],
+    constraints: { maxCarbs: 15, glycemicIndex: "low" },
+    instructions: [
+      "Toast pumpkin (or sunflower) seeds in a dry pan over medium heat for 2–3 minutes until golden. Set aside.",
+      "Melt butter in a heavy-bottomed pot over medium heat. Add finely diced onion and cook 5–6 minutes until soft and translucent. Add minced garlic and cook 1 minute more.",
+      "Reserve a few small florets from the broccoli for garnish. Chop the rest and add to the pot. Pour in broth, bring to a boil, then reduce heat and simmer 12–15 minutes until very tender.",
+      "Meanwhile, blanch reserved florets in salted boiling water for 3 minutes — they should stay bright green and slightly crisp. Drain, rinse with cold water, and set aside.",
+      "Remove pot from heat. Blend with an immersion blender until completely smooth and silky. Return to low heat.",
+      "Stir in cream, dijon mustard, and nutmeg. Add cheddar in handfuls, stirring until fully melted before adding the next. Do not boil after adding cheese. Season with salt and black pepper.",
+      "Ladle into bowls. Top with reserved florets, toasted seeds, a pinch of smoked paprika, and optional parmesan. Serve immediately."
+    ]
   }
 ];

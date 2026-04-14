@@ -34,6 +34,7 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-tuna-salad": "/images/Skinny-Salad.webp",
   "recipe-snack-apple-cottage": "/images/AppleCinnamonCottageCheese.jpg",
   "recipe-snack-chocolate-nuts": "/images/chocolade-puur.png",
+  "recipe-broccoli-cheddar-soup": "/images/soup.jpg",
 };
 
 export function mealImageUrlForId(mealId: string): string {
