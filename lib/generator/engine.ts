@@ -23,6 +23,7 @@ const ingredientByName = new Map(INGREDIENTS.map((ingredient) => [ingredient.nam
 const recipeSequenceByMealType: Record<MealType, string[]> = {
   breakfast: [
     "recipe-shakshuka-toast",
+    "recipe-eggs-benedict-avocado",
     "recipe-chia-pudding-berries",
     "recipe-savory-oats-eggs",
     "recipe-yogurt-berries-nuts",

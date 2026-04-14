@@ -470,6 +470,32 @@ export const FIXED_RECIPES: Recipe[] = [
     ]
   },
   {
+    id: "recipe-eggs-benedict-avocado",
+    name: "Eggs benedict on avocado",
+    mealTypes: ["breakfast", "lunch"],
+    ingredients: [
+      ing("protein", "eggs"),
+      ing("fats", "avocado"),
+      ing("fats", "ghee"),
+      ing("liquid", "lemon juice"),
+      ing("spices", "dijon mustard"),
+      ing("spices", "cayenne pepper"),
+      ing("liquid", "vinegar"),
+      ing("spices", "garlic", { optional: true }),
+      ing("spices", "smoked paprika", { optional: true }),
+      ing("spices", "dill", { optional: true })
+    ],
+    constraints: { maxCarbs: 10, glycemicIndex: "low" },
+    instructions: [
+      "Melt ghee in a small saucepan over low heat until liquid and hot (around 60–65°C). Remove from heat and let cool slightly.",
+      "Make hollandaise: whisk egg yolks with cold water and dijon mustard in a heatproof bowl until foamy. Set over a pot of barely simmering water (bowl must not touch water). Whisk 2–3 minutes until thickened and increased in volume. Remove from heat and, still whisking, slowly drizzle in hot ghee. Add lemon juice, salt, and cayenne. Sauce should coat a spoon. Keep warm, covered.",
+      "Halve avocados and remove pits. Slightly enlarge the pit cavity with a spoon so the egg sits securely. Drizzle with lemon juice to prevent browning. Place cut-side up on plates.",
+      "Fill a wide pan with 6–7 cm of water. Add vinegar. Bring to a gentle simmer (small bubbles, ~90°C — do not boil hard).",
+      "Crack eggs one at a time into small cups. Create a gentle swirl in the water. Slide each egg into the centre of the vortex. Poach 3 minutes for a runny yolk. Lift out with a slotted spoon and blot dry.",
+      "Place a poached egg on each avocado half. Spoon hollandaise generously over the top. Finish with smoked paprika, fresh dill or chives, and optional garlic. Serve immediately."
+    ]
+  },
+  {
     id: "recipe-broccoli-cheddar-soup",
     name: "Broccoli cheddar cream soup",
     mealTypes: ["lunch", "dinner"],

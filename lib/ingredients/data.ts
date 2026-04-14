@@ -1363,4 +1363,41 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: true
   },
+  {
+    name: "avocado",
+    calories: 160,
+    protein: 2,
+    fat: 15,
+    carbs: 8.5,
+    fiber: 6.7,
+    glycemicIndex: 10,
+    portionGrams: 100,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "ghee",
+    calories: 900,
+    protein: 0,
+    fat: 99.5,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 15,
+    category: "fats",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "cayenne pepper",
+    calories: 318,
+    protein: 12,
+    fat: 17,
+    carbs: 57,
+    fiber: 27,
+    glycemicIndex: 15,
+    portionGrams: 2,
+    category: "spices",
+    vegetarian: true
+  },
 ];
