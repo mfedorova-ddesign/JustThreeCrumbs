@@ -27,8 +27,13 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-baked-eggplant": "/images/Grilled-eggplant.jpg",
   "recipe-borscht-style": "/images/borsh.jpg",
   "recipe-snack-tuna-cup": "/images/Simple-Tuna-Salad.webp",
+  "recipe-snack-egg-cucumber": "/images/egg-cucumber.webp",
+  "recipe-snack-hummus-veggies": "/images/hummus-with-vegetable-sticks.png",
+  "recipe-snack-yogurt-berry": "/images/Granola-Yogurt.jpg",
   "recipe-protein-salad-plate": "/images/salad.jpg",
   "recipe-tuna-salad": "/images/Skinny-Salad.webp",
+  "recipe-snack-apple-cottage": "/images/AppleCinnamonCottageCheese.jpg",
+  "recipe-snack-chocolate-nuts": "/images/chocolade-puur.png",
 };
 
 export function mealImageUrlForId(mealId: string): string {

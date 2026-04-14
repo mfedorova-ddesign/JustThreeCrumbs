@@ -421,12 +421,13 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("liquid", "greek yogurt"),
       ing("vegetables", "berries"),
       ing("carbs", "chia seeds", { optional: true }),
-      ing("spices", "cinnamon", { optional: true })
+      ing("spices", "cinnamon", { optional: true }),
+      ing("spices", "sugar-free jam", { optional: true })
     ],
     constraints: { maxCarbs: 22, glycemicIndex: "low" },
     instructions: [
       "Add yogurt to a bowl.",
-      "Top with berries and optional chia and cinnamon."
+      "Top with berries and optional chia, cinnamon, and sugar-free jam."
     ]
   },
   {
@@ -434,14 +435,21 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Apple cinnamon cottage cup",
     mealTypes: ["snack"],
     ingredients: [
-      ing("protein", "cottage cheese"),
-      ing("carbs", "apple"),
-      ing("spices", "cinnamon")
+      ing("protein", "cottage cheese", { alternatives: ["greek yogurt"] }),
+      ing("carbs", "apple", { alternatives: ["pear"] }),
+      ing("liquid", "water", { optional: true }),
+      ing("spices", "sweetener", { optional: true }),
+      ing("spices", "cinnamon"),
+      ing("carbs", "raisins"),
+      ing("fats", "almond flakes", { optional: true })
     ],
-    constraints: { maxCarbs: 24, glycemicIndex: "low" },
+    constraints: { maxCarbs: 28, glycemicIndex: "low" },
     instructions: [
-      "Mix diced apple with cottage cheese.",
-      "Sprinkle cinnamon and serve."
+      "Slice apple (or pear) into thin wedges.",
+      "Place slices in a pan with a splash of water and cook over medium heat for 3–4 minutes until softened and lightly caramelized. Add sweetener if desired.",
+      "Sprinkle with cinnamon and arrange on a plate.",
+      "Spoon cottage cheese (or greek yogurt) on top.",
+      "Finish with a light sprinkle of raisins and optional almond flakes."
     ]
   },
   {

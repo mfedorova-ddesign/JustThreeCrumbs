@@ -1204,4 +1204,53 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: true
   },
+  {
+    name: "pear",
+    calories: 57,
+    protein: 0.4,
+    fat: 0.1,
+    carbs: 15.5,
+    fiber: 3.1,
+    glycemicIndex: 38,
+    portionGrams: 100,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "raisins",
+    calories: 299,
+    protein: 3.1,
+    fat: 0.5,
+    carbs: 79,
+    fiber: 3.7,
+    glycemicIndex: 64,
+    portionGrams: 10,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "almond flakes",
+    calories: 579,
+    protein: 21.2,
+    fat: 49.9,
+    carbs: 21.6,
+    fiber: 12.5,
+    glycemicIndex: 15,
+    portionGrams: 10,
+    category: "fats",
+    vegetarian: true,
+    allergens: ["tree nuts"]
+  },
+  {
+    name: "sweetener",
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 2,
+    category: "spices",
+    vegetarian: true
+  },
 ];
