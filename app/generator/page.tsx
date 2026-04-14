@@ -737,7 +737,7 @@ export default function GeneratorPage() {
                         );
                       }
 
-                      const imgUrl = mealImageUrlForId(meal.id);
+                      const imgUrl = mealImageUrlForId(meal.templateId);
 
                       return (
                         <div
@@ -844,7 +844,7 @@ export default function GeneratorPage() {
             {(() => {
               const meal = getMealById(openedMealId);
               if (!meal) return null;
-              const modalImg = mealImageUrlForId(meal.id);
+              const modalImg = mealImageUrlForId(meal.templateId);
 
               return (
                 <>
