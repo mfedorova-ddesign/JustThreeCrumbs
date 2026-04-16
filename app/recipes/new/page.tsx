@@ -6,14 +6,19 @@ import { useGeneratorStore } from "@/lib/generator/store";
 import { MealType } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 export default function NewRecipePage() {
   const router = useRouter();
   const { addCustomRecipe } = useGeneratorStore();
   const [form, setForm] = useState(makeEmptyRecipeForm());
   const [error, setError] = useState<string | null>(null);
-  const autoMetrics = useMemo(() => computeRecipeMetricsFromForm(form), [form]);
+  const [calculatedMetrics, setCalculatedMetrics] = useState<ReturnType<typeof computeRecipeMetricsFromForm> | null>(null);
+
+  const updateForm = (updater: (prev: ReturnType<typeof makeEmptyRecipeForm>) => ReturnType<typeof makeEmptyRecipeForm>) => {
+    setForm((prev) => updater(prev));
+    setCalculatedMetrics(null);
+  };
 
   const save = () => {
     const payload = buildRecipePayload(form);
@@ -44,7 +49,7 @@ export default function NewRecipePage() {
             Dish name
             <input
               value={form.name}
-              onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+              onChange={(event) => updateForm((prev) => ({ ...prev, name: event.target.value }))}
               className="mt-1 w-full rounded-xl border border-brand-border px-3 py-2"
             />
           </label>
@@ -59,7 +64,7 @@ export default function NewRecipePage() {
                     key={mealType}
                     type="button"
                     onClick={() =>
-                      setForm((prev) => ({
+                      updateForm((prev) => ({
                         ...prev,
                         mealTypes: selected
                           ? prev.mealTypes.filter((item) => item !== mealType)
@@ -84,7 +89,7 @@ export default function NewRecipePage() {
               Ingredients (one per line)
               <textarea
                 value={form.ingredientsText}
-                onChange={(event) => setForm((prev) => ({ ...prev, ingredientsText: event.target.value }))}
+                onChange={(event) => updateForm((prev) => ({ ...prev, ingredientsText: event.target.value }))}
                 className="mt-1 min-h-[140px] w-full rounded-xl border border-brand-border px-3 py-2"
                 placeholder={"eggs -> tofu, egg whites\nspinach\nolive oil [optional]"}
               />
@@ -93,7 +98,7 @@ export default function NewRecipePage() {
               Instructions (one per line)
               <textarea
                 value={form.instructionsText}
-                onChange={(event) => setForm((prev) => ({ ...prev, instructionsText: event.target.value }))}
+                onChange={(event) => updateForm((prev) => ({ ...prev, instructionsText: event.target.value }))}
                 className="mt-1 min-h-[140px] w-full rounded-xl border border-brand-border px-3 py-2"
                 placeholder={"Step 1...\nStep 2..."}
               />
@@ -101,6 +106,9 @@ export default function NewRecipePage() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button type="button" variant="secondary" onClick={() => setCalculatedMetrics(computeRecipeMetricsFromForm(form))}>
+              Calculate nutrition
+            </Button>
             <Button type="button" onClick={save}>
               Save recipe
             </Button>
@@ -111,20 +119,21 @@ export default function NewRecipePage() {
             <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">
               Auto nutrition preview
             </p>
-            {autoMetrics ? (
+            {calculatedMetrics ? (
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-brand-text/80 sm:grid-cols-4">
-                <div className="rounded-lg bg-white px-2 py-1">kcal: {Math.round(autoMetrics.calories)}</div>
+                <div className="rounded-lg bg-white px-2 py-1">Calories: {Math.round(calculatedMetrics.calories)}</div>
                 <div className="rounded-lg bg-white px-2 py-1">
-                  P/F/C: {Math.round(autoMetrics.protein)}/{Math.round(autoMetrics.fat)}/{Math.round(autoMetrics.carbs)}
+                  Protein/Fat/Carbs: {Math.round(calculatedMetrics.protein)}/{Math.round(calculatedMetrics.fat)}/
+                  {Math.round(calculatedMetrics.carbs)}
                 </div>
-                <div className="rounded-lg bg-white px-2 py-1">Fiber: {Math.round(autoMetrics.fiber)}g</div>
+                <div className="rounded-lg bg-white px-2 py-1">Fiber: {Math.round(calculatedMetrics.fiber)}g</div>
                 <div className="rounded-lg bg-white px-2 py-1">
-                  GI: {autoMetrics.glycemicIndex} | Score: {autoMetrics.diabeticScore}
+                  Glycemic Index: {Math.max(1, calculatedMetrics.glycemicIndex)} | Diabetic Score: {calculatedMetrics.diabeticScore}
                 </div>
               </div>
             ) : (
               <p className="mt-2 text-xs text-brand-text/60">
-                Fill required fields and valid ingredients to calculate kBJU, GI and diabetic score.
+                Click Calculate nutrition to preview calories, protein, fat, carbs, glycemic index and diabetic score.
               </p>
             )}
           </div>

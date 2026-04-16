@@ -51,7 +51,11 @@ export function glycemicIndexAverage(ingredients: Ingredient[]): number {
     (acc, ingredient) => acc + ingredient.carbs * getPortionFactor(ingredient),
     0
   );
-  if (totalCarbs === 0) return 0;
+  if (totalCarbs === 0) {
+    const simpleAverage =
+      ingredients.reduce((acc, ingredient) => acc + ingredient.glycemicIndex, 0) / ingredients.length;
+    return Number(simpleAverage.toFixed(1));
+  }
 
   const weightedGi = ingredients.reduce((acc, ingredient) => {
     const ingredientCarbs = ingredient.carbs * getPortionFactor(ingredient);

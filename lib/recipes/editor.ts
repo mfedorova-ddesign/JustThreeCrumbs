@@ -13,6 +13,34 @@ export type RecipeFormState = {
 
 const ingredientByName = new Map(INGREDIENTS.map((ingredient) => [ingredient.name.toLowerCase(), ingredient]));
 
+function normalizeIngredientToken(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\(.*?\)/g, " ")
+    .replace(/\d+([.,]\d+)?\s*(g|gram|grams|ml|tbsp|tsp|cup|cups|oz)\b/gi, " ")
+    .replace(/[^a-z\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function resolveIngredientName(raw: string): string | null {
+  const normalized = normalizeIngredientToken(raw);
+  if (!normalized) return null;
+  const exact = ingredientByName.get(normalized);
+  if (exact) return exact.name;
+
+  let bestMatch: string | null = null;
+  for (const ingredient of INGREDIENTS) {
+    const candidate = ingredient.name.toLowerCase();
+    if (normalized.includes(candidate)) {
+      if (!bestMatch || candidate.length > bestMatch.length) {
+        bestMatch = candidate;
+      }
+    }
+  }
+  return bestMatch ? ingredientByName.get(bestMatch)?.name ?? null : null;
+}
+
 export const mealTypeLabels: Record<MealType, string> = {
   breakfast: "Breakfast",
   lunch: "Lunch",
@@ -58,14 +86,16 @@ function parseIngredients(ingredientsText: string): RecipeIngredientRule[] {
     const optional = /\[optional\]/i.test(line);
     const clean = line.replace(/\[optional\]/gi, "").trim();
     const [left, right] = clean.split("->").map((part) => part.trim());
-    const primaryIngredient = ingredientByName.get(left.toLowerCase());
+    const resolvedPrimaryName = resolveIngredientName(left);
+    const primaryIngredient = resolvedPrimaryName ? ingredientByName.get(resolvedPrimaryName.toLowerCase()) : null;
     if (!primaryIngredient) return;
     const alternatives =
       right
         ?.split(",")
         .map((name) => name.trim())
         .filter(Boolean)
-        .filter((name) => ingredientByName.has(name.toLowerCase())) ?? [];
+        .map((name) => resolveIngredientName(name))
+        .filter((name): name is string => Boolean(name)) ?? [];
     out.push({
       category: primaryIngredient.category,
       primary: primaryIngredient.name,

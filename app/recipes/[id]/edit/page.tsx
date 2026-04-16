@@ -16,11 +16,14 @@ export default function EditRecipePage() {
   const recipe = useMemo(() => customRecipes.find((entry) => entry.id === recipeId) ?? null, [customRecipes, recipeId]);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(() => (recipe ? toRecipeForm(recipe) : null));
+  const [calculatedMetrics, setCalculatedMetrics] = useState<ReturnType<typeof computeRecipeMetricsFromForm> | null>(null);
 
   useEffect(() => {
-    if (recipe) setForm(toRecipeForm(recipe));
+    if (recipe) {
+      setForm(toRecipeForm(recipe));
+      setCalculatedMetrics(null);
+    }
   }, [recipe]);
-  const autoMetrics = useMemo(() => (form ? computeRecipeMetricsFromForm(form) : null), [form]);
 
   if (!recipe || !form) {
     return (
@@ -43,6 +46,11 @@ export default function EditRecipePage() {
     router.push("/recipes");
   };
 
+  const updateForm = (updater: (prev: typeof form) => typeof form) => {
+    setForm((prev) => updater(prev));
+    setCalculatedMetrics(null);
+  };
+
   return (
     <div className="min-h-screen bg-brand-bg">
       <header className="w-full border-b border-brand-border/90 bg-white">
@@ -62,7 +70,7 @@ export default function EditRecipePage() {
             Dish name
             <input
               value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              onChange={(event) => updateForm((prev) => (prev ? { ...prev, name: event.target.value } : prev))}
               className="mt-1 w-full rounded-xl border border-brand-border px-3 py-2"
             />
           </label>
@@ -77,12 +85,16 @@ export default function EditRecipePage() {
                     key={mealType}
                     type="button"
                     onClick={() =>
-                      setForm({
-                        ...form,
-                        mealTypes: selected
-                          ? form.mealTypes.filter((item) => item !== mealType)
-                          : [...form.mealTypes, mealType]
-                      })
+                      updateForm((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              mealTypes: selected
+                                ? prev.mealTypes.filter((item) => item !== mealType)
+                                : [...prev.mealTypes, mealType]
+                            }
+                          : prev
+                      )
                     }
                     className={`rounded-xl border px-3 py-2 text-sm ${
                       selected
@@ -102,7 +114,9 @@ export default function EditRecipePage() {
               Ingredients (one per line)
               <textarea
                 value={form.ingredientsText}
-                onChange={(event) => setForm({ ...form, ingredientsText: event.target.value })}
+                onChange={(event) =>
+                  updateForm((prev) => (prev ? { ...prev, ingredientsText: event.target.value } : prev))
+                }
                 className="mt-1 min-h-[140px] w-full rounded-xl border border-brand-border px-3 py-2"
               />
             </label>
@@ -110,13 +124,18 @@ export default function EditRecipePage() {
               Instructions (one per line)
               <textarea
                 value={form.instructionsText}
-                onChange={(event) => setForm({ ...form, instructionsText: event.target.value })}
+                onChange={(event) =>
+                  updateForm((prev) => (prev ? { ...prev, instructionsText: event.target.value } : prev))
+                }
                 className="mt-1 min-h-[140px] w-full rounded-xl border border-brand-border px-3 py-2"
               />
             </label>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button type="button" variant="secondary" onClick={() => setCalculatedMetrics(computeRecipeMetricsFromForm(form))}>
+              Calculate nutrition
+            </Button>
             <Button type="button" onClick={save}>
               Save changes
             </Button>
@@ -127,20 +146,22 @@ export default function EditRecipePage() {
             <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">
               Auto nutrition preview
             </p>
-            {autoMetrics ? (
+            {calculatedMetrics ? (
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-brand-text/80 sm:grid-cols-4">
-                <div className="rounded-lg bg-white px-2 py-1">kcal: {Math.round(autoMetrics.calories)}</div>
+                <div className="rounded-lg bg-white px-2 py-1">Calories: {Math.round(calculatedMetrics.calories)}</div>
                 <div className="rounded-lg bg-white px-2 py-1">
-                  P/F/C: {Math.round(autoMetrics.protein)}/{Math.round(autoMetrics.fat)}/{Math.round(autoMetrics.carbs)}
+                  Protein/Fat/Carbs: {Math.round(calculatedMetrics.protein)}/{Math.round(calculatedMetrics.fat)}/
+                  {Math.round(calculatedMetrics.carbs)}
                 </div>
-                <div className="rounded-lg bg-white px-2 py-1">Fiber: {Math.round(autoMetrics.fiber)}g</div>
+                <div className="rounded-lg bg-white px-2 py-1">Fiber: {Math.round(calculatedMetrics.fiber)}g</div>
                 <div className="rounded-lg bg-white px-2 py-1">
-                  GI: {autoMetrics.glycemicIndex} | Score: {autoMetrics.diabeticScore}
+                  Glycemic Index: {Math.max(1, calculatedMetrics.glycemicIndex)} | Diabetic Score:{" "}
+                  {calculatedMetrics.diabeticScore}
                 </div>
               </div>
             ) : (
               <p className="mt-2 text-xs text-brand-text/60">
-                Fill required fields and valid ingredients to calculate kBJU, GI and diabetic score.
+                Click Calculate nutrition to preview calories, protein, fat, carbs, glycemic index and diabetic score.
               </p>
             )}
           </div>
