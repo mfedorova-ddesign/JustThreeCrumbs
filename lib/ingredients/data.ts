@@ -1559,4 +1559,28 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: true
   },
+  {
+    name: "capers",
+    calories: 23,
+    protein: 2.4,
+    fat: 0.9,
+    carbs: 4.9,
+    fiber: 3.2,
+    glycemicIndex: 15,
+    portionGrams: 20,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "white wine",
+    calories: 82,
+    protein: 0.1,
+    fat: 0,
+    carbs: 2.6,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 50,
+    category: "liquid",
+    vegetarian: true
+  },
 ];

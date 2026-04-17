@@ -640,5 +640,36 @@ export const FIXED_RECIPES: Recipe[] = [
       "Pour into a silicone mould (one large or several small) and bake 20–25 minutes.",
       "Allow to cool completely before slicing — brownies firm up as they cool."
     ]
+  },
+  {
+    id: "recipe-salmon-caper-sauce",
+    name: "Salmon with caper butter sauce",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "salmon"),
+      ing("fats", "butter"),
+      ing("fats", "ghee"),
+      ing("vegetables", "spinach"),
+      ing("fats", "olive oil"),
+      ing("spices", "capers"),
+      ing("spices", "garlic"),
+      ing("liquid", "white wine", { alternatives: ["chicken broth"] }),
+      ing("liquid", "lemon juice"),
+      ing("spices", "lemon zest"),
+      ing("spices", "parsley", { optional: true }),
+      ing("spices", "black pepper")
+    ],
+    constraints: { maxCarbs: 8, glycemicIndex: "low" },
+    instructions: [
+      "Take salmon out of the fridge 15 minutes before cooking. Pat completely dry — especially the skin. Season with salt and black pepper on all sides.",
+      "Heat a heavy-bottomed pan over high heat for 2–3 minutes. Add ghee until just smoking.",
+      "Place salmon skin-side down. Press gently with a spatula for the first 30 seconds to prevent curling. Cook undisturbed 4–5 minutes until skin is golden and crisp and the cook line has risen 2/3 up the fillet.",
+      "Flip and cook 1.5–2 minutes for medium (slightly pink centre) or 3 minutes for fully cooked. Rest on a warm plate, tented with foil.",
+      "In the same pan over medium heat, add garlic and cook 30 seconds. Pour in white wine (or chicken broth) and reduce 1–2 minutes, scraping up any caramelised bits.",
+      "Add capers, lemon juice, and lemon zest. Stir and warm 1 minute.",
+      "Remove pan from heat. Add cold butter cubes 2–3 at a time, swirling or whisking vigorously to emulsify into a glossy sauce. Stir in chopped parsley.",
+      "In a separate pan, wilt spinach in olive oil over medium heat for 1–2 minutes until just collapsed and still bright green. Season with salt.",
+      "Plate spinach, place salmon skin-side up, spoon sauce generously over the top. Serve with a lemon wedge immediately."
+    ]
   }
 ];
