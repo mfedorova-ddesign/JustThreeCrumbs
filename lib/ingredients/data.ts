@@ -1729,4 +1729,28 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: true
   },
+  {
+    name: "harissa",
+    calories: 108,
+    protein: 4.7,
+    fat: 8,
+    carbs: 8,
+    fiber: 3,
+    glycemicIndex: 20,
+    portionGrams: 15,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "sesame seeds",
+    calories: 573,
+    protein: 17,
+    fat: 50,
+    carbs: 23,
+    fiber: 12,
+    glycemicIndex: 25,
+    portionGrams: 10,
+    category: "fats",
+    vegetarian: true
+  },
 ];

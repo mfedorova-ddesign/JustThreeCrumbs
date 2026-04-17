@@ -755,5 +755,36 @@ export const FIXED_RECIPES: Recipe[] = [
       "Remove pan from heat. Whisk in cold butter cubes 2–3 at a time until the sauce is glossy and emulsified. Adjust salt.",
       "Spoon cauliflower purée onto each plate. Slice duck at an angle into 1–1.5 cm pieces and fan over the purée, skin-side up. Spoon orange reduction over the top. Garnish with fresh thyme or parsley. Serve immediately — the skin loses its crunch after 3–5 minutes."
     ]
+  },
+  {
+    id: "recipe-cauliflower-steak-harissa",
+    name: "Cauliflower steak with harissa and tahini",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("vegetables", "cauliflower"),
+      ing("fats", "coconut oil"),
+      ing("spices", "harissa"),
+      ing("fats", "olive oil"),
+      ing("fats", "tahini"),
+      ing("liquid", "lemon juice"),
+      ing("spices", "garlic"),
+      ing("spices", "cumin"),
+      ing("spices", "coriander"),
+      ing("spices", "smoked paprika"),
+      ing("spices", "black pepper"),
+      ing("fats", "sesame seeds", { optional: true }),
+      ing("spices", "parsley", { alternatives: ["cilantro"], optional: true }),
+      ing("carbs", "pomegranate seeds", { optional: true })
+    ],
+    constraints: { maxCarbs: 15, glycemicIndex: "low" },
+    instructions: [
+      "Preheat oven to 220°C with convection. Place a baking sheet inside to heat up — a hot tray gives the steaks immediate crust on the bottom.",
+      "Remove outer leaves from the cauliflower, keeping the stalk intact — it holds the steak together. Stand the head upright and slice crossways into 2.5–3 cm steaks. A large head yields 3–4 good steaks. Reserve crumbled edges for another use.",
+      "Mix harissa, olive oil, cumin, coriander, smoked paprika, black pepper, and half the salt into a thick marinade.",
+      "Heat coconut oil in a large cast-iron pan over high heat until just smoking. Sear steaks 3 minutes without moving until deeply golden. Flip and sear 2 more minutes. This Maillard crust is key — don't skip it.",
+      "Transfer to the hot baking sheet. Brush generously with harissa marinade. Roast 12–15 minutes until tender in the centre (a knife should slide in with no resistance) and charred at the edges.",
+      "While the cauliflower roasts, whisk tahini with lemon juice, garlic, remaining salt, and cold water a tablespoon at a time until smooth, creamy, and pourable.",
+      "Spread tahini sauce on each plate. Place hot cauliflower steak on top. Drizzle with remaining harissa marinade. Scatter toasted sesame seeds, chopped parsley or cilantro, and optional pomegranate seeds. Serve immediately."
+    ]
   }
 ];
