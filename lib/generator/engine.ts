@@ -24,6 +24,7 @@ const recipeSequenceByMealType: Record<MealType, string[]> = {
   breakfast: [
     "recipe-shakshuka-toast",
     "recipe-eggs-benedict-avocado",
+    "recipe-omelet-goat-cheese",
     "recipe-chia-pudding-berries",
     "recipe-savory-oats-eggs",
     "recipe-yogurt-berries-nuts",

@@ -42,6 +42,7 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-keto-mascarpone-mousse": "/images/musse.jpg",
   "recipe-keto-brownies": "/images/keto-brauni.webp",
   "recipe-salmon-caper-sauce": "/images/fish.jpg",
+  "recipe-omelet-goat-cheese": "/images/fluffy-omelet-baked.jpg",
 };
 
 export function mealImageUrlForId(mealId: string): string {

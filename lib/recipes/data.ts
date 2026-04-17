@@ -671,5 +671,30 @@ export const FIXED_RECIPES: Recipe[] = [
       "In a separate pan, wilt spinach in olive oil over medium heat for 1–2 minutes until just collapsed and still bright green. Season with salt.",
       "Plate spinach, place salmon skin-side up, spoon sauce generously over the top. Serve with a lemon wedge immediately."
     ]
+  },
+  {
+    id: "recipe-omelet-goat-cheese",
+    name: "Omelette with goat cheese and sun-dried tomatoes",
+    mealTypes: ["breakfast", "lunch"],
+    ingredients: [
+      ing("protein", "eggs"),
+      ing("fats", "butter"),
+      ing("protein", "goat cheese"),
+      ing("vegetables", "sun-dried tomatoes"),
+      ing("spices", "basil"),
+      ing("liquid", "cream"),
+      ing("spices", "black pepper"),
+      ing("spices", "garlic powder", { optional: true }),
+      ing("vegetables", "arugula", { alternatives: ["spinach"], optional: true })
+    ],
+    constraints: { maxCarbs: 8, glycemicIndex: "low" },
+    instructions: [
+      "Prep the filling: slice sun-dried tomatoes into thin strips, break goat cheese into small pieces, roughly tear basil leaves. Have everything ready before you start cooking.",
+      "Beat eggs with cream, salt, pepper, and optional garlic powder vigorously for 30–40 seconds until fully homogeneous with no white streaks.",
+      "Heat a 20–22 cm pan over medium heat. Add butter. When it melts, foams, and the foam just begins to subside — the pan is ready (~45–60 seconds). Don't wait for it to brown.",
+      "Pour in the egg mixture. Immediately shake the pan back and forth while stirring with a silicone spatula in circular motions. The goal is a soft, fine curd across the surface — not a flat pancake. Work fast — the whole process takes about 60 seconds.",
+      "When the eggs are set on the bottom but the top is still slightly wet and glossy, remove from heat. Lay goat cheese, sun-dried tomatoes, and half the basil in a line down the centre. Fold the near edge over a third, then the far edge, forming a roll. Turn onto the plate seam-side down.",
+      "Serve immediately with arugula (or spinach) and remaining basil alongside. Omelettes lose their texture within 2–3 minutes."
+    ]
   }
 ];

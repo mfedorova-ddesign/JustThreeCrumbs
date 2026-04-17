@@ -1583,4 +1583,53 @@ export const INGREDIENTS: Ingredient[] = [
     category: "liquid",
     vegetarian: true
   },
+  {
+    name: "goat cheese",
+    calories: 364,
+    protein: 22,
+    fat: 30,
+    carbs: 0.1,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 50,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
+  {
+    name: "sun-dried tomatoes",
+    calories: 258,
+    protein: 14,
+    fat: 3,
+    carbs: 56,
+    fiber: 12,
+    glycemicIndex: 35,
+    portionGrams: 20,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "arugula",
+    calories: 25,
+    protein: 2.6,
+    fat: 0.7,
+    carbs: 3.7,
+    fiber: 1.6,
+    glycemicIndex: 15,
+    portionGrams: 30,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "garlic powder",
+    calories: 331,
+    protein: 16,
+    fat: 0.7,
+    carbs: 73,
+    fiber: 9,
+    glycemicIndex: 25,
+    portionGrams: 2,
+    category: "spices",
+    vegetarian: true
+  },
 ];
