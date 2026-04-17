@@ -1753,4 +1753,76 @@ export const INGREDIENTS: Ingredient[] = [
     category: "fats",
     vegetarian: true
   },
+  {
+    name: "coconut yogurt",
+    calories: 110,
+    protein: 1,
+    fat: 7,
+    carbs: 10,
+    fiber: 0,
+    glycemicIndex: 30,
+    portionGrams: 150,
+    category: "liquid",
+    vegetarian: true
+  },
+  {
+    name: "walnuts",
+    calories: 654,
+    protein: 15,
+    fat: 65,
+    carbs: 14,
+    fiber: 7,
+    glycemicIndex: 15,
+    portionGrams: 30,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "hazelnuts",
+    calories: 628,
+    protein: 15,
+    fat: 61,
+    carbs: 17,
+    fiber: 10,
+    glycemicIndex: 15,
+    portionGrams: 30,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "ricotta",
+    calories: 174,
+    protein: 11,
+    fat: 13,
+    carbs: 3,
+    fiber: 0,
+    glycemicIndex: 27,
+    portionGrams: 80,
+    category: "protein",
+    vegetarian: true
+  },
+  {
+    name: "trout",
+    calories: 141,
+    protein: 20,
+    fat: 6,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 150,
+    category: "protein",
+    vegetarian: false
+  },
+  {
+    name: "sea bass",
+    calories: 97,
+    protein: 18,
+    fat: 2,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 150,
+    category: "protein",
+    vegetarian: false
+  },
 ];

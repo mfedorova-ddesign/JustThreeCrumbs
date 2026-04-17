@@ -48,7 +48,7 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "High-protein chia pudding with berries",
     mealTypes: ["breakfast", "snack"],
     ingredients: [
-      ing("protein", "greek yogurt", { alternatives: ["coconut milk", "almond milk"] }),
+      ing("protein", "greek yogurt", { alternatives: ["coconut milk", "almond milk", "coconut yogurt"] }),
       ing("vegetables", "berries"),
       ing("carbs", "chia seeds"),
       ing("carbs", "banana", { optional: true, alternatives: ["dried fruit"] }),
@@ -68,12 +68,12 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Savory oatmeal with flax seeds and eggs",
     mealTypes: ["breakfast"],
     ingredients: [
-      ing("protein", "eggs", { alternatives: ["fried eggs", "tofu"] }),
+      ing("protein", "eggs", { alternatives: ["tofu"] }),
       ing("protein", "protein powder", { optional: true }),
       ing("carbs", "oats", { alternatives: ["quinoa"] }),
       ing("liquid", "water"),
       ing("fats", "flax seeds"),
-      ing("fats", "butter", { optional: true, alternatives: ["milk"] }),
+      ing("fats", "butter", { optional: true, alternatives: ["coconut oil"] }),
       ing("vegetables", "fresh herbs", { optional: true }),
       ing("spices", "black pepper")
     ],
@@ -91,7 +91,7 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Greek yogurt bowl with berries and nuts",
     mealTypes: ["breakfast"],
     ingredients: [
-      ing("protein", "greek yogurt"),
+      ing("protein", "greek yogurt", { alternatives: ["coconut yogurt"] }),
       ing("vegetables", "berries"),
       ing("vegetables", "banana", { optional: true, alternatives: ["fresh fruit"] }),
       ing("fats", "almonds", { alternatives: ["coconut flakes", "mixed nuts"] }),
@@ -300,7 +300,7 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Baked eggplant with feta and yogurt-tahini sauce",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "feta cheese"),
+      ing("protein", "feta cheese", { alternatives: ["goat cheese"] }),
       ing("vegetables", "eggplant"),
       ing("vegetables", "pomegranate seeds", { optional: true }),
       ing("fats", "olive oil"),
@@ -329,7 +329,7 @@ export const FIXED_RECIPES: Recipe[] = [
     ingredients: [
       ing("protein", "beef", { alternatives: ["chicken breast", "white beans", "red beans"] }),
       ing("vegetables", "beets"),
-      ing("vegetables", "potato"),
+      ing("vegetables", "potato", { alternatives: ["sweet potato"] }),
       ing("vegetables", "cabbage"),
       ing("vegetables", "carrot"),
       ing("vegetables", "onion"),
@@ -418,7 +418,7 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Greek yogurt berry mini bowl",
     mealTypes: ["snack"],
     ingredients: [
-      ing("liquid", "greek yogurt"),
+      ing("liquid", "greek yogurt", { alternatives: ["coconut yogurt"] }),
       ing("vegetables", "berries"),
       ing("carbs", "chia seeds", { optional: true }),
       ing("spices", "cinnamon", { optional: true }),
@@ -457,7 +457,7 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Dark chocolate nut bites",
     mealTypes: ["snack"],
     ingredients: [
-      ing("protein", "almonds", { alternatives: ["chia seeds"] }),
+      ing("protein", "almonds", { alternatives: ["walnuts", "hazelnuts"] }),
       ing("fats", "dark chocolate"),
       ing("fats", "almond butter"),
       ing("spices", "cinnamon", { optional: true })
@@ -476,7 +476,7 @@ export const FIXED_RECIPES: Recipe[] = [
     ingredients: [
       ing("protein", "eggs"),
       ing("fats", "avocado"),
-      ing("fats", "ghee"),
+      ing("fats", "ghee", { alternatives: ["butter"] }),
       ing("liquid", "lemon juice"),
       ing("spices", "dijon mustard"),
       ing("spices", "cayenne pepper"),
@@ -502,7 +502,7 @@ export const FIXED_RECIPES: Recipe[] = [
     ingredients: [
       ing("vegetables", "broccoli"),
       ing("protein", "cheddar"),
-      ing("liquid", "cream"),
+      ing("liquid", "cream", { alternatives: ["coconut cream"] }),
       ing("liquid", "chicken broth", { alternatives: ["vegetable broth"] }),
       ing("fats", "butter"),
       ing("vegetables", "onion"),
@@ -533,7 +533,7 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("protein", "ribeye steak"),
       ing("fats", "butter"),
       ing("fats", "ghee"),
-      ing("vegetables", "green beans"),
+      ing("vegetables", "green beans", { alternatives: ["asparagus"] }),
       ing("spices", "garlic"),
       ing("spices", "rosemary"),
       ing("spices", "thyme"),
@@ -585,7 +585,7 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Keto panna cotta",
     mealTypes: ["snack"],
     ingredients: [
-      ing("liquid", "cream"),
+      ing("liquid", "cream", { alternatives: ["coconut cream"] }),
       ing("spices", "erythritol"),
       ing("spices", "vanilla"),
       ing("spices", "gelatin"),
@@ -627,7 +627,7 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("fats", "almond flour"),
       ing("spices", "cocoa powder"),
       ing("protein", "eggs"),
-      ing("fats", "butter"),
+      ing("fats", "butter", { alternatives: ["coconut oil"] }),
       ing("spices", "erythritol"),
       ing("spices", "baking powder")
     ],
@@ -646,7 +646,7 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Salmon with caper butter sauce",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "salmon"),
+      ing("protein", "salmon", { alternatives: ["trout", "sea bass"] }),
       ing("fats", "butter"),
       ing("fats", "ghee"),
       ing("vegetables", "spinach"),
@@ -679,7 +679,7 @@ export const FIXED_RECIPES: Recipe[] = [
     ingredients: [
       ing("protein", "eggs"),
       ing("fats", "butter"),
-      ing("protein", "goat cheese"),
+      ing("protein", "goat cheese", { alternatives: ["ricotta", "feta"] }),
       ing("vegetables", "sun-dried tomatoes"),
       ing("spices", "basil"),
       ing("liquid", "cream"),
@@ -702,9 +702,9 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Keto chicken Caesar salad",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "chicken breast"),
+      ing("protein", "chicken breast", { alternatives: ["salmon"] }),
       ing("vegetables", "romaine"),
-      ing("protein", "bacon"),
+      ing("protein", "bacon", { alternatives: ["turkey breast"] }),
       ing("protein", "eggs"),
       ing("protein", "parmesan"),
       ing("spices", "anchovies"),
@@ -762,7 +762,7 @@ export const FIXED_RECIPES: Recipe[] = [
     mealTypes: ["lunch", "dinner"],
     ingredients: [
       ing("vegetables", "cauliflower"),
-      ing("fats", "coconut oil"),
+      ing("fats", "coconut oil", { alternatives: ["ghee"] }),
       ing("spices", "harissa"),
       ing("fats", "olive oil"),
       ing("fats", "tahini"),
