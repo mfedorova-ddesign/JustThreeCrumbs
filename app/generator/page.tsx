@@ -95,9 +95,12 @@ const ingredientByName = new Map(
   INGREDIENTS.map((ingredient) => [ingredient.name.toLowerCase(), ingredient])
 );
 
-function getSubstituteOptions(ingredientName: string): string[] {
-  const key = ingredientName.toLowerCase();
-  const options = INGREDIENT_SUBSTITUTIONS[key] ?? [];
+function getSubstituteOptions(ingredientName: string, ruleAlternatives?: string[]): string[] {
+  // Prefer per-recipe alternatives from the rule; fall back to global map only if none defined
+  const options =
+    ruleAlternatives && ruleAlternatives.length > 0
+      ? ruleAlternatives
+      : (INGREDIENT_SUBSTITUTIONS[ingredientName.toLowerCase()] ?? []);
   return options.filter((option) => ingredientByName.has(option.toLowerCase()));
 }
 
@@ -929,7 +932,7 @@ export default function GeneratorPage() {
                       <h4 className="text-[15px] font-semibold text-brand-text">Ingredients</h4>
                       <ul className="mt-2 space-y-2 list-disc pl-5 text-[14px] leading-[1.6] text-brand-text/80">
                         {meal.ingredients.map((ing, ingredientIndex) => {
-                          const substituteOptions = getSubstituteOptions(ing.name);
+                          const substituteOptions = getSubstituteOptions(ing.name, meal.ruleAlternatives?.[ingredientIndex]);
                           const healthFact = getHealthFact(ing.name);
                           const isRemoved = getIngredientRemoved(meal.id, ingredientIndex);
                           const pickerOpen =

@@ -109,6 +109,8 @@ export type GeneratedMeal = {
   templateId: string;
   mealType: MealType;
   ingredients: Ingredient[];
+  /** Per-ingredient swap options from the recipe rules (parallel to ingredients[]). */
+  ruleAlternatives: string[][];
   /** Hidden from menu and summaries until restored or replaced. */
   skipped?: boolean;
   calories: number;

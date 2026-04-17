@@ -283,18 +283,23 @@ function resolveRecipeIngredients(
   user: UserProfile,
   mealType: MealType,
   seed: number
-): Ingredient[] {
+): { ingredient: Ingredient; alternatives: string[] }[] {
   const allergySet = getAllergySet(user);
-  const selected: Ingredient[] = [];
+  const selected: { ingredient: Ingredient; alternatives: string[] }[] = [];
   for (let i = 0; i < recipe.ingredients.length; i += 1) {
     const rule = recipe.ingredients[i];
     const pickedName = pickIngredientName(rule, user, allergySet, seed + i * 37);
     if (!pickedName) continue;
     const ingredient = ingredientByName.get(pickedName);
     if (!ingredient) continue;
+    // Alternatives are the other allowed names from the rule (excluding the picked one)
+    const ruleNames = [rule.primary, ...(rule.alternatives ?? [])];
+    const alternatives = ruleNames.filter(
+      (name) => name !== pickedName && ingredientByName.has(name)
+    );
     selected.push({
-      ...ingredient,
-      portionGrams: getIngredientPortionGrams(ingredient, mealType)
+      ingredient: { ...ingredient, portionGrams: getIngredientPortionGrams(ingredient, mealType) },
+      alternatives
     });
   }
   return selected;
@@ -339,14 +344,16 @@ function buildMeal(
   mealType: MealType,
   dayIndex: number,
   seed: number,
-  ingredients: Ingredient[]
+  resolved: { ingredient: Ingredient; alternatives: string[] }[]
 ): GeneratedMeal {
+  const ingredients = resolved.map((r) => r.ingredient);
   return {
     id: `${recipe.id}-${mealType}-${dayIndex}-${Math.abs(seed % 100000)}`,
     name: recipe.name,
     templateId: recipe.id,
     mealType,
     ingredients,
+    ruleAlternatives: resolved.map((r) => r.alternatives),
     calories: sumCalories(ingredients),
     macros: sumMacros(ingredients),
     fiber: sumFiber(ingredients),
@@ -405,14 +412,21 @@ function generateMealFromRecipe(
   seed: number,
   target: { calories: number; protein: number; fat: number; carbs: number; fiber: number }
 ): GeneratedMeal {
-  let ingredients = resolveRecipeIngredients(recipe, user, mealType, seed);
-  if (ingredients.length === 0) {
+  const resolved = resolveRecipeIngredients(recipe, user, mealType, seed);
+  if (resolved.length === 0) {
     throw new Error(`Recipe ${recipe.id} has no allowed ingredients for current profile.`);
   }
+  let ingredients = resolved.map((r) => r.ingredient);
   ingredients = scaleIngredientsToCalorieTarget(ingredients, mealType, target.calories);
   ingredients = fitMealToTarget(ingredients, target);
   ingredients = enforceRecipeConstraints(ingredients, recipe, target);
-  return buildMeal(recipe, mealType, dayIndex, seed, ingredients);
+  // Re-attach alternatives by name (enforceRecipeConstraints may remove some ingredients)
+  const altsByName = new Map(resolved.map((r) => [r.ingredient.name, r.alternatives]));
+  const scaledResolved = ingredients.map((ing) => ({
+    ingredient: ing,
+    alternatives: altsByName.get(ing.name) ?? []
+  }));
+  return buildMeal(recipe, mealType, dayIndex, seed, scaledResolved);
 }
 
 export type RegenerateSingleMealOptions = {
