@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/Button";
 import { INGREDIENTS } from "@/lib/ingredients/data";
 import { INGREDIENT_HEALTH_FACTS } from "@/lib/ingredients/healthFacts";
-import { INGREDIENT_SUBSTITUTIONS } from "@/lib/ingredients/substitutions";
 import { isProfileComplete } from "@/lib/generator/profile";
 import { recommendedDailyTargets } from "@/lib/generator/targets";
 import {
@@ -96,12 +95,7 @@ const ingredientByName = new Map(
 );
 
 function getSubstituteOptions(ingredientName: string, ruleAlternatives?: string[]): string[] {
-  // Prefer per-recipe alternatives from the rule; fall back to global map only if none defined
-  const options =
-    ruleAlternatives && ruleAlternatives.length > 0
-      ? ruleAlternatives
-      : (INGREDIENT_SUBSTITUTIONS[ingredientName.toLowerCase()] ?? []);
-  return options.filter((option) => ingredientByName.has(option.toLowerCase()));
+  return (ruleAlternatives ?? []).filter((option) => ingredientByName.has(option.toLowerCase()));
 }
 
 function getHealthFact(ingredientName: string): string | null {
