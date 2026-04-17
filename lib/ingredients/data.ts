@@ -1521,4 +1521,17 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: false
   },
+  {
+    name: "mascarpone",
+    calories: 429,
+    protein: 5.5,
+    fat: 44,
+    carbs: 2.5,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 100,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["dairy"]
+  },
 ];

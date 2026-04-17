@@ -599,5 +599,24 @@ export const FIXED_RECIPES: Recipe[] = [
       "Pour into silicone moulds or glasses. Refrigerate 4–5 hours until set.",
       "Serve chilled, topped with fresh berries if desired."
     ]
+  },
+  {
+    id: "recipe-keto-mascarpone-mousse",
+    name: "Keto mascarpone chocolate mousse",
+    mealTypes: ["snack"],
+    ingredients: [
+      ing("protein", "mascarpone"),
+      ing("liquid", "cream"),
+      ing("spices", "cocoa powder"),
+      ing("spices", "erythritol"),
+      ing("vegetables", "berries", { optional: true })
+    ],
+    constraints: { maxCarbs: 8, glycemicIndex: "low" },
+    instructions: [
+      "Whip cold cream with erythritol until stiff, stable peaks form.",
+      "Gently fold in mascarpone and cocoa powder until smooth and uniform — do not overmix.",
+      "Divide into glasses or ramekins and refrigerate for at least 2 hours.",
+      "Serve chilled, topped with fresh raspberries or other berries if desired."
+    ]
   }
 ];

@@ -39,6 +39,7 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-ribeye-herb-butter": "/images/Steak.jpg",
   "recipe-keto-chocolate-truffles": "/images/truffel.jpg",
   "recipe-keto-panna-cotta": "/images/panna-cotta.jpg",
+  "recipe-keto-mascarpone-mousse": "/images/musse.jpeg",
 };
 
 export function mealImageUrlForId(mealId: string): string {
