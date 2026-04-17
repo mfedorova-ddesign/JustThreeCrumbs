@@ -36,6 +36,7 @@ const recipeSequenceByMealType: Record<MealType, string[]> = {
     "recipe-broccoli-cheddar-soup",
     "recipe-ribeye-herb-butter",
     "recipe-salmon-caper-sauce",
+    "recipe-caesar-salad-keto",
     "recipe-protein-salad-plate",
     "recipe-buckwheat-skillet",
     "recipe-lemon-herb-bake",
@@ -47,6 +48,7 @@ const recipeSequenceByMealType: Record<MealType, string[]> = {
   dinner: [
     "recipe-ribeye-herb-butter",
     "recipe-salmon-caper-sauce",
+    "recipe-caesar-salad-keto",
     "recipe-buckwheat-skillet",
     "recipe-green-curry",
     "recipe-legume-soup",

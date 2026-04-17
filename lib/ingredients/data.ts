@@ -1632,4 +1632,53 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: true
   },
+  {
+    name: "romaine",
+    calories: 17,
+    protein: 1.2,
+    fat: 0.3,
+    carbs: 3.3,
+    fiber: 2.1,
+    glycemicIndex: 10,
+    portionGrams: 100,
+    category: "vegetables",
+    vegetarian: true
+  },
+  {
+    name: "bacon",
+    calories: 541,
+    protein: 37,
+    fat: 42,
+    carbs: 1.4,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 40,
+    category: "protein",
+    vegetarian: false
+  },
+  {
+    name: "anchovies",
+    calories: 131,
+    protein: 20,
+    fat: 4.8,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 10,
+    category: "spices",
+    vegetarian: false,
+    allergens: ["fish"]
+  },
+  {
+    name: "worcestershire sauce",
+    calories: 78,
+    protein: 0.3,
+    fat: 0,
+    carbs: 19,
+    fiber: 0,
+    glycemicIndex: 15,
+    portionGrams: 5,
+    category: "spices",
+    vegetarian: false
+  },
 ];

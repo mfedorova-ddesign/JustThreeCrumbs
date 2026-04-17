@@ -696,5 +696,35 @@ export const FIXED_RECIPES: Recipe[] = [
       "When the eggs are set on the bottom but the top is still slightly wet and glossy, remove from heat. Lay goat cheese, sun-dried tomatoes, and half the basil in a line down the centre. Fold the near edge over a third, then the far edge, forming a roll. Turn onto the plate seam-side down.",
       "Serve immediately with arugula (or spinach) and remaining basil alongside. Omelettes lose their texture within 2–3 minutes."
     ]
+  },
+  {
+    id: "recipe-caesar-salad-keto",
+    name: "Keto chicken Caesar salad",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "chicken breast"),
+      ing("vegetables", "romaine"),
+      ing("protein", "bacon"),
+      ing("protein", "eggs"),
+      ing("protein", "parmesan"),
+      ing("spices", "anchovies"),
+      ing("spices", "garlic"),
+      ing("spices", "dijon mustard"),
+      ing("liquid", "lemon juice"),
+      ing("fats", "olive oil"),
+      ing("fats", "ghee"),
+      ing("spices", "garlic powder", { optional: true }),
+      ing("spices", "smoked paprika", { optional: true }),
+      ing("spices", "worcestershire sauce", { optional: true })
+    ],
+    constraints: { maxCarbs: 10, glycemicIndex: "low" },
+    instructions: [
+      "Season chicken with salt, pepper, garlic powder, and smoked paprika. Sear in ghee on a hot grill pan or skillet 4–5 minutes per side until golden and internal temp reaches 74°C. Rest 5 minutes under foil, then slice thinly against the grain.",
+      "Fry bacon in a dry pan over medium heat 3–4 minutes until crisp. Drain on paper towel. Break into large pieces when cooled.",
+      "Make the dressing: mince anchovies and garlic to a paste. Whisk with egg yolks, dijon mustard, lemon juice, and worcestershire sauce. Very slowly drizzle in olive oil while whisking constantly until the sauce emulsifies and thickens. Stir in grated parmesan. Adjust salt and pepper. Thin with a teaspoon of water if too thick.",
+      "Poach eggs: simmer water with a splash of white wine vinegar. Slide eggs in one at a time from cups, cook 3 minutes, blot dry. Or use soft-boiled eggs instead.",
+      "Wash and dry romaine leaves thoroughly — wet leaves dilute the dressing. Tear large leaves into 2–3 pieces.",
+      "Toss romaine with 2/3 of the dressing until every leaf is coated. Plate, then top with chicken slices, bacon, and poached eggs. Spoon remaining dressing over the top and finish with shaved parmesan and fresh black pepper."
+    ]
   }
 ];
