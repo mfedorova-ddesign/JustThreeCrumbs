@@ -1436,4 +1436,77 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: true
   },
+  {
+    name: "coconut cream",
+    calories: 330,
+    protein: 3.5,
+    fat: 34,
+    carbs: 5.5,
+    fiber: 0,
+    glycemicIndex: 45,
+    portionGrams: 60,
+    category: "liquid",
+    vegetarian: true
+  },
+  {
+    name: "cacao butter",
+    calories: 884,
+    protein: 0,
+    fat: 100,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 15,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "coconut oil",
+    calories: 862,
+    protein: 0,
+    fat: 100,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 15,
+    category: "fats",
+    vegetarian: true
+  },
+  {
+    name: "erythritol",
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 10,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "cocoa powder",
+    calories: 228,
+    protein: 20,
+    fat: 14,
+    carbs: 58,
+    fiber: 33,
+    glycemicIndex: 20,
+    portionGrams: 10,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "pecans",
+    calories: 691,
+    protein: 9.2,
+    fat: 72,
+    carbs: 14,
+    fiber: 9.6,
+    glycemicIndex: 15,
+    portionGrams: 15,
+    category: "fats",
+    vegetarian: true,
+    allergens: ["tree nuts"]
+  },
 ];

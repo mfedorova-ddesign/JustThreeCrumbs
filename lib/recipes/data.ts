@@ -554,5 +554,30 @@ export const FIXED_RECIPES: Recipe[] = [
       "In the same pan (do not clean — the flavoured fat remains), sauté green beans over medium heat 4–5 minutes until lightly charred but still with a bite. Season with salt and pepper.",
       "Slice steak against the grain into 1.5–2 cm pieces or serve whole. Top with a round of herb butter from the fridge and serve with green beans immediately."
     ]
+  },
+  {
+    id: "recipe-keto-chocolate-truffles",
+    name: "Keto chocolate truffles",
+    mealTypes: ["snack"],
+    ingredients: [
+      ing("fats", "dark chocolate"),
+      ing("liquid", "coconut cream"),
+      ing("fats", "cacao butter", { alternatives: ["coconut oil"] }),
+      ing("spices", "erythritol"),
+      ing("spices", "vanilla"),
+      ing("spices", "cocoa powder"),
+      ing("fats", "pecans", { alternatives: ["almonds"], optional: true }),
+      ing("fats", "coconut flakes", { optional: true })
+    ],
+    constraints: { maxCarbs: 12, glycemicIndex: "low" },
+    instructions: [
+      "Finely chop dark chocolate into pieces no larger than 5 mm. Place in a heatproof bowl.",
+      "Heat coconut cream in a small saucepan over medium heat until just beginning to simmer (small bubbles at the edges, ~80°C). Do not boil. Add erythritol and stir until dissolved.",
+      "Pour hot cream over chopped chocolate. Wait 1 minute, then add cacao butter (or coconut oil) and vanilla. Stir slowly from the centre outward with a spatula — do not whisk. The ganache should be smooth, glossy, and homogeneous. Add a pinch of sea salt.",
+      "Press cling film directly onto the surface of the ganache to prevent a skin forming. Leave at room temperature 20–30 minutes, then refrigerate for at least 2 hours until firm enough to shape.",
+      "Spread cocoa powder on a flat plate. Set up separate plates with crushed pecans or almonds and coconut flakes if using.",
+      "Scoop about 15–18 g of ganache per truffle using two teaspoons. Working quickly with cold hands, roll into a ball.",
+      "Immediately roll each truffle in cocoa powder (or other coating). Place on parchment. Refrigerate 20–30 minutes until set. Store in a sealed container in the fridge for up to 2 weeks."
+    ]
   }
 ];
