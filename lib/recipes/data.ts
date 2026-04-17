@@ -579,5 +579,25 @@ export const FIXED_RECIPES: Recipe[] = [
       "Scoop about 15–18 g of ganache per truffle using two teaspoons. Working quickly with cold hands, roll into a ball.",
       "Immediately roll each truffle in cocoa powder (or other coating). Place on parchment. Refrigerate 20–30 minutes until set. Store in a sealed container in the fridge for up to 2 weeks."
     ]
+  },
+  {
+    id: "recipe-keto-panna-cotta",
+    name: "Keto panna cotta",
+    mealTypes: ["snack"],
+    ingredients: [
+      ing("liquid", "cream"),
+      ing("spices", "erythritol"),
+      ing("spices", "vanilla"),
+      ing("spices", "gelatin"),
+      ing("vegetables", "berries", { optional: true })
+    ],
+    constraints: { maxCarbs: 8, glycemicIndex: "low" },
+    instructions: [
+      "Soak gelatin in 60 ml cold water for 10–15 minutes until bloomed.",
+      "Gently heat cream in a saucepan over low heat — do not boil. Add bloomed gelatin and stir until completely dissolved.",
+      "Add erythritol and vanilla bean seeds (split the pod and scrape). Stir well.",
+      "Pour into silicone moulds or glasses. Refrigerate 4–5 hours until set.",
+      "Serve chilled, topped with fresh berries if desired."
+    ]
   }
 ];

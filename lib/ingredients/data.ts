@@ -1509,4 +1509,16 @@ export const INGREDIENTS: Ingredient[] = [
     vegetarian: true,
     allergens: ["tree nuts"]
   },
+  {
+    name: "gelatin",
+    calories: 335,
+    protein: 86,
+    fat: 0,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 5,
+    category: "spices",
+    vegetarian: false
+  },
 ];

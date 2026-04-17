@@ -38,6 +38,7 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-eggs-benedict-avocado": "/images/avocado.jpg",
   "recipe-ribeye-herb-butter": "/images/Steak.jpg",
   "recipe-keto-chocolate-truffles": "/images/truffel.jpg",
+  "recipe-keto-panna-cotta": "/images/panna-cotta.jpg",
 };
 
 export function mealImageUrlForId(mealId: string): string {
