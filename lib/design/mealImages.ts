@@ -33,10 +33,10 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-protein-salad-plate": "/images/salad.jpg",
   "recipe-tuna-salad": "/images/Skinny-Salad.webp",
   "recipe-snack-apple-cottage": "/images/AppleCinnamonCottageCheese.jpg",
-  "recipe-snack-chocolate-nuts": "/images/chocolade-puur.png",
+  "recipe-snack-chocolate-nuts": "/images/bites.jfif",
   "recipe-broccoli-cheddar-soup": "/images/soup.jpg",
   "recipe-eggs-benedict-avocado": "/images/avocado.jpg",
-  "recipe-ribeye-herb-butter": "/images/Steak.jpeg",
+  "recipe-ribeye-herb-butter": "/images/Steak.jpg",
 };
 
 export function mealImageUrlForId(mealId: string): string {
