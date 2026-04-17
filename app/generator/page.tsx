@@ -738,7 +738,7 @@ export default function GeneratorPage() {
                         );
                       }
 
-                      const imgUrl = mealImageUrlForId(meal.templateId);
+                      const imgUrl = mealImageUrlForId(meal.templateId, customRecipes.find((r) => r.id === meal.templateId)?.imageUrl);
 
                       return (
                         <div
@@ -845,7 +845,7 @@ export default function GeneratorPage() {
             {(() => {
               const meal = getMealById(openedMealId);
               if (!meal) return null;
-              const modalImg = mealImageUrlForId(meal.templateId);
+              const modalImg = mealImageUrlForId(meal.templateId, customRecipes.find((r) => r.id === meal.templateId)?.imageUrl);
 
               return (
                 <>

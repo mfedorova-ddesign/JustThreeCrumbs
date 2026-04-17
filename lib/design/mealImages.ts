@@ -48,7 +48,8 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-cauliflower-steak-harissa": "/images/cabbage.jpg",
 };
 
-export function mealImageUrlForId(mealId: string): string {
+export function mealImageUrlForId(mealId: string, customUrl?: string): string {
+  if (customUrl) return customUrl;
   if (RECIPE_IMAGE_OVERRIDES[mealId]) {
     return RECIPE_IMAGE_OVERRIDES[mealId];
   }

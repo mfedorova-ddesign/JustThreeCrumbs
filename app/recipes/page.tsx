@@ -42,7 +42,10 @@ export default function RecipesPage() {
   const [favoriteOnly, setFavoriteOnly] = useState(false);
   const [skippedOnly, setSkippedOnly] = useState(false);
 
-  const allRecipes: Recipe[] = [...FIXED_RECIPES.map((recipe) => ({ ...recipe, source: "default" as const })), ...customRecipes];
+  const allRecipes: Recipe[] = [
+    ...customRecipes,
+    ...FIXED_RECIPES.map((recipe) => ({ ...recipe, source: "default" as const }))
+  ];
   const toggleMultiFilter = <T extends string>(selected: T[], value: T): T[] => {
     if (value === "all") return ["all" as T];
     const withoutAll = selected.filter((item) => item !== ("all" as T));
@@ -259,7 +262,7 @@ export default function RecipesPage() {
                   >
                     <div className="flex">
                       <div className="relative h-[100px] w-[88px] shrink-0 sm:h-[108px] sm:w-[100px]">
-                        <img src={mealImageUrlForId(recipe.id)} alt="" className="h-full w-full object-cover" loading="lazy" />
+                        <img src={mealImageUrlForId(recipe.id, recipe.imageUrl)} alt="" className="h-full w-full object-cover" loading="lazy" />
                       </div>
                       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-3 py-2.5">
                         <div className="flex flex-wrap items-center gap-1.5">

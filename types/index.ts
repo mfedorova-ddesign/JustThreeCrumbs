@@ -59,6 +59,8 @@ export type Recipe = {
   id: string;
   name: string;
   source?: "default" | "custom";
+  /** Custom user-uploaded image as a data URL or path. */
+  imageUrl?: string;
   mealTypes: MealType[];
   ingredients: RecipeIngredientRule[];
   constraints: {

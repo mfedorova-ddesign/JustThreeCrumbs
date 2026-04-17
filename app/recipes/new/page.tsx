@@ -4,20 +4,29 @@ import { Button } from "@/components/ui/Button";
 import { buildRecipePayload, computeRecipeMetricsFromForm, makeEmptyRecipeForm, mealTypeLabels } from "@/lib/recipes/editor";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { MealType } from "@/types";
+import { ImagePlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function NewRecipePage() {
   const router = useRouter();
   const { addCustomRecipe } = useGeneratorStore();
   const [form, setForm] = useState(makeEmptyRecipeForm());
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [calculatedMetrics, setCalculatedMetrics] = useState<ReturnType<typeof computeRecipeMetricsFromForm> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateForm = (updater: (prev: ReturnType<typeof makeEmptyRecipeForm>) => ReturnType<typeof makeEmptyRecipeForm>) => {
     setForm((prev) => updater(prev));
     setCalculatedMetrics(null);
+  };
+
+  const handleImageFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => setImageUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
   };
 
   const save = () => {
@@ -26,7 +35,7 @@ export default function NewRecipePage() {
       setError("Fill name, meal types, ingredients, and instructions.");
       return;
     }
-    addCustomRecipe(payload);
+    addCustomRecipe({ ...payload, imageUrl });
     router.push("/recipes");
   };
 
@@ -53,6 +62,34 @@ export default function NewRecipePage() {
               className="mt-1 w-full rounded-xl border border-brand-border px-3 py-2"
             />
           </label>
+
+          <div className="mt-4">
+            <div className="mb-2 text-sm font-medium text-brand-text/80">Photo (optional)</div>
+            {imageUrl ? (
+              <div className="relative w-36">
+                <img src={imageUrl} alt="Preview" className="h-24 w-36 rounded-xl border border-brand-border object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setImageUrl(undefined); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-brand-border bg-white text-brand-text/70 hover:bg-red-50 hover:text-red-700"
+                >
+                  <X className="size-3.5" strokeWidth={2.5} />
+                </button>
+              </div>
+            ) : (
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-brand-border bg-brand-bg/50 px-4 py-3 text-sm text-brand-text/70 transition hover:bg-brand-bg">
+                <ImagePlus className="size-4 shrink-0" strokeWidth={2} />
+                Upload photo
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageFile(f); }}
+                />
+              </label>
+            )}
+          </div>
 
           <div className="mt-4">
             <div className="mb-2 text-sm font-medium text-brand-text/80">Best for</div>
