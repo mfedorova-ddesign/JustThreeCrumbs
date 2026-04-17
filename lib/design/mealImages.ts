@@ -44,6 +44,7 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-salmon-caper-sauce": "/images/fish.jpg",
   "recipe-omelet-goat-cheese": "/images/fluffy-omelet-baked.jpg",
   "recipe-caesar-salad-keto": "/images/cesar.jpg",
+  "recipe-duck-orange": "/images/duck.jpg",
 };
 
 export function mealImageUrlForId(mealId: string): string {

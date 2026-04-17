@@ -726,5 +726,34 @@ export const FIXED_RECIPES: Recipe[] = [
       "Wash and dry romaine leaves thoroughly — wet leaves dilute the dressing. Tear large leaves into 2–3 pieces.",
       "Toss romaine with 2/3 of the dressing until every leaf is coated. Plate, then top with chicken slices, bacon, and poached eggs. Spoon remaining dressing over the top and finish with shaved parmesan and fresh black pepper."
     ]
+  },
+  {
+    id: "recipe-duck-orange",
+    name: "Duck breast with orange reduction",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "duck breast"),
+      ing("carbs", "orange"),
+      ing("fats", "butter"),
+      ing("vegetables", "cauliflower"),
+      ing("liquid", "red wine", { alternatives: ["chicken broth"] }),
+      ing("spices", "balsamic vinegar"),
+      ing("spices", "erythritol"),
+      ing("liquid", "cream"),
+      ing("spices", "thyme"),
+      ing("spices", "nutmeg"),
+      ing("spices", "black pepper"),
+      ing("spices", "parsley", { optional: true })
+    ],
+    constraints: { maxCarbs: 12, glycemicIndex: "low" },
+    instructions: [
+      "Take duck breasts out of the fridge 30 minutes before cooking. Score the skin in a diamond pattern at 1 cm intervals, cutting down to but not through the meat. Pat completely dry. Season all over with salt and black pepper.",
+      "Cook cauliflower florets in salted water 12–15 minutes until very tender. Drain thoroughly and steam-dry 2 minutes. Blend with butter, cream, and nutmeg until completely smooth and silky. Season to taste. Keep warm.",
+      "Place duck breasts skin-side down in a cold heavy pan — no oil. Turn heat to medium. Cook undisturbed 12–15 minutes as the fat renders out slowly; spoon off excess fat periodically (save it). The skin is ready when thin, deep golden, and releases easily from the pan.",
+      "Flip to the flesh side. Add thyme sprigs. Cook 3–4 minutes for medium rare (54–57°C) or 5–6 minutes for medium (60–63°C). Rest skin-side up on a warm plate under loose foil for 8 minutes — essential step.",
+      "Discard most fat from the pan, leaving about 1 tsp. Over medium heat, dissolve erythritol stirring for 1–2 minutes until lightly caramelised. Pour in orange juice, red wine (or broth), balsamic vinegar, and orange zest. Reduce on high heat 4–5 minutes until halved and lightly syrupy.",
+      "Remove pan from heat. Whisk in cold butter cubes 2–3 at a time until the sauce is glossy and emulsified. Adjust salt.",
+      "Spoon cauliflower purée onto each plate. Slice duck at an angle into 1–1.5 cm pieces and fan over the purée, skin-side up. Spoon orange reduction over the top. Garnish with fresh thyme or parsley. Serve immediately — the skin loses its crunch after 3–5 minutes."
+    ]
   }
 ];

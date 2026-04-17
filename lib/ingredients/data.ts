@@ -1681,4 +1681,52 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: false
   },
+  {
+    name: "duck breast",
+    calories: 201,
+    protein: 19.7,
+    fat: 13.5,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 200,
+    category: "protein",
+    vegetarian: false
+  },
+  {
+    name: "orange",
+    calories: 47,
+    protein: 0.9,
+    fat: 0.1,
+    carbs: 12,
+    fiber: 2.4,
+    glycemicIndex: 40,
+    portionGrams: 100,
+    category: "carbs",
+    vegetarian: true
+  },
+  {
+    name: "red wine",
+    calories: 85,
+    protein: 0.1,
+    fat: 0,
+    carbs: 2.6,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 60,
+    category: "liquid",
+    vegetarian: true
+  },
+  {
+    name: "balsamic vinegar",
+    calories: 88,
+    protein: 0.5,
+    fat: 0,
+    carbs: 17,
+    fiber: 0,
+    glycemicIndex: 35,
+    portionGrams: 10,
+    category: "spices",
+    vegetarian: true
+  },
 ];
