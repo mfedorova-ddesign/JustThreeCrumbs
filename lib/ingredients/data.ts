@@ -1400,4 +1400,40 @@ export const INGREDIENTS: Ingredient[] = [
     category: "spices",
     vegetarian: true
   },
+  {
+    name: "ribeye steak",
+    calories: 291,
+    protein: 24,
+    fat: 21,
+    carbs: 0,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 200,
+    category: "protein",
+    vegetarian: false
+  },
+  {
+    name: "rosemary",
+    calories: 131,
+    protein: 3.3,
+    fat: 5.9,
+    carbs: 20,
+    fiber: 14,
+    glycemicIndex: 5,
+    portionGrams: 3,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "lemon zest",
+    calories: 47,
+    protein: 1.5,
+    fat: 0.3,
+    carbs: 16,
+    fiber: 10,
+    glycemicIndex: 20,
+    portionGrams: 3,
+    category: "spices",
+    vegetarian: true
+  },
 ];

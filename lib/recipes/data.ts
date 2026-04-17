@@ -524,5 +524,35 @@ export const FIXED_RECIPES: Recipe[] = [
       "Stir in cream, dijon mustard, and nutmeg. Add cheddar in handfuls, stirring until fully melted before adding the next. Do not boil after adding cheese. Season with salt and black pepper.",
       "Ladle into bowls. Top with reserved florets, toasted seeds, a pinch of smoked paprika, and optional parmesan. Serve immediately."
     ]
+  },
+  {
+    id: "recipe-ribeye-herb-butter",
+    name: "Ribeye steak with herb butter",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "ribeye steak"),
+      ing("fats", "butter"),
+      ing("fats", "ghee"),
+      ing("vegetables", "green beans"),
+      ing("spices", "garlic"),
+      ing("spices", "rosemary"),
+      ing("spices", "thyme"),
+      ing("spices", "black pepper"),
+      ing("spices", "parsley", { optional: true }),
+      ing("spices", "lemon zest", { optional: true }),
+      ing("spices", "smoked paprika", { optional: true })
+    ],
+    constraints: { maxCarbs: 10, glycemicIndex: "low" },
+    instructions: [
+      "Take ribeye out of the fridge 45–60 minutes before cooking. Pat completely dry with paper towels — crucial for a good crust.",
+      "Make herb butter: mix softened butter with 1 crushed garlic clove, chopped parsley, lemon zest, and a pinch of salt. Roll into a log in cling film and refrigerate.",
+      "Season steak generously with coarse salt and black pepper on all sides including the edges. Let rest 10 minutes after seasoning.",
+      "Heat a cast-iron skillet over maximum heat for 3–4 minutes until almost smoking. Add ghee.",
+      "Place steak in pan — it should sizzle loudly. Do not move for 2.5–3 minutes; the crust will release itself when ready. Flip. Add crushed garlic cloves (unpeeled), rosemary, and thyme sprigs alongside.",
+      "Add a knob of plain butter. Tilt the pan and baste the steak continuously with the foaming herb-scented butter for 60–90 seconds.",
+      "Transfer steak to a board, tent loosely with foil, and rest 7–10 minutes. Do not skip — the juices redistribute and the internal temp rises 2–3°C more.",
+      "In the same pan (do not clean — the flavoured fat remains), sauté green beans over medium heat 4–5 minutes until lightly charred but still with a bite. Season with salt and pepper.",
+      "Slice steak against the grain into 1.5–2 cm pieces or serve whole. Top with a round of herb butter from the fridge and serve with green beans immediately."
+    ]
   }
 ];
