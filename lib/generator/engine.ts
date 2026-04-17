@@ -292,11 +292,9 @@ function resolveRecipeIngredients(
     if (!pickedName) continue;
     const ingredient = ingredientByName.get(pickedName);
     if (!ingredient) continue;
-    // Alternatives are the other allowed names from the rule (excluding the picked one)
+    // All valid names from this rule — including the picked one so the user can always swap back
     const ruleNames = [rule.primary, ...(rule.alternatives ?? [])];
-    const alternatives = ruleNames.filter(
-      (name) => name !== pickedName && ingredientByName.has(name)
-    );
+    const alternatives = ruleNames.filter((name) => ingredientByName.has(name));
     selected.push({
       ingredient: { ...ingredient, portionGrams: getIngredientPortionGrams(ingredient, mealType) },
       alternatives

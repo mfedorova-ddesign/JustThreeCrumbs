@@ -95,7 +95,11 @@ const ingredientByName = new Map(
 );
 
 function getSubstituteOptions(ingredientName: string, ruleAlternatives?: string[]): string[] {
-  return (ruleAlternatives ?? []).filter((option) => ingredientByName.has(option.toLowerCase()));
+  return (ruleAlternatives ?? []).filter(
+    (option) =>
+      option.toLowerCase() !== ingredientName.toLowerCase() &&
+      ingredientByName.has(option.toLowerCase())
+  );
 }
 
 function getHealthFact(ingredientName: string): string | null {
