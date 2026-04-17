@@ -65,6 +65,7 @@ const recipeSequenceByMealType: Record<MealType, string[]> = {
     "recipe-keto-chocolate-truffles",
     "recipe-keto-panna-cotta",
     "recipe-keto-mascarpone-mousse",
+    "recipe-keto-brownies",
     "recipe-chia-pudding-berries",
     "recipe-protein-salad-plate"
   ]

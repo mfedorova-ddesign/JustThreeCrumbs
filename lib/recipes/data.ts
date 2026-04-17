@@ -618,5 +618,27 @@ export const FIXED_RECIPES: Recipe[] = [
       "Divide into glasses or ramekins and refrigerate for at least 2 hours.",
       "Serve chilled, topped with fresh raspberries or other berries if desired."
     ]
+  },
+  {
+    id: "recipe-keto-brownies",
+    name: "Keto chocolate brownies",
+    mealTypes: ["snack"],
+    ingredients: [
+      ing("fats", "almond flour"),
+      ing("spices", "cocoa powder"),
+      ing("protein", "eggs"),
+      ing("fats", "butter"),
+      ing("spices", "erythritol"),
+      ing("spices", "baking powder")
+    ],
+    constraints: { maxCarbs: 10, glycemicIndex: "low" },
+    instructions: [
+      "Preheat oven to 180°C.",
+      "Melt butter and mix with cocoa powder until smooth.",
+      "Beat eggs into the chocolate-butter mixture, then add erythritol.",
+      "Stir in almond flour and baking powder until just combined.",
+      "Pour into a silicone mould (one large or several small) and bake 20–25 minutes.",
+      "Allow to cool completely before slicing — brownies firm up as they cool."
+    ]
   }
 ];

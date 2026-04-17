@@ -1534,4 +1534,29 @@ export const INGREDIENTS: Ingredient[] = [
     vegetarian: true,
     allergens: ["dairy"]
   },
+  {
+    name: "almond flour",
+    calories: 571,
+    protein: 21,
+    fat: 50,
+    carbs: 21,
+    fiber: 11,
+    glycemicIndex: 5,
+    portionGrams: 30,
+    category: "fats",
+    vegetarian: true,
+    allergens: ["tree nuts"]
+  },
+  {
+    name: "baking powder",
+    calories: 53,
+    protein: 0,
+    fat: 0,
+    carbs: 28,
+    fiber: 0,
+    glycemicIndex: 0,
+    portionGrams: 3,
+    category: "spices",
+    vegetarian: true
+  },
 ];
