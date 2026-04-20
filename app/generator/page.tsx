@@ -25,6 +25,7 @@ import {
   Download,
   RefreshCw,
   RotateCcw,
+  ShoppingCart,
   Sparkles,
   Trash2,
   User,
@@ -170,6 +171,7 @@ export default function GeneratorPage() {
   const [removedIngredients, setRemovedIngredients] = useState<RemovedIngredientsState>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [openedMealId, setOpenedMealId] = useState<string | null>(null);
+  const [showShoppingList, setShowShoppingList] = useState(false);
   const recommendedTargets = recommendedDailyTargets(profile);
 
   function commitPlan(updater: (prev: MealPlan) => MealPlan) {
@@ -323,6 +325,36 @@ export default function GeneratorPage() {
   function getVisibleIngredients(meal: GeneratedMeal): Ingredient[] {
     const removedMap = removedIngredients[meal.id] ?? {};
     return meal.ingredients.filter((_, index) => !removedMap[index]);
+  }
+
+  function buildShoppingList(): Map<string, { name: string; grams: number }[]> {
+    if (!mealPlan) return new Map();
+    const aggregate = new Map<string, { grams: number; category: string }>();
+    for (const day of mealPlan.days) {
+      for (const meal of [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack]) {
+        if (!meal || meal.skipped) continue;
+        for (const ing of getVisibleIngredients(meal)) {
+          const key = ing.name.toLowerCase();
+          const grams = ing.portionGrams ?? 100;
+          const existing = aggregate.get(key);
+          if (existing) existing.grams += grams;
+          else aggregate.set(key, { grams, category: ing.category });
+        }
+      }
+    }
+    const categoryOrder = ["protein", "vegetables", "carbs", "fats", "liquid", "spices"];
+    const grouped = new Map<string, { name: string; grams: number }[]>();
+    for (const [key, { grams, category }] of aggregate) {
+      const display = key.charAt(0).toUpperCase() + key.slice(1);
+      const list = grouped.get(category) ?? [];
+      list.push({ name: display, grams: Math.round(grams) });
+      grouped.set(category, list);
+    }
+    const sorted = new Map<string, { name: string; grams: number }[]>();
+    for (const cat of categoryOrder) {
+      if (grouped.has(cat)) sorted.set(cat, grouped.get(cat)!.sort((a, b) => a.name.localeCompare(b.name)));
+    }
+    return sorted;
   }
 
   function getIngredientRemoved(mealId: string, ingredientIndex: number): boolean {
@@ -567,7 +599,7 @@ export default function GeneratorPage() {
           </Button>
 
           {hasGenerated ? (
-            <div className="mt-4 grid gap-2 border-t border-brand-border/70 pt-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-2 border-t border-brand-border/70 pt-4 sm:grid-cols-3">
               <button
                 type="button"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-brand-border/90 bg-white text-[14px] font-medium text-brand-text transition hover:bg-brand-bg"
@@ -575,6 +607,14 @@ export default function GeneratorPage() {
               >
                 <Download className="size-4" strokeWidth={2} />
                 Export PDF
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-brand-primary/40 bg-[#EAF5EF] text-[14px] font-medium text-brand-primary transition hover:bg-[#d6edde]"
+                onClick={() => setShowShoppingList(true)}
+              >
+                <ShoppingCart className="size-4" strokeWidth={2} />
+                Shopping list
               </button>
               <button
                 type="button"
@@ -1020,6 +1060,68 @@ export default function GeneratorPage() {
                 </>
               );
             })()}
+          </div>
+        </div>
+      ) : null}
+
+      {showShoppingList ? (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4 animate-[fadeIn_180ms_ease-out]"
+          onClick={() => setShowShoppingList(false)}
+        >
+          <div
+            className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-brand-border/90 bg-white shadow-2xl animate-[modalIn_220ms_cubic-bezier(0.16,1,0.3,1)] sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-brand-border/70 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="size-5 text-brand-primary" strokeWidth={2} />
+                <h2 className="text-[17px] font-semibold text-brand-text">Shopping list</h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Close"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-bg"
+                onClick={() => setShowShoppingList(false)}
+              >
+                <X className="size-5" strokeWidth={2} />
+              </button>
+            </div>
+            <div className="px-5 py-4">
+              {(() => {
+                const list = buildShoppingList();
+                if (list.size === 0) {
+                  return <p className="text-sm text-brand-text/60">No ingredients found in the current plan.</p>;
+                }
+                const categoryLabels: Record<string, string> = {
+                  protein: "Protein",
+                  vegetables: "Vegetables",
+                  carbs: "Grains & Carbs",
+                  fats: "Fats & Oils",
+                  liquid: "Liquids",
+                  spices: "Spices & Seasonings"
+                };
+                return (
+                  <div className="space-y-5">
+                    {Array.from(list.entries()).map(([category, items]) => (
+                      <div key={category}>
+                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">
+                          {categoryLabels[category] ?? category}
+                        </p>
+                        <ul className="space-y-1">
+                          {items.map((item) => (
+                            <li key={item.name} className="flex items-center justify-between rounded-lg px-3 py-2 text-[14px] odd:bg-brand-bg/60">
+                              <span className="text-brand-text">{item.name}</span>
+                              <span className="text-brand-text/55">{item.grams} g</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </div>
       ) : null}
