@@ -367,6 +367,18 @@ export default function GeneratorPage() {
     return sorted;
   }
 
+  function getAdaptedLabel(meal: GeneratedMeal): string {
+    if (!meal.isVegetarian && !meal.isVegan) return "";
+    const recipe = [...FIXED_RECIPES, ...customRecipes].find((r) => r.id === meal.templateId);
+    if (!recipe) return "";
+    const originalIsVeg = recipe.ingredients.every((rule) => {
+      const ing = ingredientByName.get(rule.primary.toLowerCase());
+      return ing ? ing.vegetarian : true;
+    });
+    if (originalIsVeg) return "";
+    return meal.isVegan ? " (vegan)" : " (vegetarian)";
+  }
+
   function shoppingListAsText(): string {
     const list = buildShoppingList();
     const lines: string[] = ["SHOPPING LIST", ""];
@@ -489,7 +501,7 @@ export default function GeneratorPage() {
 
       activeMeals.forEach((meal) => {
         ensureSpace(64);
-        writeLine(`${meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}: ${meal.name}`, {
+        writeLine(`${meal.mealType[0].toUpperCase() + meal.mealType.slice(1)}: ${meal.name}${getAdaptedLabel(meal)}`, {
           bold: true
         });
         writeLine(
@@ -866,7 +878,7 @@ export default function GeneratorPage() {
                                 ) : null}
                               </div>
                               <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-brand-text sm:text-base">
-                                {meal.name}
+                                {meal.name}{getAdaptedLabel(meal)}
                               </h3>
                               <div className="scrollbar-none flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-brand-text/55"> 
                                 <span>{Math.round(meal.calories)} kcal</span>
@@ -963,7 +975,7 @@ export default function GeneratorPage() {
                       ) : null}
                     </div>
                     <h3 className="mt-2 text-xl font-semibold leading-snug tracking-tight text-brand-text sm:text-2xl">
-                      {meal.name}
+                      {meal.name}{getAdaptedLabel(meal)}
                     </h3>
 
                   <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
