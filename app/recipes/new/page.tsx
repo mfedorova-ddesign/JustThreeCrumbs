@@ -32,7 +32,7 @@ export default function NewRecipePage() {
   const save = () => {
     const payload = buildRecipePayload(form);
     if (!payload) {
-      setError("Fill name, meal types, ingredients, and instructions.");
+      setError("Fill in the dish name, ingredients, and instructions.");
       return;
     }
     addCustomRecipe({ ...payload, imageUrl });

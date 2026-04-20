@@ -113,12 +113,12 @@ export function buildRecipePayload(form: RecipeFormState): Omit<Recipe, "id" | "
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
-  if (!form.name.trim() || form.mealTypes.length === 0 || ingredients.length === 0 || instructions.length === 0) {
+  if (!form.name.trim() || ingredients.length === 0 || instructions.length === 0) {
     return null;
   }
   return {
     name: form.name.trim(),
-    mealTypes: form.mealTypes,
+    mealTypes: form.mealTypes.length > 0 ? form.mealTypes : ["lunch", "dinner"],
     ingredients,
     constraints: {
       maxCarbs: Number(form.maxCarbs) > 0 ? Number(form.maxCarbs) : 45,
@@ -128,13 +128,22 @@ export function buildRecipePayload(form: RecipeFormState): Omit<Recipe, "id" | "
   };
 }
 
-export function computeRecipeMetricsFromForm(form: RecipeFormState): ReturnType<typeof recipeNutrition> | null {
-  const payload = buildRecipePayload(form);
-  if (!payload) return null;
-  const draftRecipe: Recipe = {
-    id: "draft-recipe",
+/** Calculate nutrition from ingredients text only — no other fields required. */
+export function computeNutritionFromIngredients(ingredientsText: string): ReturnType<typeof recipeNutrition> | null {
+  const ingredients = parseIngredients(ingredientsText);
+  if (ingredients.length === 0) return null;
+  const draft: Recipe = {
+    id: "draft",
     source: "custom",
-    ...payload
+    name: "draft",
+    mealTypes: ["lunch"],
+    ingredients,
+    constraints: { maxCarbs: 45, glycemicIndex: "low" },
+    instructions: []
   };
-  return recipeNutrition(draftRecipe);
+  return recipeNutrition(draft);
+}
+
+export function computeRecipeMetricsFromForm(form: RecipeFormState): ReturnType<typeof recipeNutrition> | null {
+  return computeNutritionFromIngredients(form.ingredientsText);
 }
