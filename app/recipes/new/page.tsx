@@ -165,7 +165,7 @@ export default function NewRecipePage() {
                 </div>
                 <div className="rounded-lg bg-white px-2 py-1">Fiber: {Math.round(calculatedMetrics.fiber)}g</div>
                 <div className="rounded-lg bg-white px-2 py-1">
-                  Glycemic Index: {Math.max(1, calculatedMetrics.glycemicIndex)} | Diabetic Score: {calculatedMetrics.diabeticScore}
+                  Glycemic Index: {calculatedMetrics.glycemicIndex} | Diabetic Score: {calculatedMetrics.diabeticScore}
                 </div>
               </div>
             ) : (

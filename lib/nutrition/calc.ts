@@ -83,13 +83,21 @@ export function diabeticScore(ingredients: Ingredient[]): number {
   const gi = glycemicIndexAverage(ingredients);
   const calories = sumCalories(ingredients);
 
-  const giPenalty = Math.max(0, (gi - 40) / 4.5);
-  const carbPenalty = Math.max(0, (macros.carbs - 35) / 10);
-  const fiberBonus = Math.min(2, fiber / 6);
-  const proteinBonus = Math.min(1.5, macros.protein / 20);
-  const caloriePenalty = calories > 750 ? (calories - 750) / 200 : 0;
+  // Glycemic load (GL = GI × carbs / 100) is clinically more relevant than GI alone
+  // for predicting post-meal blood glucose response.
+  const glycemicLoad = (gi * macros.carbs) / 100;
 
-  const score = 7.5 + fiberBonus + proteinBonus - giPenalty - carbPenalty - caloriePenalty;
+  // Penalties — raise these for meals that are harder to manage with type 2 diabetes
+  const glPenalty = Math.max(0, (glycemicLoad - 10) / 2.5);   // GL ≤ 10 is low, > 20 is high
+  const carbPenalty = Math.max(0, (macros.carbs - 30) / 12);  // excess carbs over 30 g
+  const caloriePenalty = calories > 650 ? (calories - 650) / 220 : 0;
+
+  // Bonuses — reward meal properties that help control blood glucose
+  const fiberBonus = Math.min(2.5, fiber / 3.5);             // fibre slows glucose absorption
+  const proteinBonus = Math.min(1.5, macros.protein / 15);   // protein aids satiety & glucose regulation
+  const fatBonus = Math.min(0.5, macros.fat / 25);           // fats slow digestion slightly
+
+  const score = 5.0 + fiberBonus + proteinBonus + fatBonus - glPenalty - carbPenalty - caloriePenalty;
   return Number(Math.max(1, Math.min(10, score)).toFixed(1));
 }
 
