@@ -88,7 +88,7 @@ export function diabeticScore(ingredients: Ingredient[]): number {
   const glycemicLoad = (gi * macros.carbs) / 100;
 
   // Penalties — raise these for meals that are harder to manage with type 2 diabetes
-  const glPenalty = Math.max(0, (glycemicLoad - 10) / 2.5);   // GL ≤ 10 is low, > 20 is high
+  const glPenalty = Math.max(0, (glycemicLoad - 10) / 3.5);   // GL ≤ 10 is low, > 20 is high
   const carbPenalty = Math.max(0, (macros.carbs - 30) / 12);  // excess carbs over 30 g
   const caloriePenalty = calories > 650 ? (calories - 650) / 220 : 0;
 
