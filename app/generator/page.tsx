@@ -22,6 +22,7 @@ import { mealImageUrlForId } from "@/lib/design/mealImages";
 import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType } from "@/types";
 import {
   ChevronRight,
+  Copy,
   Download,
   RefreshCw,
   RotateCcw,
@@ -149,6 +150,15 @@ function recalculateMeal(meal: GeneratedMeal, removedMap: Record<number, boolean
     isVegan: isVeganMeal(activeIngredients)
   };
 }
+
+const SHOPPING_CATEGORY_LABELS: Record<string, string> = {
+  protein: "Protein",
+  vegetables: "Vegetables",
+  carbs: "Grains & Carbs",
+  fats: "Fats & Oils",
+  liquid: "Liquids",
+  spices: "Spices & Seasonings"
+};
 
 export default function GeneratorPage() {
   const {
@@ -355,6 +365,41 @@ export default function GeneratorPage() {
       if (grouped.has(cat)) sorted.set(cat, grouped.get(cat)!.sort((a, b) => a.name.localeCompare(b.name)));
     }
     return sorted;
+  }
+
+  function shoppingListAsText(): string {
+    const list = buildShoppingList();
+    const lines: string[] = ["SHOPPING LIST", ""];
+    for (const [category, items] of list.entries()) {
+      lines.push((SHOPPING_CATEGORY_LABELS[category] ?? category).toUpperCase());
+      for (const item of items) lines.push(`• ${item.name} — ${item.grams} g`);
+      lines.push("");
+    }
+    return lines.join("\n").trim();
+  }
+
+  function copyShoppingList() {
+    navigator.clipboard.writeText(shoppingListAsText()).then(() => setToastMessage("Copied to clipboard"));
+  }
+
+  async function exportShoppingListPdf() {
+    const list = buildShoppingList();
+    const { default: jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const marginX = 40;
+    const lineHeight = 16;
+    let y = 48;
+    const ensureSpace = () => { if (y + lineHeight > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); y = 48; } };
+    const write = (text: string, bold = false, size = 11) => { ensureSpace(); doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(size); doc.text(text, marginX, y); y += lineHeight; };
+
+    write("Shopping List", true, 16);
+    y += 8;
+    for (const [category, items] of list.entries()) {
+      y += 6;
+      write((SHOPPING_CATEGORY_LABELS[category] ?? category).toUpperCase(), true, 10);
+      for (const item of items) write(`${item.name} — ${item.grams} g`);
+    }
+    doc.save("shopping-list.pdf");
   }
 
   function getIngredientRemoved(mealId: string, ingredientIndex: number): boolean {
@@ -1078,14 +1123,34 @@ export default function GeneratorPage() {
                 <ShoppingCart className="size-5 text-brand-primary" strokeWidth={2} />
                 <h2 className="text-[17px] font-semibold text-brand-text">Shopping list</h2>
               </div>
-              <button
-                type="button"
-                aria-label="Close"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-bg"
-                onClick={() => setShowShoppingList(false)}
-              >
-                <X className="size-5" strokeWidth={2} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  aria-label="Copy to clipboard"
+                  title="Copy to clipboard"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-bg"
+                  onClick={copyShoppingList}
+                >
+                  <Copy className="size-4" strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Export PDF"
+                  title="Export PDF"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-bg"
+                  onClick={() => void exportShoppingListPdf()}
+                >
+                  <Download className="size-4" strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-bg"
+                  onClick={() => setShowShoppingList(false)}
+                >
+                  <X className="size-5" strokeWidth={2} />
+                </button>
+              </div>
             </div>
             <div className="px-5 py-4">
               {(() => {
@@ -1093,20 +1158,12 @@ export default function GeneratorPage() {
                 if (list.size === 0) {
                   return <p className="text-sm text-brand-text/60">No ingredients found in the current plan.</p>;
                 }
-                const categoryLabels: Record<string, string> = {
-                  protein: "Protein",
-                  vegetables: "Vegetables",
-                  carbs: "Grains & Carbs",
-                  fats: "Fats & Oils",
-                  liquid: "Liquids",
-                  spices: "Spices & Seasonings"
-                };
                 return (
                   <div className="space-y-5">
                     {Array.from(list.entries()).map(([category, items]) => (
                       <div key={category}>
                         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">
-                          {categoryLabels[category] ?? category}
+                          {SHOPPING_CATEGORY_LABELS[category] ?? category}
                         </p>
                         <ul className="space-y-1">
                           {items.map((item) => (
