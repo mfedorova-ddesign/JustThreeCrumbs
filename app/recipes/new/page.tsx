@@ -15,12 +15,14 @@ export default function NewRecipePage() {
   const [form, setForm] = useState(makeEmptyRecipeForm());
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
-  const [calculatedMetrics, setCalculatedMetrics] = useState<ReturnType<typeof computeRecipeMetricsFromForm> | null>(null);
+  const [calculatedMetrics, setCalculatedMetrics] = useState<ReturnType<typeof computeRecipeMetricsFromForm>>(null);
+  const [calcAttempted, setCalcAttempted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateForm = (updater: (prev: ReturnType<typeof makeEmptyRecipeForm>) => ReturnType<typeof makeEmptyRecipeForm>) => {
     setForm((prev) => updater(prev));
     setCalculatedMetrics(null);
+    setCalcAttempted(false);
   };
 
   const handleImageFile = (file: File) => {
@@ -143,7 +145,10 @@ export default function NewRecipePage() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Button type="button" variant="secondary" onClick={() => setCalculatedMetrics(computeRecipeMetricsFromForm(form))}>
+            <Button type="button" variant="secondary" onClick={() => {
+              setCalculatedMetrics(computeRecipeMetricsFromForm(form));
+              setCalcAttempted(true);
+            }}>
               Calculate nutrition
             </Button>
             <Button type="button" onClick={save}>
@@ -168,9 +173,13 @@ export default function NewRecipePage() {
                   Glycemic Index: {calculatedMetrics.glycemicIndex} | Diabetic Score: {calculatedMetrics.diabeticScore}
                 </div>
               </div>
+            ) : calcAttempted ? (
+              <p className="mt-2 text-xs text-red-600">
+                No ingredients recognised. Use English names matching our database (e.g. eggs, chicken breast, spinach).
+              </p>
             ) : (
               <p className="mt-2 text-xs text-brand-text/60">
-                Click Calculate nutrition to preview calories, protein, fat, carbs, glycemic index and diabetic score.
+                Enter ingredients above, then click Calculate nutrition.
               </p>
             )}
           </div>

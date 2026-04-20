@@ -375,28 +375,35 @@ function selectRecipe(
   const skipped = new Set(options.skippedRecipeIds ?? []);
   const favorites = new Set(options.favoriteRecipeIds ?? []);
   const orderedIds = recipeSequenceByMealType[mealType];
-  const pool = orderedIds
+  const basePool = orderedIds
     .map((id) => recipeSource.find((recipe) => recipe.id === id))
     .filter((recipe): recipe is Recipe => Boolean(recipe))
     .filter((recipe) => recipe.mealTypes.includes(mealType))
     .filter((recipe) => recipeAllowedForUser(recipe, user))
     .filter((recipe) => !excludedRecipeIds.includes(recipe.id))
     .filter((recipe) => !skipped.has(recipe.id));
-  const fallback = recipeSource.filter(
+  const customPool = recipeSource.filter(
     (recipe) =>
+      !orderedIds.includes(recipe.id) &&
       recipe.mealTypes.includes(mealType) &&
       recipeAllowedForUser(recipe, user) &&
       !excludedRecipeIds.includes(recipe.id) &&
       !skipped.has(recipe.id)
   );
-  const source = pool.length > 0 ? pool : fallback;
-  if (source.length === 0) {
+  const allEligible = [...(basePool.length > 0 ? basePool : recipeSource.filter(
+    (recipe) =>
+      recipe.mealTypes.includes(mealType) &&
+      recipeAllowedForUser(recipe, user) &&
+      !excludedRecipeIds.includes(recipe.id) &&
+      !skipped.has(recipe.id)
+  )), ...customPool];
+  if (allEligible.length === 0) {
     throw new Error(`No recipe available for ${mealType} and current dietary constraints.`);
   }
   const weighted = [
-    ...source,
-    ...source.filter((recipe) => favorites.has(recipe.id)),
-    ...source.filter((recipe) => favorites.has(recipe.id))
+    ...allEligible,
+    ...allEligible.filter((recipe) => favorites.has(recipe.id)),
+    ...allEligible.filter((recipe) => favorites.has(recipe.id))
   ];
   const index = Math.abs(dayIndex + seed) % weighted.length;
   return weighted[index];

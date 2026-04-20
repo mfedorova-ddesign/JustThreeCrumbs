@@ -18,7 +18,8 @@ export default function EditRecipePage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(() => (recipe ? toRecipeForm(recipe) : null));
   const [imageUrl, setImageUrl] = useState<string | undefined>(() => recipe?.imageUrl);
-  const [calculatedMetrics, setCalculatedMetrics] = useState<ReturnType<typeof computeRecipeMetricsFromForm> | null>(null);
+  const [calculatedMetrics, setCalculatedMetrics] = useState<ReturnType<typeof computeRecipeMetricsFromForm>>(null);
+  const [calcAttempted, setCalcAttempted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export default function EditRecipePage() {
       setForm(toRecipeForm(recipe));
       setImageUrl(recipe.imageUrl);
       setCalculatedMetrics(null);
+      setCalcAttempted(false);
     }
   }, [recipe]);
 
@@ -59,6 +61,7 @@ export default function EditRecipePage() {
   const updateForm = (updater: (prev: typeof form) => typeof form) => {
     setForm((prev) => updater(prev));
     setCalculatedMetrics(null);
+    setCalcAttempted(false);
   };
 
   return (
@@ -171,7 +174,10 @@ export default function EditRecipePage() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <Button type="button" variant="secondary" onClick={() => setCalculatedMetrics(computeRecipeMetricsFromForm(form))}>
+            <Button type="button" variant="secondary" onClick={() => {
+              setCalculatedMetrics(computeRecipeMetricsFromForm(form));
+              setCalcAttempted(true);
+            }}>
               Calculate nutrition
             </Button>
             <Button type="button" onClick={save}>
@@ -197,6 +203,10 @@ export default function EditRecipePage() {
                   {calculatedMetrics.diabeticScore}
                 </div>
               </div>
+            ) : calcAttempted ? (
+              <p className="mt-2 text-xs text-red-600">
+                No ingredients recognised. Use English names matching our database (e.g. eggs, chicken breast, spinach).
+              </p>
             ) : (
               <p className="mt-2 text-xs text-brand-text/60">
                 Click Calculate nutrition to preview calories, protein, fat, carbs, glycemic index and diabetic score.
