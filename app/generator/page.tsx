@@ -629,37 +629,41 @@ export default function GeneratorPage() {
         </div>
 
         <section className="mt-6 rounded-2xl border border-brand-border/90 bg-white p-4 shadow-soft sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">Plan length</p>
-          <div className="mt-3 flex rounded-xl bg-brand-bg p-1">
-            {([1, 3, 7] as const).map((d) => (
-              <button
-                key={d}
-                type="button"
-                disabled={loading}
-                onClick={() => setSelectedPlanRange(d)}
-                className={`flex-1 rounded-lg py-2.5 text-center text-[13px] font-medium transition sm:text-sm ${
-                  selectedPlanRange === d
-                    ? "bg-white text-brand-text shadow-sm"
-                    : "text-brand-text/50 hover:text-brand-text/80"
-                }`}
-              >
-                {d === 1 ? "1 day" : d === 3 ? "3 days" : "1 week"}
-              </button>
-            ))}
-          </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">Plan length</p>
+              <div className="mt-2 flex rounded-xl bg-brand-bg p-1 sm:w-64">
+                {([1, 3, 7] as const).map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => setSelectedPlanRange(d)}
+                    className={`flex-1 rounded-lg py-2.5 text-center text-[13px] font-medium transition sm:text-sm ${
+                      selectedPlanRange === d
+                        ? "bg-white text-brand-text shadow-sm"
+                        : "text-brand-text/50 hover:text-brand-text/80"
+                    }`}
+                  >
+                    {d === 1 ? "1 day" : d === 3 ? "3 days" : "1 week"}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          <Button
-            type="button"
-            variant="primary"
-            className="mt-4 h-12 w-full rounded-xl text-[15px] font-semibold shadow-soft"
-            onClick={onGenerateMealPlan}
-            disabled={loading}
-          >
-            <span className="inline-flex items-center justify-center gap-2">
-              <Sparkles className="size-[18px]" strokeWidth={2} />
-              {loading ? "Generating…" : "Generate meal plan"}
-            </span>
-          </Button>
+            <Button
+              type="button"
+              variant="primary"
+              className="h-12 w-full rounded-xl text-[15px] font-semibold shadow-soft sm:w-auto sm:px-10"
+              onClick={onGenerateMealPlan}
+              disabled={loading}
+            >
+              <span className="inline-flex items-center justify-center gap-2">
+                <Sparkles className="size-[18px]" strokeWidth={2} />
+                {loading ? "Generating…" : "Generate meal plan"}
+              </span>
+            </Button>
+          </div>
 
           {hasGenerated ? (
             <div className="mt-4 grid gap-2 border-t border-brand-border/70 pt-4 sm:grid-cols-3">
