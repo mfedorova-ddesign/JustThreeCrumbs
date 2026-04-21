@@ -152,7 +152,6 @@ function PlateSVG({
 }) {
   // Opacity: 0.25 when empty, 0.8 when has content; active section gets a highlight ring
   const opacity = (s: SectionId) => (sections[s].length > 0 ? 0.82 : 0.22);
-  const strokeW = (s: SectionId) => (s === activeSection ? "3" : "0");
 
   return (
     <svg viewBox="0 0 220 220" className="w-full max-w-[240px]" aria-label="Plate diagram">
