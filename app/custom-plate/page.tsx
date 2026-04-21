@@ -8,7 +8,8 @@ import { Ingredient, IngredientCategory } from "@/types";
 import { Minus, Plus, Shuffle, Trash2, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import type { CSSProperties } from "react";
+import { useId, useMemo, useState } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -55,8 +56,8 @@ const SECTIONS: Record<SectionId, {
     categories: ["carbs"],
   },
   fats: {
-    label: "Healthy fats",
-    hint: "Small amount — oils & dressings",
+    label: "Fats",
+    hint: "Small amount — oils, nuts, avocado",
     svgFill: "#818CF8",
     activeBg: "bg-[#EEF2FF]",
     activeText: "text-[#4F46E5]",
@@ -139,103 +140,341 @@ function cap(n: number, dec = 1) { return Math.round(n * 10 ** dec) / 10 ** dec;
 function pct(val: number, target: number) { return target > 0 ? Math.min(100, Math.round((val / target) * 100)) : 0; }
 function displayName(name: string) { return name.charAt(0).toUpperCase() + name.slice(1); }
 
+/** Protein: modest overshoot is OK — only treat as “over” well above meal target */
+const PROTEIN_OVER_TARGET_MULTIPLIER = 1.2;
+
+/** True when current amount is above meal target (show red glow). Use `multiplier` > 1 to allow a buffer (protein). */
+function isOverTarget(value: number, target: number, multiplier = 1): boolean {
+  return target > 0 && value > target * multiplier + 1e-6;
+}
+
+const overValueClassName = "font-semibold text-red-600 animate-pulse";
+
+function overValueStyle(): CSSProperties {
+  return {
+    textShadow: "0 0 10px rgba(248, 113, 113, 0.95), 0 0 20px rgba(220, 38, 38, 0.6)",
+  };
+}
+
+function clampGrams(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.round(value));
+}
+
+/** Full-sector template (grey); brand colour fills only the angular / radial portion given by nutrient % */
+const PLATE_NEUTRAL_HEX = "#B4B8C4";
+
+/** Coloured wedge: west → north along outer rim (carbs quadrant), p = 0–100 */
+function partialCarbsColoredPath(p: number): string | null {
+  if (p <= 0) return null;
+  if (p >= 100) return "M110 110 L10 110 A100 100 0 0 1 110 10 Z";
+  const u = p / 100;
+  const endA = Math.PI + (Math.PI / 2) * u;
+  const ex = 110 + 100 * Math.cos(endA);
+  const ey = 110 + 100 * Math.sin(endA);
+  return `M110 110 L10 110 A100 100 0 0 1 ${ex} ${ey} Z`;
+}
+
+/** Coloured wedge: west → south along outer rim (protein quadrant), p = 0–100 */
+function partialProteinColoredPath(p: number): string | null {
+  if (p <= 0) return null;
+  if (p >= 100) return "M110 110 L10 110 A100 100 0 0 0 110 210 Z";
+  const u = p / 100;
+  const endA = Math.PI - (Math.PI / 2) * u;
+  const ex = 110 + 100 * Math.cos(endA);
+  const ey = 110 + 100 * Math.sin(endA);
+  return `M110 110 L10 110 A100 100 0 0 0 ${ex} ${ey} Z`;
+}
+
+/** Coloured wedge: north → east → south along outer rim (right half), p = 0–100 of 180° */
+function partialVegetablesColoredPath(p: number): string | null {
+  if (p <= 0) return null;
+  if (p >= 100) return "M110 110 L110 10 A100 100 0 0 1 210 110 A100 100 0 0 1 110 210 Z";
+  const u = p / 100;
+  const endA = -Math.PI / 2 + Math.PI * u;
+  const ex = 110 + 100 * Math.cos(endA);
+  const ey = 110 + 100 * Math.sin(endA);
+  return `M110 110 L110 10 A100 100 0 0 1 ${ex} ${ey} Z`;
+}
+
+function sectionTotals(sections: Sections, sid: SectionId) {
+  return sections[sid].reduce(
+    (acc, e) => {
+      const n = entryNutrition(e);
+      acc.calories += n.calories;
+      acc.protein += n.protein;
+      acc.carbs += n.carbs;
+      acc.fat += n.fat;
+      acc.fiber += n.fiber;
+      return acc;
+    },
+    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+  );
+}
+
+/**
+ * 0–100: how close this section’s nutrients are to the meal target (plate-style weights for veg).
+ * No ingredients → 0 (full neutral grey).
+ */
+function sectionNutrientFillPercent(
+  sid: SectionId,
+  sections: Sections,
+  mealTarget: { calories: number; protein: number; carbs: number; fat: number; fiber: number }
+): number {
+  if (sections[sid].length === 0) return 0;
+  const s = sectionTotals(sections, sid);
+  switch (sid) {
+    case "vegetables": {
+      const calT = Math.max(1, mealTarget.calories * 0.5);
+      const fibT = Math.max(1, mealTarget.fiber * 0.45);
+      return Math.min(100, Math.round((pct(s.calories, calT) + pct(s.fiber, fibT)) / 2));
+    }
+    case "protein":
+      return pct(s.protein, Math.max(1, mealTarget.protein));
+    case "carbs":
+      return pct(s.carbs, Math.max(1, mealTarget.carbs));
+    case "fats":
+      return pct(s.fat, Math.max(1, mealTarget.fat));
+    default:
+      return 0;
+  }
+}
+
 // ── Plate SVG ──────────────────────────────────────────────────────────────────
 
 function PlateSVG({
   sections,
   activeSection,
   onSectionClick,
+  mealTarget,
 }: {
   sections: Sections;
   activeSection: SectionId;
   onSectionClick: (s: SectionId) => void;
+  mealTarget: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
 }) {
-  // Opacity: 0.25 when empty, 0.8 when has content; active section gets a highlight ring
-  const opacity = (s: SectionId) => (sections[s].length > 0 ? 0.82 : 0.22);
+  const fatsGradId = `fatsg-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const pCarbs = sectionNutrientFillPercent("carbs", sections, mealTarget);
+  const pVeg = sectionNutrientFillPercent("vegetables", sections, mealTarget);
+  const pProt = sectionNutrientFillPercent("protein", sections, mealTarget);
+  const pFats = sectionNutrientFillPercent("fats", sections, mealTarget);
+
+  const dCarbsColor = partialCarbsColoredPath(pCarbs);
+  const dVegColor = partialVegetablesColoredPath(pVeg);
+  const dProtColor = partialProteinColoredPath(pProt);
+
+  /** White sector seams only — never stroke filled wedges (stroke bleeds inward on radial edges and “erases” protein). */
+  const seamW = 2.5;
 
   return (
     <svg viewBox="0 0 220 220" className="w-full max-w-[240px]" aria-label="Plate diagram">
       {/* Shadow */}
-      <ellipse cx="110" cy="216" rx="90" ry="5" fill="#00000012" />
-      {/* Plate rim */}
-      <circle cx="110" cy="110" r="104" fill="white" stroke="#E5E7EB" strokeWidth="2" />
+      <ellipse cx="110" cy="216" rx="90" ry="5" fill="#00000014" />
+      {/* Outer rim — white fill so sector arcs (r=100) do not show a grey band outside the orange/green/yellow */}
+      <circle cx="110" cy="110" r="104" fill="white" stroke="#E5E7EB" strokeWidth="3" />
 
-      {/* Vegetables — top semicircle */}
-      <path
-        d="M110 110 L10 110 A100 100 0 0 0 210 110 Z"
-        fill={SECTIONS.vegetables.svgFill}
-        opacity={opacity("vegetables")}
-        className="cursor-pointer transition-opacity duration-200"
-        onClick={() => onSectionClick("vegetables")}
-      />
+      {/*
+        Donut-style plate:
+        · Grey full wedge + brand-coloured partial wedge (nutrient % = angular fill of that sector)
+        · Fats: radial fill from centre outward by same %
+      */}
+
+      {/* Carbs — top-left 25% */}
+      <g className="cursor-pointer" onClick={() => onSectionClick("carbs")}>
+        <path d="M110 110 L10 110 A100 100 0 0 1 110 10 Z" fill={PLATE_NEUTRAL_HEX} stroke="none" />
+        {dCarbsColor ? <path d={dCarbsColor} fill={SECTIONS.carbs.svgFill} stroke="none" /> : null}
+      </g>
+      {activeSection === "carbs" && (
+        <path d="M110 110 L10 110 A100 100 0 0 1 110 10 Z" fill="none" stroke="#A16207" strokeWidth="2.5" strokeDasharray="5 4" opacity="0.55" />
+      )}
+
+      {/* Vegetables — right half 50% */}
+      <g className="cursor-pointer" onClick={() => onSectionClick("vegetables")}>
+        <path d="M110 110 L110 10 A100 100 0 0 1 210 110 A100 100 0 0 1 110 210 Z" fill={PLATE_NEUTRAL_HEX} stroke="none" />
+        {dVegColor ? <path d={dVegColor} fill={SECTIONS.vegetables.svgFill} stroke="none" /> : null}
+      </g>
       {activeSection === "vegetables" && (
-        <path d="M110 110 L10 110 A100 100 0 0 0 210 110 Z" fill="none" stroke="white" strokeWidth="3" strokeDasharray="6 3" opacity=".7" />
+        <path
+          d="M110 110 L110 10 A100 100 0 0 1 210 110 A100 100 0 0 1 110 210 Z"
+          fill="none"
+          stroke="#166534"
+          strokeWidth="2.5"
+          strokeDasharray="6 4"
+          opacity="0.55"
+        />
       )}
 
-      {/* Protein — bottom-left quarter */}
-      <path
-        d="M110 110 L10 110 A100 100 0 0 1 110 210 Z"
-        fill={SECTIONS.protein.svgFill}
-        opacity={opacity("protein")}
-        className="cursor-pointer transition-opacity duration-200"
-        onClick={() => onSectionClick("protein")}
-      />
+      {/* Protein — bottom-left 25% (west→south arc must use sweep=0) */}
+      <g className="cursor-pointer" onClick={() => onSectionClick("protein")}>
+        <path d="M110 110 L10 110 A100 100 0 0 0 110 210 Z" fill={PLATE_NEUTRAL_HEX} stroke="none" />
+        {dProtColor ? <path d={dProtColor} fill={SECTIONS.protein.svgFill} stroke="none" /> : null}
+      </g>
+      {activeSection === "protein" && (
+        <path d="M110 110 L10 110 A100 100 0 0 0 110 210 Z" fill="none" stroke="#9A3412" strokeWidth="2.5" strokeDasharray="5 4" opacity="0.55" />
+      )}
 
-      {/* Carbs — bottom-right quarter */}
-      <path
-        d="M110 110 L110 210 A100 100 0 0 1 210 110 Z"
-        fill={SECTIONS.carbs.svgFill}
-        opacity={opacity("carbs")}
-        className="cursor-pointer transition-opacity duration-200"
-        onClick={() => onSectionClick("carbs")}
-      />
+      {/* Sector seams (on top of fills, under fats disc) */}
+      <g stroke="white" strokeWidth={seamW} strokeLinecap="round" pointerEvents="none">
+        <line x1="110" y1="10" x2="110" y2="210" />
+        <line x1="10" y1="110" x2="110" y2="110" />
+      </g>
 
-      {/* Dividers */}
-      <line x1="10" y1="110" x2="210" y2="110" stroke="white" strokeWidth="2.5" />
-      <line x1="110" y1="110" x2="110" y2="210" stroke="white" strokeWidth="2.5" />
-
-      {/* Fats — center circle */}
-      <circle
-        cx="110" cy="110" r="27"
-        fill={SECTIONS.fats.svgFill}
-        opacity={opacity("fats")}
-        className="cursor-pointer transition-opacity duration-200"
-        onClick={() => onSectionClick("fats")}
-      />
-      <circle cx="110" cy="110" r="27" fill="none" stroke="white" strokeWidth="2" />
+      {/* Fats — radial coloured fill grows from centre with nutrient % */}
+      <g className="cursor-pointer" onClick={() => onSectionClick("fats")}>
+        {pFats <= 0 ? (
+          <circle cx="110" cy="110" r="33.5" fill={PLATE_NEUTRAL_HEX} stroke="none" />
+        ) : pFats >= 100 ? (
+          <circle cx="110" cy="110" r="33.5" fill={SECTIONS.fats.svgFill} stroke="none" />
+        ) : (
+          <>
+            <defs>
+              <radialGradient id={fatsGradId} gradientUnits="userSpaceOnUse" cx={110} cy={110} r={33.5}>
+                <stop offset="0%" stopColor={SECTIONS.fats.svgFill} />
+                <stop offset={`${pFats}%`} stopColor={SECTIONS.fats.svgFill} />
+                <stop offset={`${pFats}%`} stopColor={PLATE_NEUTRAL_HEX} />
+                <stop offset="100%" stopColor={PLATE_NEUTRAL_HEX} />
+              </radialGradient>
+            </defs>
+            <circle cx="110" cy="110" r="33.5" fill={`url(#${fatsGradId})`} stroke="none" />
+          </>
+        )}
+      </g>
       {activeSection === "fats" && (
-        <circle cx="110" cy="110" r="27" fill="none" stroke="white" strokeWidth="2.5" strokeDasharray="5 3" opacity=".8" />
+        <circle
+          cx="110"
+          cy="110"
+          r="33.5"
+          fill="none"
+          stroke="#4338CA"
+          strokeWidth="2"
+          strokeDasharray="5 3"
+          opacity="0.55"
+        />
       )}
 
-      {/* Labels */}
-      <text x="110" y="68" textAnchor="middle" fontSize="10" fontWeight="700" fill="white" opacity=".95" style={{ pointerEvents: "none" }}>Vegetables</text>
-      <text x="110" y="80" textAnchor="middle" fontSize="9" fill="white" opacity=".8" style={{ pointerEvents: "none" }}>50%</text>
+      {/* Labels on ring — light shadow keeps text readable on muted grey fills */}
+      <text
+        x="178"
+        y="100"
+        textAnchor="middle"
+        fontSize="9"
+        fontWeight="700"
+        fill="white"
+        opacity=".96"
+        style={{ pointerEvents: "none", textShadow: "0 1px 2px rgb(0 0 0 / 0.35)" }}
+      >
+        Vegetables
+      </text>
+      <text
+        x="178"
+        y="113"
+        textAnchor="middle"
+        fontSize="8"
+        fill="white"
+        opacity=".88"
+        style={{ pointerEvents: "none", textShadow: "0 1px 2px rgb(0 0 0 / 0.35)" }}
+      >
+        50%
+      </text>
 
-      <text x="59" y="158" textAnchor="middle" fontSize="9" fontWeight="700" fill="white" opacity=".95" style={{ pointerEvents: "none" }}>Protein</text>
-      <text x="59" y="169" textAnchor="middle" fontSize="9" fill="white" opacity=".8" style={{ pointerEvents: "none" }}>25%</text>
+      <text
+        x="62"
+        y="78"
+        textAnchor="middle"
+        fontSize="9"
+        fontWeight="700"
+        fill="white"
+        opacity=".96"
+        style={{ pointerEvents: "none", textShadow: "0 1px 2px rgb(0 0 0 / 0.35)" }}
+      >
+        Carbs
+      </text>
+      <text
+        x="62"
+        y="91"
+        textAnchor="middle"
+        fontSize="9"
+        fill="white"
+        opacity=".88"
+        style={{ pointerEvents: "none", textShadow: "0 1px 2px rgb(0 0 0 / 0.35)" }}
+      >
+        25%
+      </text>
 
-      <text x="161" y="158" textAnchor="middle" fontSize="9" fontWeight="700" fill="white" opacity=".95" style={{ pointerEvents: "none" }}>Carbs</text>
-      <text x="161" y="169" textAnchor="middle" fontSize="9" fill="white" opacity=".8" style={{ pointerEvents: "none" }}>25%</text>
+      <text
+        x="62"
+        y="158"
+        textAnchor="middle"
+        fontSize="9"
+        fontWeight="700"
+        fill="white"
+        opacity=".96"
+        style={{ pointerEvents: "none", textShadow: "0 1px 2px rgb(0 0 0 / 0.35)" }}
+      >
+        Protein
+      </text>
+      <text
+        x="62"
+        y="171"
+        textAnchor="middle"
+        fontSize="9"
+        fill="white"
+        opacity=".88"
+        style={{ pointerEvents: "none", textShadow: "0 1px 2px rgb(0 0 0 / 0.35)" }}
+      >
+        25%
+      </text>
 
-      <text x="110" y="107" textAnchor="middle" fontSize="8" fontWeight="700" fill="white" opacity=".95" style={{ pointerEvents: "none" }}>Fats</text>
-      <text x="110" y="117" textAnchor="middle" fontSize="8" fill="white" opacity=".85" style={{ pointerEvents: "none" }}>& dressings</text>
+      <text
+        x="110"
+        y="114"
+        textAnchor="middle"
+        fontSize="9"
+        fontWeight="700"
+        fill="white"
+        opacity=".98"
+        style={{ pointerEvents: "none", textShadow: "0 1px 2px rgb(0 0 0 / 0.35)" }}
+      >
+        Fats
+      </text>
     </svg>
   );
 }
 
 // ── Progress bar ──────────────────────────────────────────────────────────────
 
-function MacroBar({ label, value, target, unit }: { label: string; value: number; target: number; unit: string }) {
+function MacroBar({
+  label,
+  value,
+  target,
+  unit,
+  overMultiplier = 1,
+}: {
+  label: string;
+  value: number;
+  target: number;
+  unit: string;
+  /** e.g. 1.2 = red glow only if value > 120% of target (used for protein) */
+  overMultiplier?: number;
+}) {
   const p = pct(value, target);
   const color = p < 75 ? "bg-amber-400" : p <= 115 ? "bg-brand-primary" : "bg-red-500";
+  const over = isOverTarget(value, target, overMultiplier);
   return (
     <div>
       <div className="flex justify-between text-[11px]">
         <span className="font-medium text-brand-text/70">{label}</span>
-        <span className="text-brand-text/50">{cap(value)}{unit} / {target}{unit}</span>
+        <span
+          className={over ? overValueClassName : "text-brand-text/50"}
+          style={over ? overValueStyle() : undefined}
+        >
+          {cap(value)}
+          {unit} / {target}
+          {unit}
+        </span>
       </div>
       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-brand-border">
-        <div className={`h-full rounded-full transition-all duration-300 ${color}`} style={{ width: `${p}%` }} />
+        <div className={`h-full rounded-full transition-all duration-300 ${color}`} style={{ width: `${Math.min(100, p)}%` }} />
       </div>
     </div>
   );
@@ -289,6 +528,13 @@ export default function CustomPlatePage() {
     }));
   }
 
+  function setGrams(sid: SectionId, idx: number, nextValue: number) {
+    setSections((prev) => ({
+      ...prev,
+      [sid]: prev[sid].map((e, i) => (i === idx ? { ...e, grams: clampGrams(nextValue) } : e)),
+    }));
+  }
+
   function autoFill() {
     const next: Sections = { vegetables: [], protein: [], carbs: [], fats: [] };
     for (const sid of SECTION_ORDER) {
@@ -338,7 +584,12 @@ export default function CustomPlatePage() {
 
           {/* ── Left: plate + controls ── */}
           <div className="flex flex-col items-center gap-5">
-            <PlateSVG sections={sections} activeSection={activeSection} onSectionClick={setActiveSection} />
+            <PlateSVG
+              sections={sections}
+              activeSection={activeSection}
+              onSectionClick={setActiveSection}
+              mealTarget={mealTarget}
+            />
 
             {/* Meals per day */}
             <div className="w-full rounded-2xl border border-brand-border bg-white p-4 shadow-soft">
@@ -460,7 +711,18 @@ export default function CustomPlatePage() {
                               <button type="button" onClick={() => adjustGrams(sid, idx, -5)} className="flex h-6 w-6 items-center justify-center rounded-lg border border-brand-border text-brand-text/60 hover:bg-white">
                                 <Minus className="size-3" strokeWidth={2.5} />
                               </button>
-                              <span className="w-12 text-center text-[12px] font-semibold text-brand-text">{entry.grams}g</span>
+                              <div className="flex items-center">
+                                <input
+                                  inputMode="numeric"
+                                  type="number"
+                                  min={0}
+                                  step={5}
+                                  value={entry.grams}
+                                  onChange={(event) => setGrams(sid, idx, Number(event.target.value))}
+                                  className="w-14 rounded-lg border border-brand-border bg-white px-2 py-1 text-center text-[12px] font-semibold text-brand-text outline-none focus:ring-2 focus:ring-brand-primary/20"
+                                />
+                                <span className="ml-1 text-[12px] font-semibold text-brand-text/70">g</span>
+                              </div>
                               <button type="button" onClick={() => adjustGrams(sid, idx, 5)} className="flex h-6 w-6 items-center justify-center rounded-lg border border-brand-border text-brand-text/60 hover:bg-white">
                                 <Plus className="size-3" strokeWidth={2.5} />
                               </button>
@@ -488,7 +750,13 @@ export default function CustomPlatePage() {
 
                 <div className="mt-3 space-y-2.5">
                   <MacroBar label="Calories" value={nutrition.calories} target={mealTarget.calories} unit=" kcal" />
-                  <MacroBar label="Protein" value={nutrition.protein} target={mealTarget.protein} unit="g" />
+                  <MacroBar
+                    label="Protein"
+                    value={nutrition.protein}
+                    target={mealTarget.protein}
+                    unit="g"
+                    overMultiplier={PROTEIN_OVER_TARGET_MULTIPLIER}
+                  />
                   <MacroBar label="Fat" value={nutrition.fat} target={mealTarget.fat} unit="g" />
                   <MacroBar label="Carbs" value={nutrition.carbs} target={mealTarget.carbs} unit="g" />
                 </div>
@@ -511,25 +779,62 @@ export default function CustomPlatePage() {
                   </div>
                   <div className="rounded-xl border border-brand-border bg-brand-bg/50 px-3 py-2 text-center">
                     <p className="text-[10px] text-brand-text/50">Total</p>
-                    <p className="text-[13px] font-semibold text-brand-text">{nutrition.calories} kcal</p>
-                    <p className="text-[10px] text-brand-text/40">{pct(nutrition.calories, mealTarget.calories)}% of target</p>
+                    <p
+                      className={`text-[13px] ${isOverTarget(nutrition.calories, mealTarget.calories) ? overValueClassName : "font-semibold text-brand-text"}`}
+                      style={isOverTarget(nutrition.calories, mealTarget.calories) ? overValueStyle() : undefined}
+                    >
+                      {nutrition.calories} kcal
+                    </p>
+                    <p
+                      className={
+                        isOverTarget(nutrition.calories, mealTarget.calories)
+                          ? `text-[10px] ${overValueClassName}`
+                          : "text-[10px] text-brand-text/40"
+                      }
+                      style={isOverTarget(nutrition.calories, mealTarget.calories) ? overValueStyle() : undefined}
+                    >
+                      {pct(nutrition.calories, mealTarget.calories)}% of target
+                    </p>
                   </div>
                 </div>
 
                 {/* Over/under feedback */}
                 {(() => {
-                  const tips: string[] = [];
-                  if (pct(nutrition.protein, mealTarget.protein) < 70) tips.push("Add more protein");
-                  if (pct(nutrition.carbs, mealTarget.carbs) > 120) tips.push("Carbs are high — reduce portion");
-                  if (pct(nutrition.fat, mealTarget.fat) > 130) tips.push("Fat is high — check dressings");
-                  if (sections.fats.length === 0) tips.push("Consider adding healthy fats (olive oil, nuts)");
-                  if (nutrition.fiber < mealTarget.fiber * 0.5) tips.push("Low fiber — add more vegetables");
+                  const tips: { text: string; tone: "amber" | "red" }[] = [];
+                  if (isOverTarget(nutrition.calories, mealTarget.calories)) {
+                    tips.push({ text: "Calories are above this meal’s target", tone: "red" });
+                  }
+                  if (isOverTarget(nutrition.protein, mealTarget.protein, PROTEIN_OVER_TARGET_MULTIPLIER)) {
+                    tips.push({ text: "Protein is well above this meal’s target", tone: "red" });
+                  }
+                  if (isOverTarget(nutrition.carbs, mealTarget.carbs)) {
+                    tips.push({ text: "Carbs are above this meal’s target", tone: "red" });
+                  }
+                  if (isOverTarget(nutrition.fat, mealTarget.fat)) {
+                    tips.push({ text: "Fat is above this meal’s target", tone: "red" });
+                  }
+                  if (pct(nutrition.protein, mealTarget.protein) < 70) tips.push({ text: "Add more protein", tone: "amber" });
+                  if (pct(nutrition.carbs, mealTarget.carbs) > 120 && !isOverTarget(nutrition.carbs, mealTarget.carbs)) {
+                    tips.push({ text: "Carbs are high — reduce portion", tone: "amber" });
+                  }
+                  if (pct(nutrition.fat, mealTarget.fat) > 130 && !isOverTarget(nutrition.fat, mealTarget.fat)) {
+                    tips.push({ text: "Fat is high — reduce oils or fat portions", tone: "amber" });
+                  }
+                  if (sections.fats.length === 0) tips.push({ text: "Consider adding healthy fats (olive oil, nuts)", tone: "amber" });
+                  if (nutrition.fiber < mealTarget.fiber * 0.5) tips.push({ text: "Low fiber — add more vegetables", tone: "amber" });
                   if (tips.length === 0) return null;
                   return (
                     <div className="mt-3 space-y-1.5">
                       {tips.map((tip) => (
-                        <p key={tip} className="flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800">
-                          <span className="mt-0.5 shrink-0">⚠</span> {tip}
+                        <p
+                          key={tip.text}
+                          className={`flex items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] ${
+                            tip.tone === "red"
+                              ? "border-red-200 bg-red-50 text-red-800 [box-shadow:0_0_12px_rgb(254_202_202_/_0.9)_inset]"
+                              : "border-amber-200 bg-amber-50 text-amber-800"
+                          }`}
+                        >
+                          <span className="mt-0.5 shrink-0">{tip.tone === "red" ? "!" : "⚠"}</span> {tip.text}
                         </p>
                       ))}
                     </div>
