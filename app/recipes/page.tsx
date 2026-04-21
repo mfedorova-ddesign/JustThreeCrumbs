@@ -5,9 +5,9 @@ import { useGeneratorStore } from "@/lib/generator/store";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { mealTypeLabels } from "@/lib/recipes/editor";
 import { giLabel, glycemicLoadLabel } from "@/lib/nutrition/calc";
-import { recipeAllergens, recipeNutrition, recipeVegan } from "@/lib/recipes/insights";
+import { recipeAllergens, recipeNutrition, recipeVegan, recipeVegetarian } from "@/lib/recipes/insights";
 import { Recipe } from "@/types";
-import { User } from "lucide-react";
+import { Plus, SlidersHorizontal, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -48,6 +48,7 @@ export default function RecipesPage() {
   const [sourceFilters, setSourceFilters] = useState<Array<"all" | "default" | "custom">>(["all"]);
   const [favoriteOnly, setFavoriteOnly] = useState(false);
   const [skippedOnly, setSkippedOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const allRecipes: Recipe[] = [
     ...customRecipes,
@@ -146,7 +147,8 @@ export default function RecipesPage() {
         <div className="h-px w-full bg-brand-border" />
 
         <div className="mt-4 grid gap-0 md:grid-cols-[250px_minmax(0,1fr)]">
-          <aside className="self-start px-1.5 py-1 md:sticky md:top-4">
+          {/* Desktop sidebar */}
+          <aside className="hidden self-start px-1.5 py-1 md:block md:sticky md:top-4">
             <div className="space-y-5 text-sm text-brand-text">
               <div>
                 <p className="text-[13px] font-bold uppercase tracking-wide text-brand-text/75">Meal type</p>
@@ -164,7 +166,6 @@ export default function RecipesPage() {
                   ))}
                 </div>
               </div>
-
               <div>
                 <p className="text-[13px] font-bold uppercase tracking-wide text-brand-text/75">Source</p>
                 <div className="mt-2.5 space-y-2.5">
@@ -176,59 +177,31 @@ export default function RecipesPage() {
                         onChange={() => setSourceFilters((prev) => toggleMultiFilter(prev, value))}
                         className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30"
                       />
-                      {value === "all"
-                        ? `All sources (${sourceCount.all})`
-                        : value === "default"
-                          ? `Default (${sourceCount.default})`
-                          : `Custom (${sourceCount.custom})`}
+                      {value === "all" ? `All sources (${sourceCount.all})` : value === "default" ? `Default (${sourceCount.default})` : `Custom (${sourceCount.custom})`}
                     </label>
                   ))}
                 </div>
               </div>
-
               <div>
                 <p className="text-[13px] font-bold uppercase tracking-wide text-brand-text/75">Options</p>
                 <div className="mt-2.5 space-y-2.5">
                   <label className="flex items-center gap-2 text-[13px] text-brand-text/80">
-                    <input
-                      type="checkbox"
-                      checked={veganOnly}
-                      onChange={() => setVeganOnly((prev) => !prev)}
-                      className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30"
-                    />
+                    <input type="checkbox" checked={veganOnly} onChange={() => setVeganOnly((prev) => !prev)} className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30" />
                     Vegan only ({veganCount})
                   </label>
                   <label className="flex items-center gap-2 text-[13px] text-brand-text/80">
-                    <input
-                      type="checkbox"
-                      checked={favoriteOnly}
-                      onChange={() => setFavoriteOnly((prev) => !prev)}
-                      className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30"
-                    />
+                    <input type="checkbox" checked={favoriteOnly} onChange={() => setFavoriteOnly((prev) => !prev)} className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30" />
                     Favorites only ({favoriteCount})
                   </label>
                   <label className="flex items-center gap-2 text-[13px] text-brand-text/80">
-                    <input
-                      type="checkbox"
-                      checked={skippedOnly}
-                      onChange={() => setSkippedOnly((prev) => !prev)}
-                      className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30"
-                    />
+                    <input type="checkbox" checked={skippedOnly} onChange={() => setSkippedOnly((prev) => !prev)} className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30" />
                     Skipped only ({skippedCount})
                   </label>
                 </div>
               </div>
-
               <button
                 type="button"
-                onClick={() => {
-                  setQuery("");
-                  setMealTypeFilters(["all"]);
-                  setSourceFilters(["all"]);
-                  setVeganOnly(false);
-                  setFavoriteOnly(false);
-                  setSkippedOnly(false);
-                }}
+                onClick={() => { setQuery(""); setMealTypeFilters(["all"]); setSourceFilters(["all"]); setVeganOnly(false); setFavoriteOnly(false); setSkippedOnly(false); }}
                 className="rounded-xl border border-brand-border px-3 py-2 text-xs text-brand-text/75 hover:bg-brand-bg"
               >
                 Reset filters
@@ -237,26 +210,92 @@ export default function RecipesPage() {
           </aside>
 
           <section className="min-w-0">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            {/* Search row — filter toggle on mobile */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFilters((p) => !p)}
+                className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium transition md:hidden ${showFilters ? "border-brand-primary bg-[#EAF5EF] text-brand-primary" : "border-brand-border bg-brand-bg text-brand-text/75"}`}
+              >
+                <SlidersHorizontal className="size-3.5 shrink-0" strokeWidth={2} />
+                Filters
+              </button>
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search recipes..."
-                className="h-10 min-w-[240px] flex-1 rounded-xl border border-brand-border bg-white px-3 text-sm text-brand-text"
+                className="h-10 flex-1 rounded-xl border border-brand-border bg-white px-3 text-sm text-brand-text"
               />
               <Link
                 href="/recipes/new"
-                className="inline-flex h-10 items-center rounded-xl bg-brand-primary px-4 text-sm font-semibold text-white shadow-soft transition hover:opacity-90"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary text-xl font-semibold text-white shadow-soft transition hover:opacity-90 sm:w-auto sm:px-4 sm:text-sm"
               >
-                Add recipe
+                <Plus className="size-5 shrink-0 sm:hidden" strokeWidth={2.5} />
+                <span className="hidden sm:inline">Add recipe</span>
               </Link>
             </div>
+
+            {/* Mobile filter panel */}
+            {showFilters && (
+              <div className="mt-2 grid grid-cols-2 gap-x-5 gap-y-4 rounded-2xl border-l-4 border-l-brand-primary bg-[#F5FBF7] px-4 py-4 text-sm text-brand-text md:hidden">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-brand-text/55">Meal type</p>
+                  <div className="mt-2 space-y-2">
+                    {(["all", "breakfast", "lunch", "dinner", "snack"] as const).map((value) => (
+                      <label key={value} className="flex items-center gap-2 text-[13px] text-brand-text/80">
+                        <input type="checkbox" checked={mealTypeFilters.includes(value)} onChange={() => setMealTypeFilters((prev) => toggleMultiFilter(prev, value))} className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30" />
+                        {value === "all" ? `All (${mealTypeCount.all})` : `${mealTypeLabels[value]} (${mealTypeCount[value]})`}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-brand-text/55">Source</p>
+                    <div className="mt-2 space-y-2">
+                      {(["all", "default", "custom"] as const).map((value) => (
+                        <label key={value} className="flex items-center gap-2 text-[13px] text-brand-text/80">
+                          <input type="checkbox" checked={sourceFilters.includes(value)} onChange={() => setSourceFilters((prev) => toggleMultiFilter(prev, value))} className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30" />
+                          {value === "all" ? `All (${sourceCount.all})` : value === "default" ? `Default (${sourceCount.default})` : `Custom (${sourceCount.custom})`}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-brand-text/55">Options</p>
+                    <div className="mt-2 space-y-2">
+                      <label className="flex items-center gap-2 text-[13px] text-brand-text/80">
+                        <input type="checkbox" checked={veganOnly} onChange={() => setVeganOnly((prev) => !prev)} className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30" />
+                        Vegan only ({veganCount})
+                      </label>
+                      <label className="flex items-center gap-2 text-[13px] text-brand-text/80">
+                        <input type="checkbox" checked={favoriteOnly} onChange={() => setFavoriteOnly((prev) => !prev)} className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30" />
+                        Favorites ({favoriteCount})
+                      </label>
+                      <label className="flex items-center gap-2 text-[13px] text-brand-text/80">
+                        <input type="checkbox" checked={skippedOnly} onChange={() => setSkippedOnly((prev) => !prev)} className="h-4 w-4 rounded border-brand-border text-brand-primary focus:ring-brand-primary/30" />
+                        Skipped ({skippedCount})
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setQuery(""); setMealTypeFilters(["all"]); setSourceFilters(["all"]); setVeganOnly(false); setFavoriteOnly(false); setSkippedOnly(false); }}
+                  className="col-span-2 rounded-xl border border-brand-border/80 bg-white px-3 py-2 text-xs text-brand-text/65 hover:bg-brand-bg"
+                >
+                  Reset filters
+                </button>
+              </div>
+            )}
+
 
             <div className="mt-4 space-y-4">
               {visibleRecipes.map((recipe) => {
                 const nutrition = recipeNutrition(recipe);
                 const allergens = recipeAllergens(recipe);
                 const vegan = recipeVegan(recipe);
+                const vegetarian = recipeVegetarian(recipe);
                 const favorite = favoriteRecipeIds.includes(recipe.id);
                 const skipped = skippedRecipeIds.includes(recipe.id);
                 const canEdit = recipe.source === "custom";
@@ -279,6 +318,10 @@ export default function RecipesPage() {
                           {vegan ? (
                             <span className="inline-flex rounded-md bg-[#EAF5EF] px-2 py-0.5 text-[10px] font-semibold text-brand-primary">
                               Vegan
+                            </span>
+                          ) : vegetarian ? (
+                            <span className="inline-flex rounded-md bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-semibold text-[#4F46E5]">
+                              Vegetarian
                             </span>
                           ) : null}
                         </div>

@@ -203,15 +203,15 @@ export default function DietPage() {
                 <path d="M110 110 L110 210 A100 100 0 0 1 10 110 Z" fill="#F97316" opacity=".8" />
                 <path d="M110 110 L10 110 A100 100 0 0 1 110 10 Z" fill="#FBBF24" opacity=".85" />
                 <line x1="110" y1="10" x2="110" y2="210" stroke="white" strokeWidth="3" />
-                <line x1="10" y1="110" x2="210" y2="110" stroke="white" strokeWidth="2" />
+                <line x1="10" y1="110" x2="110" y2="110" stroke="white" strokeWidth="2" />
                 <circle cx="110" cy="110" r="26" fill="white" />
                 <text x="110" y="118" textAnchor="middle" fontSize="20" fill="#9CA3AF">🍽</text>
-                <text x="110" y="66" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">Vegetables</text>
-                <text x="110" y="79" textAnchor="middle" fontSize="10" fill="white" opacity=".9">50%</text>
+                <text x="173" y="106" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">Vegetables</text>
+                <text x="173" y="119" textAnchor="middle" fontSize="10" fill="white" opacity=".9">50%</text>
                 <text x="60" y="155" textAnchor="middle" fontSize="10" fontWeight="700" fill="white">Protein</text>
                 <text x="60" y="167" textAnchor="middle" fontSize="10" fill="white" opacity=".9">25%</text>
-                <text x="160" y="66" textAnchor="middle" fontSize="10" fontWeight="700" fill="white" opacity=".95">Carbs</text>
-                <text x="160" y="79" textAnchor="middle" fontSize="10" fill="white" opacity=".85">25%</text>
+                <text x="57" y="63" textAnchor="middle" fontSize="10" fontWeight="700" fill="white" opacity=".95">Carbs</text>
+                <text x="57" y="75" textAnchor="middle" fontSize="10" fill="white" opacity=".85">25%</text>
               </svg>
 
               <div className="flex flex-col gap-4">

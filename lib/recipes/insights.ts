@@ -1,5 +1,5 @@
 import { INGREDIENTS } from "@/lib/ingredients/data";
-import { glycemicIndexAverage, glycemicLoad, isVeganMeal, sumCalories, sumFiber, sumMacros } from "@/lib/nutrition/calc";
+import { glycemicIndexAverage, glycemicLoad, isVeganMeal, isVegetarianMeal, sumCalories, sumFiber, sumMacros } from "@/lib/nutrition/calc";
 import { Ingredient, Recipe } from "@/types";
 
 const ingredientByName = new Map(INGREDIENTS.map((ingredient) => [ingredient.name.toLowerCase(), ingredient]));
@@ -38,6 +38,11 @@ export function recipeAllergens(recipe: Recipe): string[] {
 export function recipeVegan(recipe: Recipe): boolean {
   const ingredients = resolveRecipeBaseIngredients(recipe);
   return ingredients.length > 0 && isVeganMeal(ingredients);
+}
+
+export function recipeVegetarian(recipe: Recipe): boolean {
+  const ingredients = resolveRecipeBaseIngredients(recipe);
+  return ingredients.length > 0 && isVegetarianMeal(ingredients);
 }
 
 export function recipeNutrition(recipe: Recipe): {

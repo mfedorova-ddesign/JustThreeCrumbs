@@ -792,15 +792,14 @@ export default function GeneratorPage() {
 
                     <div className="grid grid-cols-4 gap-2 text-center">
                       {[
-                        { k: "Cal", v: Math.round(daySummary.calories), pct: Math.round(daySummary.calories / recommendedTargets.calories * 100) },
-                        { k: "C", v: `${Math.round(daySummary.carbs)}g`, pct: Math.round(daySummary.carbs / recommendedTargets.carbs * 100) },
-                        { k: "P", v: `${Math.round(daySummary.protein)}g`, pct: Math.round(daySummary.protein / recommendedTargets.protein * 100) },
-                        { k: "F", v: `${Math.round(daySummary.fat)}g`, pct: Math.round(daySummary.fat / recommendedTargets.fat * 100) }
+                        { k: "Cal", v: Math.round(daySummary.calories) },
+                        { k: "C", v: `${Math.round(daySummary.carbs)}g` },
+                        { k: "P", v: `${Math.round(daySummary.protein)}g` },
+                        { k: "F", v: `${Math.round(daySummary.fat)}g` }
                       ].map((cell) => (
                         <div key={cell.k} className="rounded-lg bg-brand-bg/80 py-2 text-[11px] sm:text-xs">
                           <div className="font-medium text-brand-text/45">{cell.k}</div>
                           <div className="mt-0.5 font-semibold text-brand-text">{cell.v}</div>
-                          <div className="text-[10px] text-brand-text/40">{cell.pct}%</div>
                         </div>
                       ))}
                     </div>
@@ -953,6 +952,14 @@ export default function GeneratorPage() {
               const meal = getMealById(openedMealId);
               if (!meal) return null;
               const modalImg = mealImageUrlForId(meal.templateId, customRecipes.find((r) => r.id === meal.templateId)?.imageUrl);
+              const modalMeta = mealPlan ? findMealSlotMeta(mealPlan, meal.id) : null;
+              const modalDay = mealPlan?.days.find((d) => d.day === modalMeta?.dayNumber);
+              const dayTotals = modalDay
+                ? [modalDay.breakfast, modalDay.lunch, modalDay.dinner, modalDay.snack, modalDay.extraSnack]
+                    .filter((m): m is GeneratedMeal => m != null && !m.skipped)
+                    .reduce((acc, m) => ({ calories: acc.calories + m.calories, carbs: acc.carbs + m.macros.carbs, protein: acc.protein + m.macros.protein, fat: acc.fat + m.macros.fat }), { calories: 0, carbs: 0, protein: 0, fat: 0 })
+                : null;
+              const pctOfDay = (val: number, total: number) => total > 0 ? Math.round((val / total) * 100) : 0;
 
               return (
                 <>
@@ -989,10 +996,10 @@ export default function GeneratorPage() {
                     </h3>
 
                   <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Calories</div><div className="font-medium">{Math.round(meal.calories)}</div></div>
-                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Carbs</div><div className="font-medium">{Math.round(meal.macros.carbs)}g</div></div>
-                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Protein</div><div className="font-medium">{Math.round(meal.macros.protein)}g</div></div>
-                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Fat</div><div className="font-medium">{Math.round(meal.macros.fat)}g</div></div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Calories</div><div className="font-medium">{Math.round(meal.calories)}</div>{dayTotals ? <div className="text-[10px] text-brand-text/40">{pctOfDay(meal.calories, dayTotals.calories)}% of day</div> : null}</div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Carbs</div><div className="font-medium">{Math.round(meal.macros.carbs)}g</div>{dayTotals ? <div className="text-[10px] text-brand-text/40">{pctOfDay(meal.macros.carbs, dayTotals.carbs)}% of day</div> : null}</div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Protein</div><div className="font-medium">{Math.round(meal.macros.protein)}g</div>{dayTotals ? <div className="text-[10px] text-brand-text/40">{pctOfDay(meal.macros.protein, dayTotals.protein)}% of day</div> : null}</div>
+                    <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Fat</div><div className="font-medium">{Math.round(meal.macros.fat)}g</div>{dayTotals ? <div className="text-[10px] text-brand-text/40">{pctOfDay(meal.macros.fat, dayTotals.fat)}% of day</div> : null}</div>
                     <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Fiber</div><div className="font-medium">{Math.round(meal.fiber)}g</div></div>
                     <div className={`rounded-lg border px-3 py-2 ${giLabel(meal.glycemicIndex) === "low" ? "border-[#CDE7D7] bg-[#EAF5EF]" : giLabel(meal.glycemicIndex) === "medium" ? "border-amber-200 bg-amber-50" : "border-red-200 bg-red-50"}`}><div className="text-[12px] text-brand-text/60">GI</div><div className={`font-medium ${giLabel(meal.glycemicIndex) === "low" ? "text-brand-primary" : giLabel(meal.glycemicIndex) === "medium" ? "text-amber-700" : "text-red-700"}`}>{meal.glycemicIndex} <span className="text-[11px] font-normal opacity-75">· {giLabel(meal.glycemicIndex)}</span></div></div>
                     <div className={`rounded-lg border px-3 py-2 ${glycemicLoadLabel(meal.glycemicLoad) === "low" ? "border-[#CDE7D7] bg-[#EAF5EF]" : glycemicLoadLabel(meal.glycemicLoad) === "medium" ? "border-amber-200 bg-amber-50" : "border-red-200 bg-red-50"}`}><div className="text-[12px] text-brand-text/60">Glycemic Load</div><div className={`font-medium ${glycemicLoadLabel(meal.glycemicLoad) === "low" ? "text-brand-primary" : glycemicLoadLabel(meal.glycemicLoad) === "medium" ? "text-amber-700" : "text-red-700"}`}>{meal.glycemicLoad} <span className="text-[11px] font-normal opacity-75">· {glycemicLoadLabel(meal.glycemicLoad)}</span></div></div>
