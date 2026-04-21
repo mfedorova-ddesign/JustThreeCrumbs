@@ -6,8 +6,9 @@ import { INGREDIENT_HEALTH_FACTS } from "@/lib/ingredients/healthFacts";
 import { isProfileComplete } from "@/lib/generator/profile";
 import { recommendedDailyTargets } from "@/lib/generator/targets";
 import {
-  diabeticScore,
   glycemicIndexAverage,
+  glycemicLoad,
+  glycemicLoadLabel,
   isVeganMeal,
   isVegetarianMeal,
   sumCalories,
@@ -145,7 +146,7 @@ function recalculateMeal(meal: GeneratedMeal, removedMap: Record<number, boolean
     macros: sumMacros(activeIngredients),
     fiber: sumFiber(activeIngredients),
     glycemicIndex: glycemicIndexAverage(activeIngredients),
-    diabeticScore: diabeticScore(activeIngredients),
+    glycemicLoad: glycemicLoad(activeIngredients),
     isVegetarian: isVegetarianMeal(activeIngredients),
     isVegan: isVeganMeal(activeIngredients)
   };
@@ -509,7 +510,7 @@ export default function GeneratorPage() {
             meal.macros.protein
           )}g | Fat ${Math.round(meal.macros.fat)}g | Fiber ${Math.round(meal.fiber)}g`
         );
-        writeLine(`GI ${meal.glycemicIndex} | Diabetes Score ${meal.diabeticScore}/10`);
+        writeLine(`GI ${meal.glycemicIndex} | GL ${meal.glycemicLoad} (${glycemicLoadLabel(meal.glycemicLoad)})`);
         writeLine("Ingredients:");
         meal.ingredients.forEach((ing) => {
           writeParagraph(`- ${ing.name}`, 12);
@@ -895,7 +896,7 @@ export default function GeneratorPage() {
                                 <span>·</span>
                                 <span>GI {meal.glycemicIndex}</span>
                                 <span>·</span>
-                                <span>Score {meal.diabeticScore}/10</span>
+                                <span>GL {meal.glycemicLoad}</span>
                               </div>
                               <p className="text-[11px] text-brand-primary/60">Tap for recipe</p>
                             </div>
@@ -995,7 +996,7 @@ export default function GeneratorPage() {
                     <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Fat</div><div className="font-medium">{Math.round(meal.macros.fat)}g</div></div>
                     <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">Fiber</div><div className="font-medium">{Math.round(meal.fiber)}g</div></div>
                     <div className="rounded-lg border border-brand-border bg-[#FAFAF8] px-3 py-2"><div className="text-[12px] text-brand-text/60">GI</div><div className="font-medium">{meal.glycemicIndex}</div></div>
-                    <div className="rounded-lg border border-[#CDE7D7] bg-[#EAF5EF] px-3 py-2"><div className="text-[12px] text-brand-text/60">Diabetes Score</div><div className="font-medium text-brand-primary">{meal.diabeticScore}/10</div></div>
+                    <div className={`rounded-lg border px-3 py-2 ${glycemicLoadLabel(meal.glycemicLoad) === "low" ? "border-[#CDE7D7] bg-[#EAF5EF]" : glycemicLoadLabel(meal.glycemicLoad) === "medium" ? "border-amber-200 bg-amber-50" : "border-red-200 bg-red-50"}`}><div className="text-[12px] text-brand-text/60">Glycemic Load</div><div className={`font-medium ${glycemicLoadLabel(meal.glycemicLoad) === "low" ? "text-brand-primary" : glycemicLoadLabel(meal.glycemicLoad) === "medium" ? "text-amber-700" : "text-red-700"}`}>{meal.glycemicLoad} <span className="text-[11px] font-normal opacity-75">· {glycemicLoadLabel(meal.glycemicLoad)}</span></div></div>
                   </div>
 
                   {mealPlan && !meal.skipped

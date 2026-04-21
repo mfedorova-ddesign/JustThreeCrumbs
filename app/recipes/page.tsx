@@ -295,7 +295,7 @@ export default function RecipesPage() {
                           <span>·</span>
                           <span>GI {nutrition.glycemicIndex}</span>
                           <span>·</span>
-                          <span>Score {nutrition.diabeticScore}</span>
+                          <span>GL {nutrition.glycemicLoad}</span>
                         </div>
                         <p className="line-clamp-1 text-[11px] text-brand-primary/60">
                           Allergens: {allergens.length > 0 ? allergens.join(", ") : "None"}

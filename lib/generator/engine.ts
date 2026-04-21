@@ -1,8 +1,8 @@
 import { recommendedDailyTargets } from "@/lib/generator/targets";
 import { INGREDIENTS } from "@/lib/ingredients/data";
 import {
-  diabeticScore,
   glycemicIndexAverage,
+  glycemicLoad,
   isVeganMeal,
   isVegetarianMeal,
   sumCalories,
@@ -356,7 +356,7 @@ function buildMeal(
     macros: sumMacros(ingredients),
     fiber: sumFiber(ingredients),
     glycemicIndex: glycemicIndexAverage(ingredients),
-    diabeticScore: diabeticScore(ingredients),
+    glycemicLoad: glycemicLoad(ingredients),
     isVegetarian: isVegetarianMeal(ingredients),
     isVegan: isVeganMeal(ingredients),
     instructions: recipe.instructions
@@ -532,7 +532,7 @@ function rebalanceDayMeals(
       macros: sumMacros(adjustedIngredients),
       fiber: sumFiber(adjustedIngredients),
       glycemicIndex: glycemicIndexAverage(adjustedIngredients),
-      diabeticScore: diabeticScore(adjustedIngredients),
+      glycemicLoad: glycemicLoad(adjustedIngredients),
       isVegetarian: isVegetarianMeal(adjustedIngredients),
       isVegan: isVeganMeal(adjustedIngredients)
     };

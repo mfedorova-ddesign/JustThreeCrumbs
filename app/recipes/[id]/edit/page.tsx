@@ -199,8 +199,7 @@ export default function EditRecipePage() {
                 </div>
                 <div className="rounded-lg bg-white px-2 py-1">Fiber: {Math.round(calculatedMetrics.fiber)}g</div>
                 <div className="rounded-lg bg-white px-2 py-1">
-                  Glycemic Index: {calculatedMetrics.glycemicIndex} | Diabetic Score:{" "}
-                  {calculatedMetrics.diabeticScore}
+                  GI: {calculatedMetrics.glycemicIndex} | GL: {calculatedMetrics.glycemicLoad}
                 </div>
               </div>
             ) : calcAttempted ? (
@@ -209,7 +208,7 @@ export default function EditRecipePage() {
               </p>
             ) : (
               <p className="mt-2 text-xs text-brand-text/60">
-                Click Calculate nutrition to preview calories, protein, fat, carbs, glycemic index and diabetic score.
+                Click Calculate nutrition to preview calories, protein, fat, carbs, glycemic index and glycemic load.
               </p>
             )}
           </div>

@@ -119,7 +119,7 @@ export type GeneratedMeal = {
   macros: Macros;
   fiber: number;
   glycemicIndex: number;
-  diabeticScore: number;
+  glycemicLoad: number;
   isVegetarian: boolean;
   isVegan: boolean;
   instructions: string[];

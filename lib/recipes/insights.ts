@@ -1,5 +1,5 @@
 import { INGREDIENTS } from "@/lib/ingredients/data";
-import { diabeticScore, glycemicIndexAverage, isVeganMeal, sumCalories, sumFiber, sumMacros } from "@/lib/nutrition/calc";
+import { glycemicIndexAverage, glycemicLoad, isVeganMeal, sumCalories, sumFiber, sumMacros } from "@/lib/nutrition/calc";
 import { Ingredient, Recipe } from "@/types";
 
 const ingredientByName = new Map(INGREDIENTS.map((ingredient) => [ingredient.name.toLowerCase(), ingredient]));
@@ -47,7 +47,7 @@ export function recipeNutrition(recipe: Recipe): {
   carbs: number;
   fiber: number;
   glycemicIndex: number;
-  diabeticScore: number;
+  glycemicLoad: number;
 } {
   const ingredients = resolveRecipeBaseIngredients(recipe);
   const macros = sumMacros(ingredients);
@@ -58,6 +58,6 @@ export function recipeNutrition(recipe: Recipe): {
     carbs: macros.carbs,
     fiber: sumFiber(ingredients),
     glycemicIndex: glycemicIndexAverage(ingredients),
-    diabeticScore: diabeticScore(ingredients)
+    glycemicLoad: glycemicLoad(ingredients)
   };
 }

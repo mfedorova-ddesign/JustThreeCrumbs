@@ -252,27 +252,63 @@ export default function DietPage() {
             </div>
           </section>
 
-          {/* Glycemic Index */}
+          {/* GI + GL */}
           <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-soft sm:p-8">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">Key concept</p>
-            <h2 className="mt-1 text-xl font-semibold text-brand-text">Glycemic Index (GI)</h2>
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-brand-text/65">
-              GI measures how quickly a food raises blood glucose on a scale of 0–100. Lower GI means a slower, gentler rise.
-            </p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">Key metrics used in this app</p>
+            <h2 className="mt-1 text-xl font-semibold text-brand-text">Glycemic Index & Glycemic Load</h2>
 
-            <div className="mt-5">
-              <div className="relative h-4 w-full overflow-hidden rounded-full" style={{ background: "linear-gradient(to right, #16a34a, #84cc16, #facc15, #f97316, #dc2626)" }}>
-                <div className="absolute inset-y-0 left-[55%] w-px bg-white/60" />
-                <div className="absolute inset-y-0 left-[69%] w-px bg-white/60" />
+            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              {/* GI */}
+              <div className="rounded-xl border border-brand-border bg-brand-bg/40 p-4">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">GI</span>
+                  <p className="font-semibold text-brand-text">Glycemic Index</p>
+                </div>
+                <p className="mt-2 text-[13px] leading-relaxed text-brand-text/65">
+                  Measures how quickly a <strong>single food</strong> raises blood glucose on a scale of 0–100.
+                  Useful for comparing individual ingredients, but does not account for portion size.
+                </p>
+                <div className="mt-3">
+                  <div className="relative h-3.5 w-full overflow-hidden rounded-full" style={{ background: "linear-gradient(to right, #16a34a, #84cc16, #facc15, #f97316, #dc2626)" }}>
+                    <div className="absolute inset-y-0 left-[55%] w-px bg-white/60" />
+                    <div className="absolute inset-y-0 left-[69%] w-px bg-white/60" />
+                  </div>
+                  <div className="mt-1.5 flex gap-3 text-[11px] text-brand-text/60">
+                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#16a34a]" />≤55 Low</span>
+                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#D97706]" />56–69 Medium</span>
+                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#DC2626]" />≥70 High</span>
+                  </div>
+                </div>
               </div>
-              <div className="mt-2 flex gap-4 text-[12px] text-brand-text/65">
-                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-[#16a34a]" />Low (≤55) — best</span>
-                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-[#D97706]" />Medium (56–69)</span>
-                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-[#DC2626]" />High (≥70) — limit</span>
+
+              {/* GL */}
+              <div className="rounded-xl border border-[#CDE7D7] bg-[#EAF5EF] p-4">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-md bg-brand-primary px-2 py-0.5 text-[11px] font-bold text-white">GL</span>
+                  <p className="font-semibold text-brand-text">Glycemic Load</p>
+                </div>
+                <p className="mt-2 text-[13px] leading-relaxed text-brand-text/65">
+                  The clinically superior metric. GL = GI × carbs (g) ÷ 100.
+                  It accounts for both the <strong>quality and quantity</strong> of carbs in a meal.
+                  Watermelon has a high GI (72) but low GL (4) — a small portion barely affects blood sugar.
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[12px]">
+                  {[
+                    { label: "Low", range: "≤ 10", bg: "bg-[#EAF5EF] border-[#CDE7D7]", text: "text-[#2D7A51]" },
+                    { label: "Medium", range: "11–19", bg: "bg-amber-50 border-amber-200", text: "text-amber-700" },
+                    { label: "High", range: "≥ 20", bg: "bg-red-50 border-red-200", text: "text-red-700" },
+                  ].map((item) => (
+                    <div key={item.label} className={`rounded-lg border px-2 py-2 ${item.bg}`}>
+                      <div className={`font-bold ${item.text}`}>{item.label}</div>
+                      <div className="text-brand-text/60">{item.range}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
             <div className="mt-5 space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">GI of common foods</p>
               {giFoods.map((food) => (
                 <div key={food.label} className="flex items-center gap-3">
                   <span className="w-36 shrink-0 text-[13px] text-brand-text/75">{food.label}</span>
@@ -284,8 +320,8 @@ export default function DietPage() {
               ))}
             </div>
 
-            <div className="mt-5 rounded-xl border border-[#CDE7D7] bg-[#EAF5EF] px-4 py-3 text-[13px] leading-relaxed text-[#2D7A51]">
-              <strong>Tip:</strong> Combining high-GI foods with protein, fat, or fibre lowers the overall glycemic load of the meal. A plain potato is high-GI; the same potato with chicken and salad is much more manageable.
+            <div className="mt-5 rounded-xl border border-brand-border bg-brand-bg/60 px-4 py-3 text-[13px] leading-relaxed text-brand-text/70">
+              <strong className="text-brand-text">How JustThreeCrumbs uses these:</strong> Every generated meal shows both GI (quality of carbs) and GL (actual impact on blood sugar). GL is the primary indicator — a meal with GL ≤ 10 is considered low-impact regardless of the GI of individual ingredients.
             </div>
           </section>
 
