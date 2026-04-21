@@ -94,6 +94,12 @@ export function glycemicLoadLabel(gl: number): "low" | "medium" | "high" {
   return "high";
 }
 
+export function giLabel(gi: number): "low" | "medium" | "high" {
+  if (gi <= 55) return "low";
+  if (gi <= 69) return "medium";
+  return "high";
+}
+
 const glycemicIndexThresholdByLevel = {
   low: 55,
   medium: 69,

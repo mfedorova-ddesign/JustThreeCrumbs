@@ -4,6 +4,7 @@ import { mealImageUrlForId } from "@/lib/design/mealImages";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { mealTypeLabels } from "@/lib/recipes/editor";
+import { giLabel, glycemicLoadLabel } from "@/lib/nutrition/calc";
 import { recipeAllergens, recipeNutrition, recipeVegan } from "@/lib/recipes/insights";
 import { Recipe } from "@/types";
 import { User } from "lucide-react";
@@ -293,9 +294,9 @@ export default function RecipesPage() {
                           <span>·</span>
                           <span>C {Math.round(nutrition.carbs)}g</span>
                           <span>·</span>
-                          <span>GI {nutrition.glycemicIndex}</span>
+                          <span className={giLabel(nutrition.glycemicIndex) === "low" ? "text-[#2D7A51]" : giLabel(nutrition.glycemicIndex) === "medium" ? "text-amber-600" : "text-red-600"}>GI {nutrition.glycemicIndex}</span>
                           <span>·</span>
-                          <span>GL {nutrition.glycemicLoad}</span>
+                          <span className={glycemicLoadLabel(nutrition.glycemicLoad) === "low" ? "text-[#2D7A51]" : glycemicLoadLabel(nutrition.glycemicLoad) === "medium" ? "text-amber-600" : "text-red-600"}>GL {nutrition.glycemicLoad}</span>
                         </div>
                         <p className="line-clamp-1 text-[11px] text-brand-primary/60">
                           Allergens: {allergens.length > 0 ? allergens.join(", ") : "None"}

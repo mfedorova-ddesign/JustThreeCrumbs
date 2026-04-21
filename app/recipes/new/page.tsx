@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { giLabel, glycemicLoadLabel } from "@/lib/nutrition/calc";
 import { buildRecipePayload, computeRecipeMetricsFromForm, makeEmptyRecipeForm, mealTypeLabels } from "@/lib/recipes/editor";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { MealType } from "@/types";
@@ -169,8 +170,11 @@ export default function NewRecipePage() {
                   {Math.round(calculatedMetrics.carbs)}
                 </div>
                 <div className="rounded-lg bg-white px-2 py-1">Fiber: {Math.round(calculatedMetrics.fiber)}g</div>
-                <div className="rounded-lg bg-white px-2 py-1">
-                  GI: {calculatedMetrics.glycemicIndex} | GL: {calculatedMetrics.glycemicLoad}
+                <div className={`rounded-lg px-2 py-1 ${giLabel(calculatedMetrics.glycemicIndex) === "low" ? "bg-[#EAF5EF] text-[#2D7A51]" : giLabel(calculatedMetrics.glycemicIndex) === "medium" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+                  GI: {calculatedMetrics.glycemicIndex} <span className="opacity-60 text-[10px]">· {giLabel(calculatedMetrics.glycemicIndex)}</span>
+                </div>
+                <div className={`rounded-lg px-2 py-1 ${glycemicLoadLabel(calculatedMetrics.glycemicLoad) === "low" ? "bg-[#EAF5EF] text-[#2D7A51]" : glycemicLoadLabel(calculatedMetrics.glycemicLoad) === "medium" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+                  GL: {calculatedMetrics.glycemicLoad} <span className="opacity-60 text-[10px]">· {glycemicLoadLabel(calculatedMetrics.glycemicLoad)}</span>
                 </div>
               </div>
             ) : calcAttempted ? (
