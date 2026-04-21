@@ -238,7 +238,7 @@ export default function DietPage() {
                   <div className="mt-0.5 h-5 w-5 shrink-0 rounded-md bg-[#F97316]" />
                   <div>
                     <p className="font-semibold text-brand-text">¼ plate — Lean protein</p>
-                    <p className="mt-0.5 text-sm text-brand-text/60">Chicken, fish, eggs, tofu, legumes. Keeps you full and doesn't spike blood sugar.</p>
+                    <p className="mt-0.5 text-sm text-brand-text/60">Chicken, fish, eggs, tofu, legumes. Keeps you full and does not spike blood sugar.</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
