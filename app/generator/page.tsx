@@ -626,6 +626,12 @@ export default function GeneratorPage() {
             >
               Diet
             </Link>
+            <Link
+              href="/custom-plate"
+              className="rounded-t-xl border border-brand-border border-b-brand-border bg-brand-bg/40 px-5 py-2.5 text-sm font-medium text-brand-text/70 transition hover:bg-white hover:text-brand-text"
+            >
+              Custom plate
+            </Link>
           </div>
           <div className="h-px w-full bg-brand-border" />
         </div>

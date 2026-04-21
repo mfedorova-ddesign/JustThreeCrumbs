@@ -22,6 +22,12 @@ function TopTabs() {
       <span className="relative -mb-px rounded-t-xl border border-brand-border bg-white px-5 py-2.5 text-sm font-semibold text-brand-text">
         Diet
       </span>
+      <Link
+        href="/custom-plate"
+        className="rounded-t-xl border border-brand-border border-b-brand-border bg-brand-bg/40 px-5 py-2.5 text-sm font-medium text-brand-text/70 transition hover:bg-white hover:text-brand-text"
+      >
+        Custom plate
+      </Link>
     </div>
   );
 }
