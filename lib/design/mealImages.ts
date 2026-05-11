@@ -46,6 +46,12 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-caesar-salad-keto": "/images/cesar.jpg",
   "recipe-duck-orange": "/images/duck.jpg",
   "recipe-cauliflower-steak-harissa": "/images/cabbage.jpg",
+  "recipe-pasta-pesto-piselli": "/images/fusilli-al-pesto.jpg",
+  "recipe-dal-delight": "/images/dal.webp",
+  "recipe-fasolia-greek": "/images/Fasolia.WEBP",
+  "recipe-caponata-chickpeas": "/images/eggplant-caponata.jpeg",
+  "recipe-bacalao-pil-pil": "/images/sugerencia.jpg",
+  "recipe-croatian-bruschetta": "/images/backf.jpg",
 };
 
 export function mealImageUrlForId(mealId: string, customUrl?: string): string {

@@ -17,6 +17,174 @@ function ing(
 
 export const FIXED_RECIPES: Recipe[] = [
   {
+    id: "recipe-dal-delight",
+    name: "Dal Delight",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "lentils", { label: "brown lentils (dry)" }),
+      ing("protein", "red beans"),
+      ing("protein", "black beans"),
+      ing("carbs", "sweet potato"),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "spinach"),
+      ing("vegetables", "tomato"),
+      ing("liquid", "light coconut milk", { label: "coconut milk" }),
+      ing("liquid", "vegetable broth"),
+      ing("vegetables", "onion"),
+      ing("spices", "garlic"),
+      ing("spices", "ginger"),
+      ing("fats", "olive oil"),
+      ing("spices", "turmeric"),
+      ing("spices", "coriander"),
+      ing("spices", "cumin"),
+      ing("spices", "black pepper"),
+      ing("spices", "salt"),
+      ing("liquid", "lemon juice"),
+      ing("spices", "cilantro")
+    ],
+    constraints: { maxCarbs: 45, glycemicIndex: "low" },
+    instructions: [
+      "Heat olive oil in a deep pot over medium heat. Cook diced onion for about 5 minutes until translucent, then add garlic and freshly grated ginger and cook 2 minutes more.",
+      "Add turmeric, coriander, cumin, black pepper, and optional fenugreek if using. Toast the spices for about 1 minute, stirring constantly so they bloom without burning.",
+      "Add tomatoes, coconut milk, and vegetable broth. Stir in rinsed brown lentils, carrot, and sweet potato. Bring to a boil, then simmer uncovered for about 25 minutes until lentils are soft.",
+      "Add drained red beans and black beans. Simmer another 10 minutes; mash a small portion of the lentils against the pot wall for a thicker, creamier texture.",
+      "Remove from heat and fold in fresh spinach so it wilts from residual heat. Stir in lemon juice and salt, then adjust seasoning to taste.",
+      "Serve hot and finish with chopped cilantro. Optionally pair with basmati rice, whole-grain rice, or naan."
+    ]
+  },
+  {
+    id: "recipe-fasolia-greek",
+    name: "Fasolia — Greek white beans in tomatoes",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "white beans", { label: "cannellini beans (canned, drained)" }),
+      ing("vegetables", "tomato", { label: "canned diced tomatoes" }),
+      ing("vegetables", "onion"),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "celery"),
+      ing("spices", "garlic"),
+      ing("fats", "olive oil"),
+      ing("spices", "rosemary"),
+      ing("liquid", "tomato paste"),
+      ing("liquid", "lemon juice"),
+      ing("spices", "black pepper"),
+      ing("spices", "salt"),
+      ing("spices", "parsley"),
+      ing("fats", "olives", { optional: true }),
+      ing("carbs", "whole grain bread", { optional: true, alternatives: ["crackers"] })
+    ],
+    constraints: { maxCarbs: 50, glycemicIndex: "low" },
+    instructions: [
+      "Soffritto: finely dice onion, carrot, and celery. Sauté in olive oil over medium heat for about 10 minutes until soft — do not rush; this is the flavour base.",
+      "Garlic and rosemary: add crushed garlic and rosemary sprigs; cook 1 minute. Stir in tomato paste and cook 2 minutes more until the paste darkens slightly.",
+      "Simmer: add diced tomatoes and about 200 ml water. Add the beans. Simmer gently, covered, on low heat for about 25 minutes. Mash some of the beans with a fork so the sauce turns creamy.",
+      "Finish: remove the rosemary sprigs. Stir in lemon juice, salt, and black pepper to taste. Drizzle generously with extra virgin olive oil at the table.",
+      "Serve with crusty whole-grain bread or pita. Top with plenty of fresh parsley and optional olives.",
+      "Freezes well for up to 4 months. Reheat with a few tablespoons of water, covered, for about 6 minutes; add a fresh drizzle of olive oil after reheating."
+    ]
+  },
+  {
+    id: "recipe-caponata-chickpeas",
+    name: "Caponata with chickpeas — Sicilian agrodolce",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("vegetables", "eggplant"),
+      ing("protein", "chickpeas", { label: "chickpeas (canned, drained)" }),
+      ing("vegetables", "tomato", { label: "canned diced tomatoes" }),
+      ing("vegetables", "celery"),
+      ing("vegetables", "onion", { label: "red onion" }),
+      ing("fats", "olives", { label: "pitted green olives" }),
+      ing("spices", "capers"),
+      ing("fats", "olive oil"),
+      ing("liquid", "vinegar", { label: "red wine vinegar" }),
+      ing("spices", "sweetener", { alternatives: ["honey"], label: "agave syrup or honey" }),
+      ing("fats", "almonds", { label: "toasted pine nuts (or almonds)" }),
+      ing("spices", "basil"),
+      ing("spices", "black pepper", { optional: true }),
+      ing("spices", "salt", { optional: true }),
+      ing("carbs", "whole grain bread", { optional: true, alternatives: ["brown rice"] })
+    ],
+    constraints: { maxCarbs: 42, glycemicIndex: "low" },
+    instructions: [
+      "Eggplant: dice into 2 cm cubes, salt lightly, and rest 15 minutes to draw out bitterness. Pat dry with paper towels. Pan-fry in olive oil over high heat until golden on all sides. Set aside.",
+      "Base: in the same pan, sauté red onion and celery for about 5 minutes. Add tomatoes and simmer for about 8 minutes.",
+      "Agrodolce: stir in red wine vinegar and honey (or agave); this is the soul of the dish. After 2 minutes, add chickpeas, olives, capers, and the fried eggplant.",
+      "Braise: simmer everything together on low heat for about 10 minutes. Taste and balance sweet and sour — add a touch more vinegar or sweetener as needed.",
+      "Serve sprinkled with toasted pine nuts and fresh basil. Excellent with whole-grain couscous or crusty bread.",
+      "Freezes very well for up to 3 months; flavour often deepens after a day. Add pine nuts and basil only when serving."
+    ]
+  },
+  {
+    id: "recipe-bacalao-pil-pil",
+    name: "Bacalao al Pil-Pil",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "cod", { label: "salt cod (bacalao), soaked 48 h, water changed every 12 h" }),
+      ing("fats", "olive oil"),
+      ing("spices", "garlic"),
+      ing("spices", "paprika", { label: "dried choricero pepper flesh (soaked, flesh scraped)" }),
+      ing("spices", "salt", { optional: true })
+    ],
+    constraints: { maxCarbs: 8, glycemicIndex: "low" },
+    instructions: [
+      "Prepare the cod: rinse the soaked salt cod and pat completely dry. Let it sit at room temperature for 15 minutes.",
+      "Garlic in oil: pour olive oil into a wide shallow pan. Gently fry sliced garlic over low heat for about 10 minutes until pale gold — not brown. Remove the garlic and set aside.",
+      "Cod in oil: place the cod skin-side down in the oil. Cook over very low heat (about 70–75°C) for 8 minutes — the oil must not boil, only shimmer. Lift out the fish and leave the oil in the pan to cool slightly.",
+      "The pil-pil emulsion: slowly rotate the pan in steady circles for about 15 minutes. Gelatin from the cod skin and the olive oil will form a creamy emulsion on their own — no cream, no whisk.",
+      "Return the cod to the sauce. Add the soaked choricero flesh and a pinch of salt to taste. Serve with the confit garlic on the side. Patience and constant circular movement are the secret — never whisk."
+    ]
+  },
+  {
+    id: "recipe-croatian-bruschetta",
+    name: "Croatian-style bruschetta",
+    mealTypes: ["breakfast"],
+    ingredients: [
+      ing("carbs", "whole grain bread"),
+      ing("fats", "avocado"),
+      ing("vegetables", "sun-dried tomatoes"),
+      ing("protein", "tuna", { label: "smoked mackerel or sardines", alternatives: ["salmon"] }),
+      ing("liquid", "lemon juice"),
+      ing("fats", "olive oil"),
+      ing("spices", "salt", { label: "flaky sea salt" }),
+      ing("spices", "basil"),
+      ing("spices", "black pepper")
+    ],
+    constraints: { maxCarbs: 35, glycemicIndex: "low" },
+    instructions: [
+      "Toast the bread: place whole-grain slices in a toaster or dry grill pan until golden and crisp — no oil on the bread so it stays crunchy, not greasy.",
+      "Avocado spread: halve the avocado, remove the pit, and scoop the flesh into a bowl. Add lemon juice, sea salt, and black pepper. Mash with a fork until chunky, not completely smooth.",
+      "Toppings: halve or leave sun-dried tomatoes whole. Break smoked mackerel or sardines into small pieces by hand for a rustic look.",
+      "Assemble: spread the avocado generously on the hot toast. Top with sun-dried tomatoes and fish. Garnish with basil leaves and drizzle with olive oil. Serve immediately while the bread is still crisp."
+    ]
+  },
+  {
+    id: "recipe-pasta-pesto-piselli",
+    name: "Pasta al Pesto di Piselli",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("carbs", "brown rice", { label: "conchiglie pasta (durum wheat)" }),
+      ing("vegetables", "green peas"),
+      ing("spices", "basil"),
+      ing("vegetables", "broccoli", { alternatives: ["cauliflower"] }),
+      ing("vegetables", "cabbage", { label: "savoy cabbage, shredded" }),
+      ing("vegetables", "sun-dried tomatoes"),
+      ing("fats", "pumpkin seeds"),
+      ing("fats", "olive oil"),
+      ing("spices", "garlic"),
+      ing("liquid", "lemon juice"),
+      ing("spices", "black pepper")
+    ],
+    constraints: { maxCarbs: 60, glycemicIndex: "low" },
+    instructions: [
+      "Blanch green peas for 2 minutes in boiling water, then transfer to ice water to keep the bright color. Reserve a few spoonfuls for garnish.",
+      "Cook broccoli florets in salted water for 4–5 minutes until tender-crisp. Add shredded savoy cabbage for the final minute. Drain and reserve some cooking water.",
+      "Cook conchiglie in salted water until al dente, about 1–2 minutes less than package instructions. Drain, reserving some pasta water.",
+      "Blend peas, basil, garlic, olive oil, lemon juice, salt, and black pepper into a creamy pesto. Add a little cooking water if needed for texture.",
+      "Combine pasta, cooked vegetables, and most of the pesto in a deep pan. Toss over medium heat for 1–2 minutes, loosening with cooking water until the sauce coats evenly.",
+      "Serve topped with reserved whole peas, sun-dried tomatoes, pumpkin seeds, and extra basil leaves."
+    ]
+  },
+  {
     id: "recipe-shakshuka-toast",
     name: "Vegetable shakshuka with toast",
     mealTypes: ["breakfast"],
