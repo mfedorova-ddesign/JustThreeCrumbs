@@ -142,7 +142,7 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("carbs", "whole grain bread"),
       ing("fats", "avocado"),
       ing("vegetables", "sun-dried tomatoes"),
-      ing("protein", "tuna", { label: "smoked mackerel or sardines", alternatives: ["salmon"] }),
+      ing("protein", "tuna", { label: "smoked mackerel or sardines", alternatives: ["salmon", "tofu", "chickpeas"] }),
       ing("liquid", "lemon juice"),
       ing("fats", "olive oil"),
       ing("spices", "salt", { label: "flaky sea salt" }),
@@ -153,8 +153,8 @@ export const FIXED_RECIPES: Recipe[] = [
     instructions: [
       "Toast the bread: place whole-grain slices in a toaster or dry grill pan until golden and crisp — no oil on the bread so it stays crunchy, not greasy.",
       "Avocado spread: halve the avocado, remove the pit, and scoop the flesh into a bowl. Add lemon juice, sea salt, and black pepper. Mash with a fork until chunky, not completely smooth.",
-      "Toppings: halve or leave sun-dried tomatoes whole. Break smoked mackerel or sardines into small pieces by hand for a rustic look.",
-      "Assemble: spread the avocado generously on the hot toast. Top with sun-dried tomatoes and fish. Garnish with basil leaves and drizzle with olive oil. Serve immediately while the bread is still crisp."
+      "Toppings: halve or leave sun-dried tomatoes whole. Break {protein} into small pieces by hand for a rustic look.",
+      "Assemble: spread the avocado generously on the hot toast. Top with sun-dried tomatoes and {protein}. Garnish with basil leaves and drizzle with olive oil. Serve immediately while the bread is still crisp."
     ]
   },
   {
@@ -204,11 +204,11 @@ export const FIXED_RECIPES: Recipe[] = [
     ],
     constraints: { maxCarbs: 20, glycemicIndex: "low" },
     instructions: [
-      "Sauté onion and bell pepper in olive oil over medium heat until soft, 5–8 minutes.",
+      "Sauté onion and bell pepper in {fat} over medium heat until soft, 5–8 minutes.",
       "Add garlic, paprika, cumin, and chili — cook for 30 seconds until fragrant.",
       "Add tomatoes and tomato paste, simmer for 10–15 minutes until thickened.",
-      "Make wells in the sauce and crack in the eggs. Cover and cook to desired doneness.",
-      "Garnish with fresh parsley or cilantro and serve with optional bread."
+      "Add {protein} to the sauce (make wells and nestle, or crumble/stir in). Cover and cook to desired doneness.",
+      "Garnish with fresh parsley or cilantro and serve with optional {grain}."
     ]
   },
   {
@@ -226,8 +226,8 @@ export const FIXED_RECIPES: Recipe[] = [
     ],
     constraints: { maxCarbs: 55, glycemicIndex: "low" },
     instructions: [
-      "Mix chia seeds with almond milk and spices.",
-      "Fold in yogurt and chill until thick.",
+      "Mix chia seeds with {protein} (or a splash of plant milk) and spices.",
+      "Fold until thick, then chill.",
       "Top with berries and optional nut butter."
     ]
   },
@@ -247,11 +247,11 @@ export const FIXED_RECIPES: Recipe[] = [
     ],
     constraints: { maxCarbs: 55, glycemicIndex: "low" },
     instructions: [
-      "Cook oats in water over medium heat, stirring occasionally.",
+      "Cook {grain} in water over medium heat, stirring occasionally.",
       "In the last minute, stir in flax seeds — add a splash more water if needed.",
-      "Season with black pepper; optionally stir in protein powder, a knob of butter, or a splash of milk.",
-      "Boil eggs (2 per serving), fry them, or use pan-fried / baked tofu instead.",
-      "Top oatmeal with halved eggs and any vegetables or fresh herbs you like."
+      "Season with black pepper; optionally stir in a little {fat} or a splash of {liquid}.",
+      "Prepare {protein} (pan-fried, baked, or boiled as suits the ingredient).",
+      "Top the {grain} with {protein} and any {veg} or fresh herbs you like."
     ]
   },
   {
@@ -268,7 +268,7 @@ export const FIXED_RECIPES: Recipe[] = [
     constraints: { maxCarbs: 25, glycemicIndex: "low" },
     instructions: [
       "Slice berries and any optional fruit into a bowl.",
-      "Spoon greek yogurt on top.",
+      "Spoon {protein} on top.",
       "Sprinkle with almonds, coconut flakes, or mixed nuts.",
       "Add a couple teaspoons of sugar-free jam if desired."
     ]
@@ -429,9 +429,9 @@ export const FIXED_RECIPES: Recipe[] = [
     ],
     constraints: { maxCarbs: 42, glycemicIndex: "low" },
     instructions: [
-      "Season fish with lemon, olive oil, and spices.",
-      "Bake with vegetables until done.",
-      "Serve with optional quinoa."
+      "Season {protein} with lemon, {fat}, and spices.",
+      "Bake with {veg} until done.",
+      "Serve with optional {grain}."
     ]
   },
   {
@@ -447,7 +447,7 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("carbs", "corn"),
       ing("carbs", "croutons", { optional: true }),
       ing("fats", "olives", { optional: true }),
-      ing("liquid", "greek yogurt"),
+      ing("liquid", "greek yogurt", { alternatives: ["hummus", "lemon juice"] }),
       ing("liquid", "soy sauce"),
       ing("spices", "mustard"),
       ing("spices", "lemon juice"),
@@ -457,9 +457,9 @@ export const FIXED_RECIPES: Recipe[] = [
     constraints: { maxCarbs: 40, glycemicIndex: "low" },
     instructions: [
       "Combine lettuce, cucumber, radish, corn, and optional carrot in a bowl.",
-      "Add drained canned tuna, cooked chicken breast, or chickpeas.",
+      "Add drained {protein}.",
       "Optionally add olives and a few croutons.",
-      "Whisk together greek yogurt, mustard, soy sauce, lemon juice, paprika, salt and pepper.",
+      "Whisk together {liquid}, mustard, soy sauce, paprika, salt and pepper.",
       "Pour dressing over the salad and toss well."
     ]
   },
@@ -514,13 +514,13 @@ export const FIXED_RECIPES: Recipe[] = [
     ],
     constraints: { maxCarbs: 60, glycemicIndex: "medium" },
     instructions: [
-      "Bring vegetable or meat broth to a boil. Add diced potato and cook until almost tender.",
+      "Bring {liquid} to a boil. Add diced potato and cook until almost tender.",
       "Add julienned or grated beets and continue cooking until they lighten slightly in colour.",
       "Meanwhile, sauté diced onion, garlic, and julienned carrot in olive oil until golden. Stir in tomato paste and cook 2–3 minutes.",
       "Add the sauté to the pot along with shredded cabbage, a splash of vinegar or lemon juice, bay leaf, and black pepper.",
-      "Add pre-cooked sliced meat or rinsed canned beans.",
+      "Add {protein}.",
       "Simmer for 3 minutes, then turn off the heat and let rest for a few minutes.",
-      "Serve with a dollop of sour cream or greek yogurt and freshly chopped dill and parsley."
+      "Serve hot with freshly chopped dill and parsley."
     ]
   },
   {
@@ -532,7 +532,7 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("carbs", "whole grain bread", { alternatives: ["crackers"] }),
       ing("vegetables", "lettuce"),
       ing("vegetables", "cucumber"),
-      ing("liquid", "greek yogurt"),
+      ing("liquid", "greek yogurt", { alternatives: ["hummus", "tahini"] }),
       ing("spices", "mustard", { optional: true }),
       ing("spices", "lemon juice"),
       ing("spices", "black pepper"),
@@ -540,10 +540,10 @@ export const FIXED_RECIPES: Recipe[] = [
     ],
     constraints: { maxCarbs: 30, glycemicIndex: "low" },
     instructions: [
-      "Mix drained tuna with greek yogurt, lemon juice, black pepper, and optional mustard and paprika.",
-      "Toast whole grain bread or lay out crackers.",
+      "Mix drained {protein} with {liquid}, black pepper, and optional mustard and paprika.",
+      "Toast {grain} or lay out crackers.",
       "Place a lettuce leaf and cucumber slices on top of the toast.",
-      "Spoon the tuna salad over the top and serve."
+      "Spoon the {protein} salad over the top and serve."
     ]
   },
   {
@@ -551,15 +551,15 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Egg and cucumber snack plate",
     mealTypes: ["snack"],
     ingredients: [
-      ing("protein", "eggs"),
+      ing("protein", "eggs", { alternatives: ["tofu", "chickpeas"] }),
       ing("vegetables", "cucumber"),
       ing("fats", "olive oil", { optional: true }),
       ing("spices", "black pepper")
     ],
     constraints: { maxCarbs: 12, glycemicIndex: "low" },
     instructions: [
-      "Slice boiled eggs and cucumber.",
-      "Add olive oil and black pepper."
+      "Slice {protein} and cucumber.",
+      "Add {fat} and black pepper."
     ]
   },
   {
@@ -594,7 +594,7 @@ export const FIXED_RECIPES: Recipe[] = [
     ],
     constraints: { maxCarbs: 22, glycemicIndex: "low" },
     instructions: [
-      "Add yogurt to a bowl.",
+      "Add {liquid} to a bowl.",
       "Top with berries and optional chia, cinnamon, and sugar-free jam."
     ]
   },
@@ -603,7 +603,7 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Apple cinnamon cottage cup",
     mealTypes: ["snack"],
     ingredients: [
-      ing("protein", "cottage cheese", { alternatives: ["greek yogurt"] }),
+      ing("protein", "cottage cheese", { alternatives: ["greek yogurt", "tofu", "hummus"] }),
       ing("carbs", "apple", { alternatives: ["pear"] }),
       ing("liquid", "water", { optional: true }),
       ing("spices", "sweetener", { optional: true }),
@@ -616,7 +616,7 @@ export const FIXED_RECIPES: Recipe[] = [
       "Slice apple (or pear) into thin wedges.",
       "Place slices in a pan with a splash of water and cook over medium heat for 3–4 minutes until softened and lightly caramelized. Add sweetener if desired.",
       "Sprinkle with cinnamon and arrange on a plate.",
-      "Spoon cottage cheese (or greek yogurt) on top.",
+      "Spoon {protein} on top.",
       "Finish with a light sprinkle of raisins and optional almond flakes."
     ]
   },
@@ -762,7 +762,7 @@ export const FIXED_RECIPES: Recipe[] = [
     constraints: { maxCarbs: 8, glycemicIndex: "low" },
     instructions: [
       "Soak gelatin in 60 ml cold water for 10–15 minutes until bloomed.",
-      "Gently heat cream in a saucepan over low heat — do not boil. Add bloomed gelatin and stir until completely dissolved.",
+      "Gently heat {liquid} in a saucepan over low heat — do not boil. Add bloomed gelatin and stir until completely dissolved.",
       "Add erythritol and vanilla bean seeds (split the pod and scrape). Stir well.",
       "Pour into silicone moulds or glasses. Refrigerate 4–5 hours until set.",
       "Serve chilled, topped with fresh berries if desired."

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { INGREDIENTS } from "@/lib/ingredients/data";
 import { INGREDIENT_HEALTH_FACTS } from "@/lib/ingredients/healthFacts";
 import { isProfileComplete } from "@/lib/generator/profile";
+import { composeMealCopy, normalizeAllergySet } from "@/lib/generator/meal-copy";
 import { recommendedDailyTargets } from "@/lib/generator/targets";
 import {
   giLabel,
@@ -139,10 +140,23 @@ function updateMealInPlan(
   };
 }
 
-function recalculateMeal(meal: GeneratedMeal, removedMap: Record<number, boolean> = {}): GeneratedMeal {
+function recalculateMeal(
+  meal: GeneratedMeal,
+  removedMap: Record<number, boolean> = {},
+  allergies: string[] = []
+): GeneratedMeal {
   const activeIngredients = meal.ingredients.filter((_, index) => !removedMap[index]);
+  const recipe = [...FIXED_RECIPES].find((r) => r.id === meal.templateId);
+  const { name, instructions } = composeMealCopy({
+    ingredients: activeIngredients,
+    recipe,
+    sourceInstructions: recipe?.instructions ?? meal.instructions,
+    allergySet: normalizeAllergySet(allergies)
+  });
   return {
     ...meal,
+    name,
+    instructions,
     calories: sumCalories(activeIngredients),
     macros: sumMacros(activeIngredients),
     fiber: sumFiber(activeIngredients),
@@ -287,7 +301,8 @@ export default function GeneratorPage() {
             ...meal,
             ingredients: nextIngredients
           },
-          removedIngredients[mealId] ?? {}
+          removedIngredients[mealId] ?? {},
+          profile.allergies
         );
       })
     );
@@ -323,7 +338,7 @@ export default function GeneratorPage() {
         if (!targetMeal) return previousPlan;
 
         return updateMealInPlan(previousPlan, mealId, () =>
-          recalculateMeal(targetMeal, nextRemovedForMeal)
+          recalculateMeal(targetMeal, nextRemovedForMeal, profile.allergies)
         );
       });
 

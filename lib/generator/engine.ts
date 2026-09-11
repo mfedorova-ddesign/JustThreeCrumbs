@@ -1,4 +1,5 @@
 import { recommendedDailyTargets } from "@/lib/generator/targets";
+import { composeMealCopy, normalizeAllergySet } from "@/lib/generator/meal-copy";
 import { INGREDIENTS } from "@/lib/ingredients/data";
 import {
   glycemicIndexAverage,
@@ -111,15 +112,7 @@ function mealTargetFromDaily(
 }
 
 function getAllergySet(user: UserProfile): Set<string> {
-  const allergySet = new Set<string>();
-  for (const raw of user.allergies.map((a) => a.toLowerCase().trim()).filter((a) => a && a !== "none")) {
-    allergySet.add(raw);
-    if (raw === "milk") allergySet.add("dairy");
-    if (raw === "dairy") allergySet.add("milk");
-    if (raw === "tree nut") allergySet.add("tree nuts");
-    if (raw === "tree nuts") allergySet.add("tree nut");
-  }
-  return allergySet;
+  return normalizeAllergySet(user.allergies);
 }
 
 function isIngredientAllowed(ingredient: Ingredient, user: UserProfile, allergySet: Set<string>): boolean {
@@ -342,12 +335,19 @@ function buildMeal(
   mealType: MealType,
   dayIndex: number,
   seed: number,
-  resolved: { ingredient: Ingredient; alternatives: string[] }[]
+  resolved: { ingredient: Ingredient; alternatives: string[] }[],
+  allergySet: Set<string>
 ): GeneratedMeal {
   const ingredients = resolved.map((r) => r.ingredient);
+  const { name, instructions } = composeMealCopy({
+    ingredients,
+    recipe,
+    sourceInstructions: recipe.instructions,
+    allergySet
+  });
   return {
     id: `${recipe.id}-${mealType}-${dayIndex}-${Math.abs(seed % 100000)}`,
-    name: recipe.name,
+    name,
     templateId: recipe.id,
     mealType,
     ingredients,
@@ -359,7 +359,7 @@ function buildMeal(
     glycemicLoad: glycemicLoad(ingredients),
     isVegetarian: isVegetarianMeal(ingredients),
     isVegan: isVeganMeal(ingredients),
-    instructions: recipe.instructions
+    instructions
   };
 }
 
@@ -431,7 +431,7 @@ function generateMealFromRecipe(
     ingredient: ing,
     alternatives: altsByName.get(ing.name) ?? []
   }));
-  return buildMeal(recipe, mealType, dayIndex, seed, scaledResolved);
+  return buildMeal(recipe, mealType, dayIndex, seed, scaledResolved, getAllergySet(user));
 }
 
 export type RegenerateSingleMealOptions = {
