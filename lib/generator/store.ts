@@ -2,11 +2,14 @@
 
 import { generateMealPlan } from "@/lib/generator/engine";
 import { isProfileComplete } from "@/lib/generator/profile";
+import { persistPlanToSession, readLatestPlanFromStorage } from "@/lib/planStorage";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { Condition, MealPlan, Recipe, UserProfile } from "@/types";
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 type GeneratorState = {
+  _hasHydrated: boolean;
   isAuthenticated: boolean;
   profile: UserProfile;
   planDays: 1 | 3 | 7;
@@ -15,6 +18,7 @@ type GeneratorState = {
   favoriteRecipeIds: string[];
   skippedRecipeIds: string[];
   onboardingStep: 1 | 2 | 3;
+  setHasHydrated: (value: boolean) => void;
   continueAsGuest: () => void;
   setProfile: (profile: Partial<UserProfile>) => void;
   setPlanDays: (days: 1 | 3 | 7) => void;
@@ -40,90 +44,132 @@ const defaultProfile: UserProfile = {
   additionalPreferences: ""
 };
 
-export const useGeneratorStore = create<GeneratorState>((set, get) => ({
-  isAuthenticated: false,
-  profile: defaultProfile,
-  planDays: 1,
-  latestPlan: null,
-  customRecipes: [],
-  favoriteRecipeIds: [],
-  skippedRecipeIds: [],
-  onboardingStep: 1,
-  continueAsGuest: () => {
-    set({
-      isAuthenticated: true
-    });
-  },
-  setProfile: (profile) =>
-    set((state) => ({
-      profile: {
-        ...state.profile,
-        ...profile
-      }
-    })),
-  setPlanDays: (days) => set({ planDays: days }),
-  setOnboardingStep: (step) => set({ onboardingStep: step }),
-  setConditionAndContinue: (condition) =>
-    set((state) => ({
-      profile: {
-        ...state.profile,
-        condition
+export const useGeneratorStore = create<GeneratorState>()(
+  persist(
+    (set, get) => ({
+      _hasHydrated: false,
+      isAuthenticated: false,
+      profile: defaultProfile,
+      planDays: 1,
+      latestPlan: null,
+      customRecipes: [],
+      favoriteRecipeIds: [],
+      skippedRecipeIds: [],
+      onboardingStep: 1,
+      setHasHydrated: (value) => set({ _hasHydrated: value }),
+      continueAsGuest: () => {
+        set({
+          isAuthenticated: true
+        });
       },
-      onboardingStep: 3
-    })),
-  setLatestPlan: (plan) => set({ latestPlan: plan }),
-  addCustomRecipe: (recipe) => {
-    const id = `custom-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
-    set((state) => ({
-      customRecipes: [...state.customRecipes, { ...recipe, id, source: "custom" }]
-    }));
-    return id;
-  },
-  updateCustomRecipe: (id, patch) =>
-    set((state) => ({
-      customRecipes: state.customRecipes.map((recipe) =>
-        recipe.id === id ? { ...recipe, ...patch, source: "custom", id } : recipe
-      )
-    })),
-  deleteCustomRecipe: (id) =>
-    set((state) => ({
-      customRecipes: state.customRecipes.filter((recipe) => recipe.id !== id),
-      favoriteRecipeIds: state.favoriteRecipeIds.filter((recipeId) => recipeId !== id),
-      skippedRecipeIds: state.skippedRecipeIds.filter((recipeId) => recipeId !== id)
-    })),
-  toggleFavoriteRecipe: (id) =>
-    set((state) => {
-      const exists = state.favoriteRecipeIds.includes(id);
-      return {
-        favoriteRecipeIds: exists
-          ? state.favoriteRecipeIds.filter((recipeId) => recipeId !== id)
-          : [...state.favoriteRecipeIds, id]
-      };
+      setProfile: (profile) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            ...profile
+          }
+        })),
+      setPlanDays: (days) => set({ planDays: days }),
+      setOnboardingStep: (step) => set({ onboardingStep: step }),
+      setConditionAndContinue: (condition) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            condition
+          },
+          onboardingStep: 3
+        })),
+      setLatestPlan: (plan) => {
+        set({ latestPlan: plan });
+        if (plan) persistPlanToSession(plan);
+      },
+      addCustomRecipe: (recipe) => {
+        const id = `custom-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+        set((state) => ({
+          customRecipes: [...state.customRecipes, { ...recipe, id, source: "custom" }]
+        }));
+        return id;
+      },
+      updateCustomRecipe: (id, patch) =>
+        set((state) => ({
+          customRecipes: state.customRecipes.map((recipe) =>
+            recipe.id === id ? { ...recipe, ...patch, source: "custom", id } : recipe
+          )
+        })),
+      deleteCustomRecipe: (id) =>
+        set((state) => ({
+          customRecipes: state.customRecipes.filter((recipe) => recipe.id !== id),
+          favoriteRecipeIds: state.favoriteRecipeIds.filter((recipeId) => recipeId !== id),
+          skippedRecipeIds: state.skippedRecipeIds.filter((recipeId) => recipeId !== id)
+        })),
+      toggleFavoriteRecipe: (id) =>
+        set((state) => {
+          const exists = state.favoriteRecipeIds.includes(id);
+          return {
+            favoriteRecipeIds: exists
+              ? state.favoriteRecipeIds.filter((recipeId) => recipeId !== id)
+              : [...state.favoriteRecipeIds, id]
+          };
+        }),
+      toggleSkipRecipe: (id) =>
+        set((state) => {
+          const exists = state.skippedRecipeIds.includes(id);
+          return {
+            skippedRecipeIds: exists
+              ? state.skippedRecipeIds.filter((recipeId) => recipeId !== id)
+              : [...state.skippedRecipeIds, id]
+          };
+        }),
+      generatePlan: (daysOverride) => {
+        const { profile, planDays, isAuthenticated, customRecipes, favoriteRecipeIds, skippedRecipeIds } =
+          get();
+        if (!isAuthenticated) {
+          throw new Error("Please start from create account or guest mode.");
+        }
+        if (!isProfileComplete(profile)) {
+          throw new Error("Please complete your profile before generating a meal plan.");
+        }
+        const effectiveDays = daysOverride ?? planDays;
+        const plan = generateMealPlan(profile, effectiveDays, {
+          recipes: [...FIXED_RECIPES, ...customRecipes],
+          favoriteRecipeIds,
+          skippedRecipeIds
+        });
+        set({ latestPlan: plan, planDays: effectiveDays });
+        persistPlanToSession(plan);
+        return plan;
+      }
     }),
-  toggleSkipRecipe: (id) =>
-    set((state) => {
-      const exists = state.skippedRecipeIds.includes(id);
-      return {
-        skippedRecipeIds: exists
-          ? state.skippedRecipeIds.filter((recipeId) => recipeId !== id)
-          : [...state.skippedRecipeIds, id]
-      };
-    }),
-  generatePlan: (daysOverride) => {
-    const { profile, planDays, isAuthenticated, customRecipes, favoriteRecipeIds, skippedRecipeIds } = get();
-    if (!isAuthenticated) {
-      throw new Error("Please start from create account or guest mode.");
+    {
+      name: "jtc-guest-state",
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
+      partialize: (state) => ({
+        isAuthenticated: state.isAuthenticated,
+        profile: state.profile,
+        planDays: state.planDays,
+        latestPlan: state.latestPlan,
+        customRecipes: state.customRecipes,
+        favoriteRecipeIds: state.favoriteRecipeIds,
+        skippedRecipeIds: state.skippedRecipeIds,
+        onboardingStep: state.onboardingStep
+      }),
+      onRehydrateStorage: () => (state, error) => {
+        try {
+          if (!error) {
+            const plan = state?.latestPlan ?? readLatestPlanFromStorage();
+            if (plan) {
+              // Defer so we don't nest setState inside rehydrate merge
+              queueMicrotask(() => {
+                useGeneratorStore.setState({ latestPlan: plan });
+                persistPlanToSession(plan);
+              });
+            }
+          }
+        } catch {
+          // ignore recovery errors
+        }
+      }
     }
-    if (!isProfileComplete(profile)) {
-      throw new Error("Please complete your profile before generating a meal plan.");
-    }
-    const effectiveDays = daysOverride ?? planDays;
-    const plan = generateMealPlan(profile, effectiveDays, {
-      recipes: [...FIXED_RECIPES, ...customRecipes],
-      favoriteRecipeIds,
-      skippedRecipeIds
-    });
-    set({ latestPlan: plan, planDays: effectiveDays });
-    return plan;
-  }
-}));
+  )
+);

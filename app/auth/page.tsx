@@ -46,6 +46,12 @@ export default function AuthPage() {
             Your profile data will be used to personalize nutrition targets and meal generation.
           </p>
 
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-[13px] leading-relaxed text-amber-950/85">
+            <strong className="font-semibold">Guest mode note:</strong> your profile and meal plans are
+            saved in this browser only (local storage). A refresh or new tab will keep them, but clearing
+            site data or switching devices will lose them until you create a real account.
+          </div>
+
           <div className="mt-5 flex gap-2 rounded-lg bg-brand-bg p-1">
             <button
               type="button"

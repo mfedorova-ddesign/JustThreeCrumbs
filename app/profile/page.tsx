@@ -3,19 +3,22 @@
 import { Button } from "@/components/ui/Button";
 import { isProfileComplete } from "@/lib/generator/profile";
 import { useGeneratorStore } from "@/lib/generator/store";
+import { useStoreHydration } from "@/lib/generator/useStoreHydration";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const hasHydrated = useStoreHydration();
   const { isAuthenticated, profile, setProfile } = useGeneratorStore();
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!isAuthenticated) {
       router.replace("/auth");
     }
-  }, [isAuthenticated, router]);
+  }, [hasHydrated, isAuthenticated, router]);
 
   const canContinue = isProfileComplete(profile);
 
@@ -95,6 +98,14 @@ export default function ProfilePage() {
     const next = hasChip ? current.filter((x) => x !== chip) : [...current, chip];
     setProfile({ allergies: next.filter((x) => x !== "None") });
   };
+
+  if (!hasHydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-brand-bg text-[14px] text-brand-text/60">
+        Loading…
+      </div>
+    );
+  }
 
   if (!isAuthenticated) return null;
 

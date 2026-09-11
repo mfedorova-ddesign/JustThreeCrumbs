@@ -21,6 +21,7 @@ import { generateMealPlanAsync, regenerateSingleMeal } from "@/lib/generator/eng
 import { persistPlanToSession } from "@/lib/planStorage";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { useGeneratorStore } from "@/lib/generator/store";
+import { useStoreHydration } from "@/lib/generator/useStoreHydration";
 import { mealImageUrlForId } from "@/lib/design/mealImages";
 import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType } from "@/types";
 import {
@@ -188,6 +189,7 @@ export default function GeneratorPage() {
     favoriteRecipeIds,
     skippedRecipeIds
   } = useGeneratorStore();
+  const hasHydrated = useStoreHydration();
   const router = useRouter();
   const [selectedPlanRange, setSelectedPlanRange] = useState<1 | 3 | 7>(planDays);
   const [mealPlan, setMealPlan] = useState(latestPlan);
@@ -199,6 +201,31 @@ export default function GeneratorPage() {
   const [openedMealId, setOpenedMealId] = useState<string | null>(null);
   const [showShoppingList, setShowShoppingList] = useState(false);
   const recommendedTargets = recommendedDailyTargets(profile);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    setSelectedPlanRange(planDays);
+    if (latestPlan) {
+      setMealPlan(latestPlan);
+      setHasGenerated(true);
+    }
+  }, [hasHydrated, latestPlan, planDays]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (!isAuthenticated) {
+      router.push("/auth");
+      return;
+    }
+  }, [hasHydrated, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (!hasHydrated || !isAuthenticated) return;
+    if (isProfileComplete(profile)) return;
+    setToastMessage("Complete onboarding data before generating a meal plan.");
+    const timer = window.setTimeout(() => router.push("/profile"), 1200);
+    return () => window.clearTimeout(timer);
+  }, [hasHydrated, isAuthenticated, profile, router]);
 
   function commitPlan(updater: (prev: MealPlan) => MealPlan) {
     setMealPlan((prev) => {
@@ -266,21 +293,6 @@ export default function GeneratorPage() {
     const timer = window.setTimeout(() => setToastMessage(null), 2200);
     return () => window.clearTimeout(timer);
   }, [toastMessage]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/auth");
-      return;
-    }
-  }, [isAuthenticated, router]);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    if (isProfileComplete(profile)) return;
-    setToastMessage("Complete onboarding data before generating a meal plan.");
-    const timer = window.setTimeout(() => router.push("/profile"), 1200);
-    return () => window.clearTimeout(timer);
-  }, [isAuthenticated, profile, router]);
 
   function onIngredientReplace(mealId: string, ingredientIndex: number, nextIngredientName: string) {
     const replacement = ingredientByName.get(nextIngredientName.toLowerCase());
@@ -595,6 +607,18 @@ export default function GeneratorPage() {
     requestAnimationFrame(() => {
       document.getElementById("plan-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  }
+
+  if (!hasHydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-brand-bg text-[14px] text-brand-text/60">
+        Loading your plan…
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (

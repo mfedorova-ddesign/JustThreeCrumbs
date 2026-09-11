@@ -4,6 +4,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { MealCard } from "@/components/meal/MealCard";
 import { readPlanFromSession } from "@/lib/planStorage";
 import { useGeneratorStore } from "@/lib/generator/store";
+import { useStoreHydration } from "@/lib/generator/useStoreHydration";
 import { DayPlan, GeneratedMeal, MealPlan } from "@/types";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
@@ -38,13 +39,14 @@ function MealDetail({ day, mealId, planId }: { day: DayPlan; mealId: string; pla
 function PlanPageInner() {
   const params = useParams();
   const planId = typeof params?.id === "string" ? params.id : "";
+  const hasHydrated = useStoreHydration();
   const { latestPlan, setLatestPlan } = useGeneratorStore();
   const searchParams = useSearchParams();
   const selectedMealId = searchParams.get("meal");
 
   const sessionPlan = useMemo(
-    () => (planId ? readPlanFromSession(planId) : null),
-    [planId]
+    () => (planId && hasHydrated ? readPlanFromSession(planId) : null),
+    [planId, hasHydrated]
   );
   const plan: MealPlan | null = useMemo(() => {
     if (!planId) return null;
@@ -58,6 +60,14 @@ function PlanPageInner() {
       setLatestPlan(plan);
     }
   }, [plan, planId, latestPlan?.id, setLatestPlan]);
+
+  if (!hasHydrated) {
+    return (
+      <AppShell title="Loading plan…" subtitle="Restoring your saved meal plan.">
+        <div className="rounded-2xl bg-white p-6 text-sm text-brand-text/60 shadow-sm">Please wait…</div>
+      </AppShell>
+    );
+  }
 
   if (!planId) {
     return (
@@ -73,7 +83,10 @@ function PlanPageInner() {
 
   if (!plan) {
     return (
-      <AppShell title="Plan not found" subtitle="Generate a meal plan first, or open it from the same browser session.">
+      <AppShell
+        title="Plan not found"
+        subtitle="Generate a meal plan first, or open it from the same browser where it was saved."
+      >
         <div className="rounded-2xl bg-white p-6 shadow-sm">
           <Link href="/generator" className="text-brand-primary underline">
             Go to generator
