@@ -1,4 +1,5 @@
 import { mealImageUrlForId } from "@/lib/design/mealImages";
+import { MealNutritionStats } from "@/components/nutrition/MealNutritionStats";
 import { GeneratedMeal } from "@/types";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -31,12 +32,15 @@ export function MealCard({ meal, planId }: MealCardProps) {
               {meal.ingredients.map((i) => i.name).join(", ")}
             </p>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-brand-text/65 sm:text-xs">
-            <span>{Math.round(meal.calories)} kcal</span>
-            <span className="text-brand-text/35">·</span>
-            <span>GI {meal.glycemicIndex}</span>
-            <span className="text-brand-text/35">·</span>
-            <span>P {meal.macros.protein}g</span>
+          <div className="mt-2">
+            <MealNutritionStats
+              carbs={meal.macros.carbs}
+              fiber={meal.fiber}
+              calories={meal.calories}
+              glycemicLoad={meal.glycemicLoad}
+              ingredients={meal.ingredients}
+              showHighNotice
+            />
           </div>
         </div>
         <Link

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { giLabel, glycemicLoadLabel } from "@/lib/nutrition/calc";
+import { GlycemicLoadBadge } from "@/components/nutrition/GlycemicLoadBadge";
 import { buildRecipePayload, computeRecipeMetricsFromForm, mealTypeLabels, toRecipeForm } from "@/lib/recipes/editor";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { MealType } from "@/types";
@@ -198,13 +198,19 @@ export default function EditRecipePage() {
                   Protein/Fat/Carbs: {Math.round(calculatedMetrics.protein)}/{Math.round(calculatedMetrics.fat)}/
                   {Math.round(calculatedMetrics.carbs)}
                 </div>
+                <div className="rounded-lg bg-white px-2 py-1">
+                  Carbs: {Math.round(calculatedMetrics.carbs)}g
+                </div>
                 <div className="rounded-lg bg-white px-2 py-1">Fiber: {Math.round(calculatedMetrics.fiber)}g</div>
-                <div className={`rounded-lg px-2 py-1 ${giLabel(calculatedMetrics.glycemicIndex) === "low" ? "bg-[#EAF5EF] text-[#2D7A51]" : giLabel(calculatedMetrics.glycemicIndex) === "medium" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
-                  GI: {calculatedMetrics.glycemicIndex} <span className="opacity-60 text-[10px]">· {giLabel(calculatedMetrics.glycemicIndex)}</span>
-                </div>
-                <div className={`rounded-lg px-2 py-1 ${glycemicLoadLabel(calculatedMetrics.glycemicLoad) === "low" ? "bg-[#EAF5EF] text-[#2D7A51]" : glycemicLoadLabel(calculatedMetrics.glycemicLoad) === "medium" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
-                  GL: {calculatedMetrics.glycemicLoad} <span className="opacity-60 text-[10px]">· {glycemicLoadLabel(calculatedMetrics.glycemicLoad)}</span>
-                </div>
+                {calculatedMetrics.showGlycemicLoadBadge ? (
+                  <div className="rounded-lg bg-white px-2 py-1">
+                    <GlycemicLoadBadge glycemicLoad={calculatedMetrics.glycemicLoad} />
+                  </div>
+                ) : (
+                  <div className="rounded-lg bg-white px-2 py-1 text-brand-text/60">
+                    {calculatedMetrics.carbs < 5 ? "Almost no carbs" : "Glycemic load not estimated"}
+                  </div>
+                )}
               </div>
             ) : calcAttempted ? (
               <p className="mt-2 text-xs text-red-600">
@@ -212,7 +218,7 @@ export default function EditRecipePage() {
               </p>
             ) : (
               <p className="mt-2 text-xs text-brand-text/60">
-                Click Calculate nutrition to preview calories, protein, fat, carbs, glycemic index and glycemic load.
+                Click Calculate nutrition to preview calories, protein, fat, carbs, fiber and glycemic load.
               </p>
             )}
           </div>

@@ -34,7 +34,7 @@ export default function LandingPage() {
     {
       icon: "🛡️",
       title: "Medical Backing",
-      text: "Balanced nutrition logic with carbs, fiber, glycemic impact and scoring."
+      text: "Balanced nutrition logic with carbs, fiber, and glycemic load ranges."
     }
   ];
 

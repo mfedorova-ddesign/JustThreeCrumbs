@@ -4,6 +4,7 @@ import {
   normalizeAllergySet
 } from "../lib/generator/meal-copy";
 import { recommendedDailyTargets } from "../lib/generator/targets";
+import { GL_HIGH_THRESHOLD } from "../lib/nutrition/calc";
 import { DayPlan, GeneratedMeal, UserProfile } from "../types";
 
 function assertCondition(condition: boolean, message: string) {
@@ -63,6 +64,11 @@ function validatePlan(profile: UserProfile, days: number, options: { checkMacros
       });
 
       assertMealCopySafeForAllergies(meal.name, meal.instructions, profile.allergies, meal.ingredients);
+
+      assertCondition(
+        meal.glycemicLoad < GL_HIGH_THRESHOLD,
+        `High glycemic load in generated meal "${meal.name}": ${meal.glycemicLoad}`
+      );
     });
 
     if (checkMacros) {

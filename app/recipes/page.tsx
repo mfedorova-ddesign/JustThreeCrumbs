@@ -1,10 +1,10 @@
 "use client";
 
 import { mealImageUrlForId } from "@/lib/design/mealImages";
+import { GlycemicLoadBadge } from "@/components/nutrition/GlycemicLoadBadge";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { mealTypeLabels } from "@/lib/recipes/editor";
-import { giLabel, glycemicLoadLabel } from "@/lib/nutrition/calc";
 import { recipeAllergens, recipeNutrition, recipeVegan, recipeVegetarian } from "@/lib/recipes/insights";
 import { Recipe } from "@/types";
 import { Plus, SlidersHorizontal, User } from "lucide-react";
@@ -49,6 +49,9 @@ export default function RecipesPage() {
   const [favoriteOnly, setFavoriteOnly] = useState(false);
   const [skippedOnly, setSkippedOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [maxCarbsFilter, setMaxCarbsFilter] = useState("");
+  const [minFiberFilter, setMinFiberFilter] = useState("");
+  const [carbsSort, setCarbsSort] = useState<"none" | "asc" | "desc">("none");
 
   const allRecipes: Recipe[] = [
     ...customRecipes,
@@ -90,9 +93,12 @@ export default function RecipesPage() {
 
   const visibleRecipes = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return allRecipes.filter((recipe) => {
+    const maxCarbs = maxCarbsFilter === "" ? null : Number(maxCarbsFilter);
+    const minFiber = minFiberFilter === "" ? null : Number(minFiberFilter);
+    const filtered = allRecipes.filter((recipe) => {
       const isFavorite = favoriteRecipeIds.includes(recipe.id);
       const isSkipped = skippedRecipeIds.includes(recipe.id);
+      const nutrition = recipeNutrition(recipe);
       const matchesQuery =
         q.length === 0 ||
         recipe.name.toLowerCase().includes(q) ||
@@ -103,7 +109,24 @@ export default function RecipesPage() {
       const matchesSource = sourceFilters.includes("all") || sourceFilters.includes(recipe.source ?? "default");
       const matchesFavorite = !favoriteOnly || isFavorite;
       const matchesSkipped = !skippedOnly || isSkipped;
-      return matchesQuery && matchesMealType && matchesVegan && matchesSource && matchesFavorite && matchesSkipped;
+      const matchesCarbs = maxCarbs == null || Number.isNaN(maxCarbs) || nutrition.carbs <= maxCarbs;
+      const matchesFiber = minFiber == null || Number.isNaN(minFiber) || nutrition.fiber >= minFiber;
+      return (
+        matchesQuery &&
+        matchesMealType &&
+        matchesVegan &&
+        matchesSource &&
+        matchesFavorite &&
+        matchesSkipped &&
+        matchesCarbs &&
+        matchesFiber
+      );
+    });
+    if (carbsSort === "none") return filtered;
+    return [...filtered].sort((a, b) => {
+      const aCarbs = recipeNutrition(a).carbs;
+      const bCarbs = recipeNutrition(b).carbs;
+      return carbsSort === "asc" ? aCarbs - bCarbs : bCarbs - aCarbs;
     });
   }, [
     allRecipes,
@@ -114,7 +137,10 @@ export default function RecipesPage() {
     favoriteOnly,
     skippedOnly,
     favoriteRecipeIds,
-    skippedRecipeIds
+    skippedRecipeIds,
+    maxCarbsFilter,
+    minFiberFilter,
+    carbsSort
   ]);
 
   return (
@@ -199,9 +225,48 @@ export default function RecipesPage() {
                   </label>
                 </div>
               </div>
+              <div>
+                <p className="text-[13px] font-bold uppercase tracking-wide text-brand-text/75">Nutrition</p>
+                <div className="mt-2.5 space-y-2.5">
+                  <label className="block text-[13px] text-brand-text/80">
+                    Carbs at most (g)
+                    <input
+                      type="number"
+                      min={0}
+                      value={maxCarbsFilter}
+                      onChange={(event) => setMaxCarbsFilter(event.target.value)}
+                      placeholder="Any"
+                      className="mt-1 h-8 w-full rounded-lg border border-brand-border bg-white px-2 text-[13px]"
+                    />
+                  </label>
+                  <label className="block text-[13px] text-brand-text/80">
+                    Fiber at least (g)
+                    <input
+                      type="number"
+                      min={0}
+                      value={minFiberFilter}
+                      onChange={(event) => setMinFiberFilter(event.target.value)}
+                      placeholder="Any"
+                      className="mt-1 h-8 w-full rounded-lg border border-brand-border bg-white px-2 text-[13px]"
+                    />
+                  </label>
+                  <label className="block text-[13px] text-brand-text/80">
+                    Sort by carbs
+                    <select
+                      value={carbsSort}
+                      onChange={(event) => setCarbsSort(event.target.value as "none" | "asc" | "desc")}
+                      className="mt-1 h-8 w-full rounded-lg border border-brand-border bg-white px-2 text-[13px]"
+                    >
+                      <option value="none">Default</option>
+                      <option value="asc">Low to high</option>
+                      <option value="desc">High to low</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => { setQuery(""); setMealTypeFilters(["all"]); setSourceFilters(["all"]); setVeganOnly(false); setFavoriteOnly(false); setSkippedOnly(false); }}
+                onClick={() => { setQuery(""); setMealTypeFilters(["all"]); setSourceFilters(["all"]); setVeganOnly(false); setFavoriteOnly(false); setSkippedOnly(false); setMaxCarbsFilter(""); setMinFiberFilter(""); setCarbsSort("none"); }}
                 className="rounded-xl border border-brand-border px-3 py-2 text-xs text-brand-text/75 hover:bg-brand-bg"
               >
                 Reset filters
@@ -278,10 +343,31 @@ export default function RecipesPage() {
                       </label>
                     </div>
                   </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-brand-text/55">Nutrition</p>
+                    <div className="mt-2 space-y-2">
+                      <label className="block text-[13px] text-brand-text/80">
+                        Carbs at most (g)
+                        <input type="number" min={0} value={maxCarbsFilter} onChange={(event) => setMaxCarbsFilter(event.target.value)} placeholder="Any" className="mt-1 h-8 w-full rounded-lg border border-brand-border bg-white px-2 text-[13px]" />
+                      </label>
+                      <label className="block text-[13px] text-brand-text/80">
+                        Fiber at least (g)
+                        <input type="number" min={0} value={minFiberFilter} onChange={(event) => setMinFiberFilter(event.target.value)} placeholder="Any" className="mt-1 h-8 w-full rounded-lg border border-brand-border bg-white px-2 text-[13px]" />
+                      </label>
+                      <label className="block text-[13px] text-brand-text/80">
+                        Sort by carbs
+                        <select value={carbsSort} onChange={(event) => setCarbsSort(event.target.value as "none" | "asc" | "desc")} className="mt-1 h-8 w-full rounded-lg border border-brand-border bg-white px-2 text-[13px]">
+                          <option value="none">Default</option>
+                          <option value="asc">Low to high</option>
+                          <option value="desc">High to low</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setQuery(""); setMealTypeFilters(["all"]); setSourceFilters(["all"]); setVeganOnly(false); setFavoriteOnly(false); setSkippedOnly(false); }}
+                  onClick={() => { setQuery(""); setMealTypeFilters(["all"]); setSourceFilters(["all"]); setVeganOnly(false); setFavoriteOnly(false); setSkippedOnly(false); setMaxCarbsFilter(""); setMinFiberFilter(""); setCarbsSort("none"); }}
                   className="col-span-2 rounded-xl border border-brand-border/80 bg-white px-3 py-2 text-xs text-brand-text/65 hover:bg-brand-bg"
                 >
                   Reset filters
@@ -328,18 +414,17 @@ export default function RecipesPage() {
                         <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-brand-text sm:text-base">
                           {recipe.name}
                         </h3>
-                        <div className="scrollbar-none flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-brand-text/55">
+                        <div className="scrollbar-none flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-brand-text/55">
+                          <span className="font-semibold text-brand-text">Carbs {Math.round(nutrition.carbs)}g</span>
+                          <span>Fiber {Math.round(nutrition.fiber)}g</span>
+                          {nutrition.showGlycemicLoadBadge ? (
+                            <GlycemicLoadBadge glycemicLoad={nutrition.glycemicLoad} />
+                          ) : nutrition.carbs < 5 ? (
+                            <span>Almost no carbs</span>
+                          ) : null}
                           <span>{Math.round(nutrition.calories)} kcal</span>
-                          <span>·</span>
                           <span>P {Math.round(nutrition.protein)}g</span>
-                          <span>·</span>
                           <span>F {Math.round(nutrition.fat)}g</span>
-                          <span>·</span>
-                          <span>C {Math.round(nutrition.carbs)}g</span>
-                          <span>·</span>
-                          <span className={giLabel(nutrition.glycemicIndex) === "low" ? "text-[#2D7A51]" : giLabel(nutrition.glycemicIndex) === "medium" ? "text-amber-600" : "text-red-600"}>GI {nutrition.glycemicIndex}</span>
-                          <span>·</span>
-                          <span className={glycemicLoadLabel(nutrition.glycemicLoad) === "low" ? "text-[#2D7A51]" : glycemicLoadLabel(nutrition.glycemicLoad) === "medium" ? "text-amber-600" : "text-red-600"}>GL {nutrition.glycemicLoad}</span>
                         </div>
                         <p className="line-clamp-1 text-[11px] text-brand-primary/60">
                           Allergens: {allergens.length > 0 ? allergens.join(", ") : "None"}

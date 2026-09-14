@@ -979,7 +979,7 @@ export const INGREDIENTS: Ingredient[] = [
     carbs: 9.6,
     fiber: 2.8,
     glycemicIndex: 64,
-    portionGrams: 150,
+    portionGrams: 100,
     category: "vegetables",
     vegetarian: true
   },

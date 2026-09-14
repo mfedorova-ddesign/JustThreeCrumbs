@@ -21,10 +21,8 @@ export const FIXED_RECIPES: Recipe[] = [
     name: "Dal Delight",
     mealTypes: ["lunch", "dinner"],
     ingredients: [
-      ing("protein", "lentils", { label: "brown lentils (dry)" }),
-      ing("protein", "red beans"),
-      ing("protein", "black beans"),
-      ing("carbs", "sweet potato"),
+      ing("protein", "lentils", { label: "brown lentils", alternatives: ["red beans", "black beans"] }),
+      ing("carbs", "sweet potato", { optional: true }),
       ing("vegetables", "carrot"),
       ing("vegetables", "spinach"),
       ing("vegetables", "tomato"),
@@ -45,11 +43,11 @@ export const FIXED_RECIPES: Recipe[] = [
     constraints: { maxCarbs: 45, glycemicIndex: "low" },
     instructions: [
       "Heat olive oil in a deep pot over medium heat. Cook diced onion for about 5 minutes until translucent, then add garlic and freshly grated ginger and cook 2 minutes more.",
-      "Add turmeric, coriander, cumin, black pepper, and optional fenugreek if using. Toast the spices for about 1 minute, stirring constantly so they bloom without burning.",
-      "Add tomatoes, coconut milk, and vegetable broth. Stir in rinsed brown lentils, carrot, and sweet potato. Bring to a boil, then simmer uncovered for about 25 minutes until lentils are soft.",
-      "Add drained red beans and black beans. Simmer another 10 minutes; mash a small portion of the lentils against the pot wall for a thicker, creamier texture.",
+      "Add turmeric, coriander, cumin, and black pepper. Toast the spices for about 1 minute, stirring constantly so they bloom without burning.",
+      "Add tomatoes, coconut milk, and vegetable broth. Stir in rinsed lentils, carrot, and optional diced sweet potato. Bring to a boil, then simmer uncovered for about 25 minutes until the lentils are soft.",
+      "Mash a small portion of the lentils against the pot wall for a thicker, creamier texture.",
       "Remove from heat and fold in fresh spinach so it wilts from residual heat. Stir in lemon juice and salt, then adjust seasoning to taste.",
-      "Serve hot and finish with chopped cilantro. Optionally pair with basmati rice, whole-grain rice, or naan."
+      "Serve hot and finish with chopped cilantro."
     ]
   },
   {
@@ -497,7 +495,7 @@ export const FIXED_RECIPES: Recipe[] = [
     ingredients: [
       ing("protein", "beef", { alternatives: ["chicken breast", "white beans", "red beans"] }),
       ing("vegetables", "beets"),
-      ing("vegetables", "potato", { alternatives: ["sweet potato"] }),
+      ing("carbs", "potato", { optional: true, alternatives: ["sweet potato"] }),
       ing("vegetables", "cabbage"),
       ing("vegetables", "carrot"),
       ing("vegetables", "onion"),
@@ -512,12 +510,12 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("spices", "dill", { optional: true }),
       ing("spices", "parsley", { optional: true })
     ],
-    constraints: { maxCarbs: 60, glycemicIndex: "medium" },
+    constraints: { maxCarbs: 45, glycemicIndex: "low" },
     instructions: [
-      "Bring {liquid} to a boil. Add diced potato and cook until almost tender.",
-      "Add julienned or grated beets and continue cooking until they lighten slightly in colour.",
+      "Bring {liquid} to a boil. Add shredded cabbage and cook until starting to soften.",
+      "Add julienned or grated beets and continue cooking until they lighten slightly in colour. If using potato, add diced potato with the beets.",
       "Meanwhile, sauté diced onion, garlic, and julienned carrot in olive oil until golden. Stir in tomato paste and cook 2–3 minutes.",
-      "Add the sauté to the pot along with shredded cabbage, a splash of vinegar or lemon juice, bay leaf, and black pepper.",
+      "Add the sauté to the pot along with a splash of vinegar or lemon juice, bay leaf, and black pepper.",
       "Add {protein}.",
       "Simmer for 3 minutes, then turn off the heat and let rest for a few minutes.",
       "Serve hot with freshly chopped dill and parsley."

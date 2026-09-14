@@ -2,6 +2,7 @@ import { recommendedDailyTargets } from "@/lib/generator/targets";
 import { composeMealCopy, normalizeAllergySet } from "@/lib/generator/meal-copy";
 import { INGREDIENTS } from "@/lib/ingredients/data";
 import {
+  GL_HIGH_THRESHOLD,
   glycemicIndexAverage,
   glycemicLoad,
   isVeganMeal,
@@ -12,12 +13,6 @@ import {
 } from "@/lib/nutrition/calc";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType, Recipe, RecipeIngredientRule, UserProfile } from "@/types";
-
-const glycemicIndexThresholdByLevel = {
-  low: 55,
-  medium: 69,
-  high: 100
-} as const;
 
 const ingredientByName = new Map(INGREDIENTS.map((ingredient) => [ingredient.name, ingredient]));
 
@@ -296,38 +291,43 @@ function resolveRecipeIngredients(
   return selected;
 }
 
+function capGlycemicLoad(ingredients: Ingredient[]): Ingredient[] {
+  let current = ingredients;
+  for (let i = 0; i < 6; i += 1) {
+    if (glycemicLoad(current) < GL_HIGH_THRESHOLD) return current;
+    current = scaleCategoryPortions(current, ["carbs"], 0.82);
+  }
+  return current;
+}
+
 function enforceRecipeConstraints(
   ingredients: Ingredient[],
   recipe: Recipe,
   target: { calories: number; protein: number; fat: number; carbs: number; fiber: number }
 ): Ingredient[] {
   let current = ingredients;
-  const giLimit = glycemicIndexThresholdByLevel[recipe.constraints.glycemicIndex];
   const dropOptionalCarbNames = new Set(
     recipe.ingredients
       .filter((rule) => rule.optional && rule.category === "carbs")
       .map((rule) => rule.primary)
   );
-  const stats = () => ({
-    carbs: sumMacros(current).carbs,
-    gi: glycemicIndexAverage(current)
-  });
-  for (let i = 0; i < 3; i += 1) {
-    const s = stats();
-    if (s.carbs <= recipe.constraints.maxCarbs && s.gi <= giLimit) break;
+  for (let i = 0; i < 4; i += 1) {
+    const carbs = sumMacros(current).carbs;
+    const gl = glycemicLoad(current);
+    if (carbs <= recipe.constraints.maxCarbs && gl < GL_HIGH_THRESHOLD) break;
     if (dropOptionalCarbNames.size > 0) {
       current = current.filter((ingredient) => !dropOptionalCarbNames.has(ingredient.name));
     }
     if (sumMacros(current).carbs > recipe.constraints.maxCarbs) {
       current = scaleCategoryPortions(current, ["carbs"], 0.84);
     }
-    if (glycemicIndexAverage(current) > giLimit) {
+    if (glycemicLoad(current) >= GL_HIGH_THRESHOLD) {
       current = current.filter((ingredient) => ingredient.category !== "carbs" || ingredient.glycemicIndex <= 55);
-      current = scaleCategoryPortions(current, ["carbs"], 0.9);
+      current = scaleCategoryPortions(current, ["carbs"], 0.88);
     }
     current = fitMealToTarget(current, target);
   }
-  return current;
+  return capGlycemicLoad(current);
 }
 
 function buildMeal(
@@ -425,6 +425,7 @@ function generateMealFromRecipe(
   ingredients = scaleIngredientsToCalorieTarget(ingredients, mealType, target.calories);
   ingredients = fitMealToTarget(ingredients, target);
   ingredients = enforceRecipeConstraints(ingredients, recipe, target);
+  ingredients = capGlycemicLoad(ingredients);
   // Re-attach alternatives by name (enforceRecipeConstraints may remove some ingredients)
   const altsByName = new Map(resolved.map((r) => [r.ingredient.name, r.alternatives]));
   const scaledResolved = ingredients.map((ing) => ({
@@ -448,8 +449,6 @@ export function regenerateSingleMeal(
   options: RegenerateSingleMealOptions = {}
 ): GeneratedMeal {
   const dailyTargets = recommendedDailyTargets(user);
-  const excluded = options.excludedTemplateIds ?? [];
-  const recipe = selectRecipe(mealType, user, dayIndex, variationSeed, excluded, options.selection);
   let target: { calories: number; protein: number; fat: number; carbs: number; fiber: number };
   if (options.isExtraSnack) {
     target = {
@@ -462,7 +461,30 @@ export function regenerateSingleMeal(
   } else {
     target = mealTargetFromDaily(dailyTargets, mealType);
   }
-  return { ...generateMealFromRecipe(recipe, mealType, user, dayIndex, variationSeed, target), skipped: false };
+  return generateMealPreferringLowGl(user, mealType, dayIndex, variationSeed, target, options);
+}
+
+function generateMealPreferringLowGl(
+  user: UserProfile,
+  mealType: MealType,
+  dayIndex: number,
+  seed: number,
+  target: { calories: number; protein: number; fat: number; carbs: number; fiber: number },
+  options: { excludedTemplateIds?: string[]; selection?: RecipeSelectionOptions } = {}
+): GeneratedMeal {
+  const excluded = [...(options.excludedTemplateIds ?? [])];
+  let lastMeal: GeneratedMeal | null = null;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const recipe = selectRecipe(mealType, user, dayIndex, seed + attempt * 911, excluded, options.selection);
+    const meal = {
+      ...generateMealFromRecipe(recipe, mealType, user, dayIndex, seed + attempt * 911, target),
+      skipped: false as const
+    };
+    lastMeal = meal;
+    if (meal.glycemicLoad < GL_HIGH_THRESHOLD) return meal;
+    excluded.push(recipe.id);
+  }
+  return lastMeal as GeneratedMeal;
 }
 
 function dayTotals(day: DayPlan): { calories: number; protein: number; fat: number; carbs: number; fiber: number } {
@@ -520,11 +542,12 @@ function rebalanceDayMeals(
   const boundedRatio = Math.max(0.9, Math.min(1.32, ratio));
   if (Math.abs(1 - boundedRatio) < 0.04) return day;
   const rescaleMeal = (meal: GeneratedMeal): GeneratedMeal => {
-    const adjustedIngredients = scaleCategoryPortions(
+    let adjustedIngredients = scaleCategoryPortions(
       meal.ingredients,
       ["protein", "carbs", "vegetables", "fats", "liquid"],
       boundedRatio
     );
+    adjustedIngredients = capGlycemicLoad(adjustedIngredients);
     return {
       ...meal,
       ingredients: adjustedIngredients,
@@ -556,67 +579,35 @@ function generateDayPlan(
   const dailyTargets = recommendedDailyTargets(user);
   const usedRecipeIds = new Set<string>();
 
-  const breakfastRecipe = selectRecipe("breakfast", user, dayIndex, seed, [...usedRecipeIds], options);
-  usedRecipeIds.add(breakfastRecipe.id);
-  const lunchRecipe = selectRecipe("lunch", user, dayIndex + 1, seed, [...usedRecipeIds], options);
-  usedRecipeIds.add(lunchRecipe.id);
-  const dinnerRecipe = selectRecipe("dinner", user, dayIndex + 2, seed, [...usedRecipeIds], options);
-  usedRecipeIds.add(dinnerRecipe.id);
-  const snackRecipe = selectRecipe("snack", user, dayIndex + 3, seed, [...usedRecipeIds], options);
-  usedRecipeIds.add(snackRecipe.id);
+  const pick = (
+    mealType: MealType,
+    seedOffset: number,
+    target: { calories: number; protein: number; fat: number; carbs: number; fiber: number }
+  ) => {
+    const meal = generateMealPreferringLowGl(user, mealType, dayIndex, seed + seedOffset, target, {
+      excludedTemplateIds: [...usedRecipeIds],
+      selection: options
+    });
+    usedRecipeIds.add(meal.templateId);
+    return meal;
+  };
 
   const dayPlan: DayPlan = {
     day: dayIndex + 1,
-    breakfast: generateMealFromRecipe(
-      breakfastRecipe,
-      "breakfast",
-      user,
-      dayIndex,
-      seed + 11,
-      mealTargetFromDaily(dailyTargets, "breakfast")
-    ),
-    lunch: generateMealFromRecipe(
-      lunchRecipe,
-      "lunch",
-      user,
-      dayIndex,
-      seed + 17,
-      mealTargetFromDaily(dailyTargets, "lunch")
-    ),
-    dinner: generateMealFromRecipe(
-      dinnerRecipe,
-      "dinner",
-      user,
-      dayIndex,
-      seed + 23,
-      mealTargetFromDaily(dailyTargets, "dinner")
-    ),
-    snack: generateMealFromRecipe(
-      snackRecipe,
-      "snack",
-      user,
-      dayIndex,
-      seed + 29,
-      mealTargetFromDaily(dailyTargets, "snack")
-    )
+    breakfast: pick("breakfast", 11, mealTargetFromDaily(dailyTargets, "breakfast")),
+    lunch: pick("lunch", 17, mealTargetFromDaily(dailyTargets, "lunch")),
+    dinner: pick("dinner", 23, mealTargetFromDaily(dailyTargets, "dinner")),
+    snack: pick("snack", 29, mealTargetFromDaily(dailyTargets, "snack"))
   };
 
   if (needsExtraSnack(dayPlan, dailyTargets)) {
-    const extraSnackRecipe = selectRecipe("snack", user, dayIndex + 4, seed, [...usedRecipeIds], options);
-    dayPlan.extraSnack = generateMealFromRecipe(
-      extraSnackRecipe,
-      "snack",
-      user,
-      dayIndex,
-      seed + 41,
-      {
-        calories: dailyTargets.calories * 0.12,
-        protein: dailyTargets.protein * 0.14,
-        fat: dailyTargets.fat * 0.12,
-        carbs: dailyTargets.carbs * 0.1,
-        fiber: dailyTargets.fiber * 0.18
-      }
-    );
+    dayPlan.extraSnack = pick("snack", 41, {
+      calories: dailyTargets.calories * 0.12,
+      protein: dailyTargets.protein * 0.14,
+      fat: dailyTargets.fat * 0.12,
+      carbs: dailyTargets.carbs * 0.1,
+      fiber: dailyTargets.fiber * 0.18
+    });
   }
 
   return rebalanceDayMeals(dayPlan, dailyTargets);

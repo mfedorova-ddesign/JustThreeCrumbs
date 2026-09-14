@@ -118,7 +118,7 @@ export default function OnboardingPage() {
 
                     <ul className="mt-4 grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
                       {[
-                        "Low glycemic index meals",
+                        "Meals with a modest glycemic load",
                         "Portion-controlled recipes",
                         "Balanced carbohydrates",
                         "Heart-healthy options"

@@ -120,7 +120,7 @@ const foodGroups = [
       "Legumes — lentils, chickpeas, black beans",
       "Lean protein — chicken, fish, eggs, tofu",
       "Low-fat dairy — Greek yogurt, cottage cheese",
-      "Low-GI fruits — apple, pear, grapefruit, berries",
+      "Fruit in modest portions — apple, pear, grapefruit, berries",
       "Healthy fats — avocado, olive oil, nuts (small portions)",
     ],
   },
@@ -135,22 +135,9 @@ const foodGroups = [
       "Pastries, cakes, cookies, candy",
       "Processed meats & fried foods",
       "Alcohol",
-      "High-GI fruits in large amounts — watermelon, dates, ripe banana",
+      "Large servings of very sweet fruit — watermelon, dates, ripe banana",
     ],
   },
-];
-
-const giFoods = [
-  { label: "Lentils", gi: 32, color: "#2D7A51" },
-  { label: "Greek yogurt", gi: 35, color: "#2D7A51" },
-  { label: "Apple", gi: 38, color: "#2D7A51" },
-  { label: "Buckwheat", gi: 45, color: "#2D7A51" },
-  { label: "Brown rice", gi: 55, color: "#2D7A51" },
-  { label: "Oatmeal", gi: 57, color: "#D97706" },
-  { label: "Whole wheat bread", gi: 68, color: "#D97706" },
-  { label: "White rice", gi: 72, color: "#DC2626" },
-  { label: "White bread", gi: 75, color: "#DC2626" },
-  { label: "Cornflakes", gi: 81, color: "#DC2626" },
 ];
 
 export default function DietPage() {
@@ -218,7 +205,7 @@ export default function DietPage() {
                 {[
                   { color: "bg-[#2D7A51]", title: "½ plate — Non-starchy vegetables", desc: "Broccoli, spinach, zucchini, peppers, cauliflower. High in fibre, low in carbs." },
                   { color: "bg-[#F97316]", title: "¼ plate — Lean protein", desc: "Chicken, fish, eggs, tofu, legumes. Keeps you full and does not spike blood sugar." },
-                  { color: "bg-[#FBBF24]", title: "¼ plate — Quality carbs", desc: "Brown rice, buckwheat, quinoa, sweet potato, whole-grain bread. Choose low-GI options." },
+                  { color: "bg-[#FBBF24]", title: "¼ plate — Quality carbs", desc: "Brown rice, buckwheat, quinoa, sweet potato, whole-grain bread. Keep the portion modest." },
                 ].map((row) => (
                   <div key={row.title} className="flex gap-3">
                     <div className={`mt-0.5 h-4 w-4 shrink-0 rounded ${row.color}`} />
@@ -229,7 +216,7 @@ export default function DietPage() {
                   </div>
                 ))}
                 <p className="rounded-xl border border-brand-border bg-brand-bg/60 px-3 py-2 text-[13px] text-brand-text/65">
-                  Add a glass of water and optionally a small portion of low-fat dairy or a piece of low-GI fruit.
+                  Add a glass of water and optionally a small portion of low-fat dairy or a piece of fruit.
                 </p>
               </div>
             </div>
@@ -252,51 +239,36 @@ export default function DietPage() {
             </div>
           </section>
 
-          {/* GI + GL */}
+          {/* Carbs, fiber, glycemic load */}
           <section className="rounded-2xl border border-brand-border bg-white p-6 shadow-soft sm:p-8">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">Key metrics used in this app</p>
-            <h2 className="mt-1 text-xl font-semibold text-brand-text">Glycemic Index & Glycemic Load</h2>
+            <h2 className="mt-1 text-xl font-semibold text-brand-text">Carbs, fiber, and glycemic load</h2>
+            <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-brand-text/65">
+              Meal cards show grams of carbohydrate and fiber because those are counted from the recipe.
+              Glycemic load is shown only as a Low / Medium / High range — not as a precise index of the whole dish.
+            </p>
 
             <div className="mt-5 grid gap-5 sm:grid-cols-2">
-              {/* GI */}
               <div className="rounded-xl border border-brand-border bg-brand-bg/40 p-4">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">GI</span>
-                  <p className="font-semibold text-brand-text">Glycemic Index</p>
-                </div>
+                <p className="font-semibold text-brand-text">Carbs and fiber per serving</p>
                 <p className="mt-2 text-[13px] leading-relaxed text-brand-text/65">
-                  Measures how quickly a <strong>single food</strong> raises blood glucose on a scale of 0–100.
-                  Useful for comparing individual ingredients, but does not account for portion size.
+                  Use carbs as the main number and fiber as the second. Fiber slows how quickly carbohydrate is absorbed.
+                  A dish with almost no carbs does not need a glycemic-load badge — the carb count already tells you that.
                 </p>
-                <div className="mt-3">
-                  <div className="relative h-3.5 w-full overflow-hidden rounded-full" style={{ background: "linear-gradient(to right, #16a34a, #84cc16, #facc15, #f97316, #dc2626)" }}>
-                    <div className="absolute inset-y-0 left-[55%] w-px bg-white/60" />
-                    <div className="absolute inset-y-0 left-[69%] w-px bg-white/60" />
-                  </div>
-                  <div className="mt-1.5 flex gap-3 text-[11px] text-brand-text/60">
-                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#16a34a]" />≤55 Low</span>
-                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#D97706]" />56–69 Medium</span>
-                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#DC2626]" />≥70 High</span>
-                  </div>
-                </div>
               </div>
 
-              {/* GL */}
               <div className="rounded-xl border border-[#CDE7D7] bg-[#EAF5EF] p-4">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-md bg-brand-primary px-2 py-0.5 text-[11px] font-bold text-white">GL</span>
-                  <p className="font-semibold text-brand-text">Glycemic Load</p>
-                </div>
+                <p className="font-semibold text-brand-text">Glycemic load range</p>
                 <p className="mt-2 text-[13px] leading-relaxed text-brand-text/65">
-                  The clinically superior metric. GL = GI × carbs (g) ÷ 100.
-                  It accounts for both the <strong>quality and quantity</strong> of carbs in a meal.
-                  Watermelon has a high GI (72) but low GL (4) — a small portion barely affects blood sugar.
+                  Glycemic load estimates the combined effect of carb amount and carb quality on a portion.
+                  It is an estimate from ingredients, not a lab measurement of the cooked dish. Individual glucose
+                  response can differ — use your own readings as the guide.
                 </p>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[12px]">
                   {[
-                    { label: "Low", range: "≤ 10", bg: "bg-[#EAF5EF] border-[#CDE7D7]", text: "text-[#2D7A51]" },
-                    { label: "Medium", range: "11–19", bg: "bg-amber-50 border-amber-200", text: "text-amber-700" },
-                    { label: "High", range: "≥ 20", bg: "bg-red-50 border-red-200", text: "text-red-700" },
+                    { label: "Low", range: "up to 10", bg: "bg-[#EAF5EF] border-[#CDE7D7]", text: "text-[#2D7A51]" },
+                    { label: "Medium", range: "10–20", bg: "bg-amber-50 border-amber-200", text: "text-amber-700" },
+                    { label: "High", range: "20 and above", bg: "bg-red-50 border-red-200", text: "text-red-700" },
                   ].map((item) => (
                     <div key={item.label} className={`rounded-lg border px-2 py-2 ${item.bg}`}>
                       <div className={`font-bold ${item.text}`}>{item.label}</div>
@@ -307,21 +279,10 @@ export default function DietPage() {
               </div>
             </div>
 
-            <div className="mt-5 space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">GI of common foods</p>
-              {giFoods.map((food) => (
-                <div key={food.label} className="flex items-center gap-3">
-                  <span className="w-36 shrink-0 text-[13px] text-brand-text/75">{food.label}</span>
-                  <div className="relative h-5 flex-1 overflow-hidden rounded-md bg-brand-bg">
-                    <div className="h-full rounded-md" style={{ width: `${food.gi}%`, backgroundColor: food.color, opacity: 0.8 }} />
-                    <span className="absolute inset-y-0 left-2 flex items-center text-[11px] font-semibold text-white drop-shadow-sm">{food.gi}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
             <div className="mt-5 rounded-xl border border-brand-border bg-brand-bg/60 px-4 py-3 text-[13px] leading-relaxed text-brand-text/70">
-              <strong className="text-brand-text">How JustThreeCrumbs uses these:</strong> Every generated meal shows both GI (quality of carbs) and GL (actual impact on blood sugar). GL is the primary indicator — a meal with GL ≤ 10 is considered low-impact regardless of the GI of individual ingredients.
+              <strong className="text-brand-text">How JustThreeCrumbs uses this:</strong> the generator keeps meals below a
+              high glycemic load (20). If a dish still lands in the high range after swaps, the card says so and suggests a
+              smaller carb portion, a carb swap, or splitting the dish across meals.
             </div>
           </section>
 
@@ -378,7 +339,7 @@ export default function DietPage() {
             <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-primary/70">Ready to eat well?</p>
             <h2 className="mt-2 text-xl font-semibold text-brand-text">Generate your personalised meal plan</h2>
             <p className="mx-auto mt-1.5 max-w-md text-sm text-brand-text/65">
-              Every plan in JustThreeCrumbs is built around these principles — low GI, balanced macros, and diabetes-safe ingredients.
+              Every plan in JustThreeCrumbs is built around these principles — carb-aware portions, balanced macros, and practical everyday cooking.
             </p>
             <Link
               href="/generator"
