@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import Link from "next/link";
+import { MedicalDisclaimer } from "@/components/legal/MedicalDisclaimer";
 
 type AppShellProps = {
   title: string;
@@ -21,6 +22,7 @@ export function AppShell({ title, subtitle, children }: AppShellProps) {
           {subtitle ? (
             <p className="mt-2 text-sm leading-relaxed text-brand-text/65 sm:text-[15px]">{subtitle}</p>
           ) : null}
+          <MedicalDisclaimer tone="plan" className="mt-4" />
         </header>
         {children}
       </div>

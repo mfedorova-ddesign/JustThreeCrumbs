@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { AppFooter } from "@/components/layout/AppFooter";
 import "./globals.css";
 
 const sans = Plus_Jakarta_Sans({
@@ -20,7 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={sans.variable}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        {children}
+        <AppFooter />
+      </body>
     </html>
   );
 }

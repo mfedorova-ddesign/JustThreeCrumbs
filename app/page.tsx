@@ -1,3 +1,4 @@
+import { DisclaimerBar } from "@/components/legal/DisclaimerBar";
 import { Button } from "@/components/ui/Button";
 
 export default function LandingPage() {
@@ -58,6 +59,7 @@ export default function LandingPage() {
           </div>
         </div>
       </header>
+      <DisclaimerBar />
 
       <main className="mx-auto w-full max-w-[1280px] px-4 pb-0 pt-6 md:px-8 md:pt-8 xl:px-12">
         <section className="grid items-start gap-8 lg:grid-cols-2 lg:items-center lg:gap-10">
@@ -275,11 +277,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-[#0A2B1C] py-5">
-        <div className="mx-auto w-full max-w-[1120px] px-4 text-center text-[12px] text-white/75 md:px-8">
-          © {new Date().getFullYear()} JustThreeCrumbs. Personalized nutrition planning.
-        </div>
-      </footer>
     </div>
   );
 }

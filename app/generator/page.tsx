@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { MedicalDisclaimer } from "@/components/legal/MedicalDisclaimer";
 import { INGREDIENTS } from "@/lib/ingredients/data";
 import { INGREDIENT_HEALTH_FACTS } from "@/lib/ingredients/healthFacts";
 import { isProfileComplete } from "@/lib/generator/profile";
@@ -781,6 +782,7 @@ export default function GeneratorPage() {
         ) : (
           <>
             <div id="plan-results" className="mt-6 space-y-5 scroll-mt-4">
+              <MedicalDisclaimer tone="plan" />
               {mealPlan?.days.map((day) => {
                 const slotRows: {
                   slot: DayMealSlot;
