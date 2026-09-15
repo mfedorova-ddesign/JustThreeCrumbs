@@ -31,7 +31,10 @@ assert(
 );
 
 const pantry = sample.sections.find((section) => section.id === "pantry_home");
-assert(pantry?.items.some((item) => item.label === "Water"), "water should be in pantry section");
+assert(
+  Boolean(pantry?.items.some((item) => item.label === "Water")),
+  "water should be in pantry section"
+);
 
 console.log("validate-shopping-list: OK");
 console.log(buyLines.join("\n"));
