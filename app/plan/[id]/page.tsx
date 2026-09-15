@@ -2,6 +2,9 @@
 
 import { AppShell } from "@/components/layout/AppShell";
 import { MealCard } from "@/components/meal/MealCard";
+import { MealServingMeta } from "@/components/meal/MealServingMeta";
+import { MealNutritionStats } from "@/components/nutrition/MealNutritionStats";
+import { formatIngredientWithGrams } from "@/lib/nutrition/portions";
 import { readPlanFromSession } from "@/lib/planStorage";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { useStoreHydration } from "@/lib/generator/useStoreHydration";
@@ -21,9 +24,26 @@ function MealDetail({ day, mealId, planId }: { day: DayPlan; mealId: string; pla
   return (
     <section className="mt-4 rounded-xl border border-brand-border bg-white p-4 sm:mt-6 sm:p-6">
       <h3 className="text-xl font-medium text-brand-text">{meal.name}</h3>
-      <p className="mt-2 text-sm text-brand-text/70">
-        Ingredients: {meal.ingredients.map((i) => i.name).join(", ")}
-      </p>
+      <MealServingMeta ingredients={meal.ingredients} className="mt-1 text-sm text-brand-text/55" />
+      <div className="mt-3">
+        <MealNutritionStats
+          variant="detail"
+          carbs={meal.macros.carbs}
+          fiber={meal.fiber}
+          calories={meal.calories}
+          protein={meal.macros.protein}
+          fat={meal.macros.fat}
+          glycemicLoad={meal.glycemicLoad}
+          ingredients={meal.ingredients}
+          showHighNotice
+        />
+      </div>
+      <h4 className="mt-4 text-sm font-semibold text-brand-text">Ingredients</h4>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-brand-text/80">
+        {meal.ingredients.map((ingredient, index) => (
+          <li key={`${meal.id}-detail-${index}`}>{formatIngredientWithGrams(ingredient)}</li>
+        ))}
+      </ul>
       <ol className="mt-4 list-decimal space-y-1 pl-6 text-sm text-brand-text/80">
         {meal.instructions.map((step) => (
           <li key={step}>{step}</li>

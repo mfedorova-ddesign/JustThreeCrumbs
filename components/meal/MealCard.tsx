@@ -1,5 +1,7 @@
 import { mealImageUrlForId } from "@/lib/design/mealImages";
+import { MealServingMeta } from "@/components/meal/MealServingMeta";
 import { MealNutritionStats } from "@/components/nutrition/MealNutritionStats";
+import { formatIngredientWithGrams } from "@/lib/nutrition/portions";
 import { GeneratedMeal } from "@/types";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -28,8 +30,9 @@ export function MealCard({ meal, planId }: MealCardProps) {
             <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-brand-text sm:text-base">
               {meal.name}
             </h3>
+            <MealServingMeta ingredients={meal.ingredients} className="mt-0.5 text-[11px] text-brand-text/50" />
             <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-brand-text/60 sm:text-[13px]">
-              {meal.ingredients.map((i) => i.name).join(", ")}
+              {meal.ingredients.map((i) => formatIngredientWithGrams(i)).join(", ")}
             </p>
           </div>
           <div className="mt-2">

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { MedicalDisclaimer } from "@/components/legal/MedicalDisclaimer";
+import { MealServingMeta } from "@/components/meal/MealServingMeta";
 import { MealNutritionStats } from "@/components/nutrition/MealNutritionStats";
 import { INGREDIENTS } from "@/lib/ingredients/data";
 import { INGREDIENT_HEALTH_FACTS } from "@/lib/ingredients/healthFacts";
@@ -18,6 +19,9 @@ import {
   sumFiber,
   sumMacros
 } from "@/lib/nutrition/calc";
+import { formatIngredientWithGrams, formatMealServingMeta, ingredientPortionGrams } from "@/lib/nutrition/portions";
+import { ShoppingListPanel } from "@/components/shopping/ShoppingListPanel";
+import { buildShoppingList, BuiltShoppingList, ShoppingListInputLine } from "@/lib/shopping/list";
 import { generateMealPlanAsync, regenerateSingleMeal } from "@/lib/generator/engine";
 import { persistPlanToSession } from "@/lib/planStorage";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
@@ -27,7 +31,6 @@ import { mealImageUrlForId } from "@/lib/design/mealImages";
 import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType } from "@/types";
 import {
   ChevronRight,
-  Copy,
   Download,
   RefreshCw,
   RotateCcw,
@@ -40,7 +43,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type IngredientPickerState = { mealId: string; ingredientIndex: number } | null;
 type RemovedIngredientsState = Record<string, Record<number, boolean>>;
@@ -168,15 +171,6 @@ function recalculateMeal(
     isVegan: isVeganMeal(activeIngredients)
   };
 }
-
-const SHOPPING_CATEGORY_LABELS: Record<string, string> = {
-  protein: "Protein",
-  vegetables: "Vegetables",
-  carbs: "Grains & Carbs",
-  fats: "Fats & Oils",
-  liquid: "Liquids",
-  spices: "Spices & Seasonings"
-};
 
 export default function GeneratorPage() {
   const {
@@ -367,35 +361,25 @@ export default function GeneratorPage() {
     return meal.ingredients.filter((_, index) => !removedMap[index]);
   }
 
-  function buildShoppingList(): Map<string, { name: string; grams: number }[]> {
-    if (!mealPlan) return new Map();
-    const aggregate = new Map<string, { grams: number; category: string }>();
+  const builtShoppingList: BuiltShoppingList = useMemo(() => {
+    if (!mealPlan) return { sections: [] };
+    const lines: ShoppingListInputLine[] = [];
     for (const day of mealPlan.days) {
       for (const meal of [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack]) {
         if (!meal || meal.skipped) continue;
-        for (const ing of getVisibleIngredients(meal)) {
-          const key = ing.name.toLowerCase();
-          const grams = ing.portionGrams ?? 100;
-          const existing = aggregate.get(key);
-          if (existing) existing.grams += grams;
-          else aggregate.set(key, { grams, category: ing.category });
-        }
+        const removedMap = removedIngredients[meal.id] ?? {};
+        meal.ingredients.forEach((ing, index) => {
+          if (removedMap[index]) return;
+          lines.push({
+            name: ing.name,
+            grams: ing.portionGrams ?? 100,
+            category: ing.category
+          });
+        });
       }
     }
-    const categoryOrder = ["protein", "vegetables", "carbs", "fats", "liquid", "spices"];
-    const grouped = new Map<string, { name: string; grams: number }[]>();
-    for (const [key, { grams, category }] of aggregate) {
-      const display = key.charAt(0).toUpperCase() + key.slice(1);
-      const list = grouped.get(category) ?? [];
-      list.push({ name: display, grams: Math.round(grams) });
-      grouped.set(category, list);
-    }
-    const sorted = new Map<string, { name: string; grams: number }[]>();
-    for (const cat of categoryOrder) {
-      if (grouped.has(cat)) sorted.set(cat, grouped.get(cat)!.sort((a, b) => a.name.localeCompare(b.name)));
-    }
-    return sorted;
-  }
+    return buildShoppingList(lines);
+  }, [mealPlan, removedIngredients]);
 
   function getAdaptedLabel(meal: GeneratedMeal): string {
     if (!meal.isVegetarian && !meal.isVegan) return "";
@@ -409,23 +393,11 @@ export default function GeneratorPage() {
     return meal.isVegan ? " (vegan)" : " (vegetarian)";
   }
 
-  function shoppingListAsText(): string {
-    const list = buildShoppingList();
-    const lines: string[] = ["SHOPPING LIST", ""];
-    for (const [category, items] of list.entries()) {
-      lines.push((SHOPPING_CATEGORY_LABELS[category] ?? category).toUpperCase());
-      for (const item of items) lines.push(`• ${item.name} — ${item.grams} g`);
-      lines.push("");
-    }
-    return lines.join("\n").trim();
+  function copyShoppingList(text: string) {
+    navigator.clipboard.writeText(text).then(() => setToastMessage("Copied to clipboard"));
   }
 
-  function copyShoppingList() {
-    navigator.clipboard.writeText(shoppingListAsText()).then(() => setToastMessage("Copied to clipboard"));
-  }
-
-  async function exportShoppingListPdf() {
-    const list = buildShoppingList();
+  async function exportShoppingListPdf(list: BuiltShoppingList, checked: Set<string>) {
     const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const marginX = 40;
@@ -436,10 +408,13 @@ export default function GeneratorPage() {
 
     write("Shopping List", true, 16);
     y += 8;
-    for (const [category, items] of list.entries()) {
+    for (const section of list.sections) {
       y += 6;
-      write((SHOPPING_CATEGORY_LABELS[category] ?? category).toUpperCase(), true, 10);
-      for (const item of items) write(`${item.name} — ${item.grams} g`);
+      write(section.title.toUpperCase(), true, 10);
+      for (const item of section.items) {
+        const mark = checked.has(item.id) ? "[x]" : "[ ]";
+        write(`${mark} ${item.label}`);
+      }
     }
     doc.save("shopping-list.pdf");
   }
@@ -540,9 +515,10 @@ export default function GeneratorPage() {
           )}g | Fat ${Math.round(meal.macros.fat)}g`
         );
         writeLine(`Glycemic load: ${glycemicLoadRangeLabel(meal.glycemicLoad)}`);
+        writeLine(formatMealServingMeta(meal.ingredients));
         writeLine("Ingredients:");
         meal.ingredients.forEach((ing) => {
-          writeParagraph(`- ${ing.name}`, 12);
+          writeParagraph(`- ${formatIngredientWithGrams(ing)}`, 12);
         });
         writeLine("Instructions:");
         meal.instructions.slice(0, 8).forEach((step, index) => {
@@ -930,6 +906,7 @@ export default function GeneratorPage() {
                               <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-brand-text sm:text-base">
                                 {meal.name}{getAdaptedLabel(meal)}
                               </h3>
+                              <MealServingMeta ingredients={meal.ingredients} className="text-[11px] text-brand-text/50" />
                               <div className="mt-1">
                                 <MealNutritionStats
                                   carbs={meal.macros.carbs}
@@ -1040,6 +1017,7 @@ export default function GeneratorPage() {
                     </h3>
 
                   <div className="mt-4">
+                    <MealServingMeta ingredients={meal.ingredients} className="mb-2 text-[13px] text-brand-text/55" />
                     <MealNutritionStats
                       variant="detail"
                       carbs={meal.macros.carbs}
@@ -1101,6 +1079,7 @@ export default function GeneratorPage() {
                           const substituteOptions = getSubstituteOptions(ing.name, meal.ruleAlternatives?.[ingredientIndex]);
                           const healthFact = getHealthFact(ing.name);
                           const isRemoved = getIngredientRemoved(meal.id, ingredientIndex);
+                          const gramsLabel = `${ingredientPortionGrams(ing)}g`;
                           const pickerOpen =
                             activeIngredientPicker?.mealId === meal.id &&
                             activeIngredientPicker.ingredientIndex === ingredientIndex;
@@ -1131,6 +1110,7 @@ export default function GeneratorPage() {
                                   ) : (
                                     ing.name
                                   )}
+                                  <span className="ml-1.5 font-medium text-brand-text/70">{gramsLabel}</span>
                                   {healthFact ? (
                                     <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-64 rounded-md border border-brand-border bg-white p-2 text-[12px] leading-[1.4] text-brand-text shadow-md group-hover:block">
                                       {healthFact}
@@ -1193,77 +1173,12 @@ export default function GeneratorPage() {
       ) : null}
 
       {showShoppingList ? (
-        <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4 animate-[fadeIn_180ms_ease-out]"
-          onClick={() => setShowShoppingList(false)}
-        >
-          <div
-            className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-brand-border/90 bg-white shadow-2xl animate-[modalIn_220ms_cubic-bezier(0.16,1,0.3,1)] sm:rounded-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-brand-border/70 px-5 py-4">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="size-5 text-brand-primary" strokeWidth={2} />
-                <h2 className="text-[17px] font-semibold text-brand-text">Shopping list</h2>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  aria-label="Copy to clipboard"
-                  title="Copy to clipboard"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-bg"
-                  onClick={copyShoppingList}
-                >
-                  <Copy className="size-4" strokeWidth={2} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Export PDF"
-                  title="Export PDF"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-bg"
-                  onClick={() => void exportShoppingListPdf()}
-                >
-                  <Download className="size-4" strokeWidth={2} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Close"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-bg"
-                  onClick={() => setShowShoppingList(false)}
-                >
-                  <X className="size-5" strokeWidth={2} />
-                </button>
-              </div>
-            </div>
-            <div className="px-5 py-4">
-              {(() => {
-                const list = buildShoppingList();
-                if (list.size === 0) {
-                  return <p className="text-sm text-brand-text/60">No ingredients found in the current plan.</p>;
-                }
-                return (
-                  <div className="space-y-5">
-                    {Array.from(list.entries()).map(([category, items]) => (
-                      <div key={category}>
-                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-brand-text/45">
-                          {SHOPPING_CATEGORY_LABELS[category] ?? category}
-                        </p>
-                        <ul className="space-y-1">
-                          {items.map((item) => (
-                            <li key={item.name} className="flex items-center justify-between rounded-lg px-3 py-2 text-[14px] odd:bg-brand-bg/60">
-                              <span className="text-brand-text">{item.name}</span>
-                              <span className="text-brand-text/55">{item.grams} g</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
+        <ShoppingListPanel
+          list={builtShoppingList}
+          onClose={() => setShowShoppingList(false)}
+          onCopy={copyShoppingList}
+          onExportPdf={(list, checked) => void exportShoppingListPdf(list, checked)}
+        />
       ) : null}
 
       {toastMessage ? (

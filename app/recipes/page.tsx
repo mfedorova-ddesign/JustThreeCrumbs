@@ -1,11 +1,19 @@
 "use client";
 
 import { mealImageUrlForId } from "@/lib/design/mealImages";
+import { MealServingMeta } from "@/components/meal/MealServingMeta";
 import { GlycemicLoadBadge } from "@/components/nutrition/GlycemicLoadBadge";
 import { useGeneratorStore } from "@/lib/generator/store";
+import { formatIngredientWithGrams } from "@/lib/nutrition/portions";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { mealTypeLabels } from "@/lib/recipes/editor";
-import { recipeAllergens, recipeNutrition, recipeVegan, recipeVegetarian } from "@/lib/recipes/insights";
+import {
+  recipeAllergens,
+  recipeNutrition,
+  recipeVegan,
+  recipeVegetarian,
+  resolveRecipeBaseIngredients
+} from "@/lib/recipes/insights";
 import { Recipe } from "@/types";
 import { Plus, SlidersHorizontal, User } from "lucide-react";
 import Link from "next/link";
@@ -379,6 +387,7 @@ export default function RecipesPage() {
             <div className="mt-4 space-y-4">
               {visibleRecipes.map((recipe) => {
                 const nutrition = recipeNutrition(recipe);
+                const baseIngredients = resolveRecipeBaseIngredients(recipe);
                 const allergens = recipeAllergens(recipe);
                 const vegan = recipeVegan(recipe);
                 const vegetarian = recipeVegetarian(recipe);
@@ -414,6 +423,7 @@ export default function RecipesPage() {
                         <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-brand-text sm:text-base">
                           {recipe.name}
                         </h3>
+                        <MealServingMeta ingredients={baseIngredients} className="text-[11px] text-brand-text/50" />
                         <div className="scrollbar-none flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-brand-text/55">
                           <span className="font-semibold text-brand-text">Carbs {Math.round(nutrition.carbs)}g</span>
                           <span>Fiber {Math.round(nutrition.fiber)}g</span>
@@ -482,13 +492,18 @@ export default function RecipesPage() {
                       <section className="border-t border-brand-border/70 bg-white p-3 sm:p-4">
                         <h4 className="text-sm font-semibold text-brand-text">Ingredients</h4>
                         <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-brand-text/80">
-                          {recipe.ingredients.map((rule, idx) => (
-                            <li key={`${recipe.id}-ing-${idx}`}>
-                              <span className="font-medium">{rule.label ?? rule.primary}</span>
-                              {rule.alternatives?.length ? ` (alt: ${rule.alternatives.join(", ")})` : ""}
-                              {rule.optional ? " [optional]" : ""}
-                            </li>
-                          ))}
+                          {baseIngredients.map((ingredient, idx) => {
+                            const rule = recipe.ingredients.find(
+                              (entry) => entry.primary.toLowerCase() === ingredient.name.toLowerCase()
+                            );
+                            const label = rule?.label ?? ingredient.name;
+                            return (
+                              <li key={`${recipe.id}-ing-${idx}`}>
+                                <span className="font-medium">{formatIngredientWithGrams(ingredient, label)}</span>
+                                {rule?.alternatives?.length ? ` (alt: ${rule.alternatives.join(", ")})` : ""}
+                              </li>
+                            );
+                          })}
                         </ul>
                         <h4 className="mt-3 text-sm font-semibold text-brand-text">Instructions</h4>
                         <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-brand-text/80">
