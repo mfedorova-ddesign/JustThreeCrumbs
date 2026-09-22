@@ -33,13 +33,14 @@ export function resolveRecipeBaseIngredients(recipe: Recipe): Ingredient[] {
 }
 
 export function recipeAllergens(recipe: Recipe): string[] {
+  // Only the default plate (primary, required) — alternatives must not pollute vegan/allergy badges.
   const allergens = new Set<string>();
-  recipe.ingredients.forEach((rule) => {
-    [rule.primary, ...(rule.alternatives ?? [])].forEach((name) => {
-      const ingredient = ingredientByName.get(name.toLowerCase());
+  recipe.ingredients
+    .filter((rule) => !rule.optional)
+    .forEach((rule) => {
+      const ingredient = ingredientByName.get(rule.primary.toLowerCase());
       ingredient?.allergens?.forEach((allergen) => allergens.add(allergen));
     });
-  });
   return [...allergens].sort((a, b) => a.localeCompare(b));
 }
 

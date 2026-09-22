@@ -73,14 +73,24 @@ function validatePlan(profile: UserProfile, days: number, options: { checkMacros
 
     if (checkMacros) {
       assertCondition(
-        totals.calories >= targets.calories * 0.75 && totals.calories <= targets.calories * 1.35,
+        totals.calories >= targets.calories * 0.9 && totals.calories <= targets.calories * 1.1,
         `Calories out of range for day ${day.day}: ${totals.calories} vs target ${targets.calories}`
+      );
+      assertCondition(
+        totals.carbs >= targets.carbs * 0.9 && totals.carbs <= targets.carbs * 1.1,
+        `Carbs out of range for day ${day.day}: ${totals.carbs} vs target ${targets.carbs}`
       );
       assertCondition(
         totals.protein >= targets.protein * 0.55 && totals.protein <= targets.protein * 1.6,
         `Protein out of range for day ${day.day}: ${totals.protein} vs target ${targets.protein}`
       );
     }
+
+    const templateIds = meals.filter((m) => !m.skipped).map((m) => m.templateId);
+    assertCondition(
+      new Set(templateIds).size === templateIds.length,
+      `Repeated dish on day ${day.day}: ${templateIds.join(", ")}`
+    );
   });
 }
 

@@ -11,6 +11,8 @@
     "recipes:import": "node --import tsx scripts/import-recipes.ts",
     "validate:generation": "node --import tsx scripts/validate-generation.ts",
     "validate:shopping": "node --import tsx scripts/validate-shopping-list.ts",
+    "validate:audit": "node --import tsx scripts/validate-audit.ts",
+    "test": "npm run validate:audit",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

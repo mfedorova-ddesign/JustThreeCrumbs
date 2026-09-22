@@ -100,11 +100,23 @@ export function isVegetarianMeal(ingredients: Ingredient[]): boolean {
   return ingredients.every((ingredient) => ingredient.vegetarian);
 }
 
+/** Animal-product allergen tags that disqualify a vegan claim. */
+const NON_VEGAN_ALLERGENS = new Set(["dairy", "egg", "fish", "shellfish"]);
+
+/** Vegetarian ingredients that are still not vegan. */
+const NON_VEGAN_INGREDIENT_NAMES = new Set(["honey", "gelatin"]);
+
+export function isVeganIngredient(ingredient: Ingredient): boolean {
+  if (!ingredient.vegetarian) return false;
+  if (NON_VEGAN_INGREDIENT_NAMES.has(ingredient.name.toLowerCase())) return false;
+  if (ingredient.allergens?.some((allergen) => NON_VEGAN_ALLERGENS.has(allergen.toLowerCase()))) {
+    return false;
+  }
+  return true;
+}
+
 export function isVeganMeal(ingredients: Ingredient[]): boolean {
-  const nonVeganNames = new Set(["eggs", "egg whites", "greek yogurt", "cottage cheese", "feta cheese"]);
-  return ingredients.every(
-    (ingredient) => ingredient.vegetarian && !nonVeganNames.has(ingredient.name.toLowerCase())
-  );
+  return ingredients.length > 0 && ingredients.every((ingredient) => isVeganIngredient(ingredient));
 }
 
 /**

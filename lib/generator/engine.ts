@@ -5,6 +5,7 @@ import {
   GL_HIGH_THRESHOLD,
   glycemicIndexAverage,
   glycemicLoad,
+  isVeganIngredient,
   isVeganMeal,
   isVegetarianMeal,
   sumCalories,
@@ -12,9 +13,13 @@ import {
   sumMacros
 } from "@/lib/nutrition/calc";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
+import { recipeVegan, recipeVegetarian } from "@/lib/recipes/insights";
 import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType, Recipe, RecipeIngredientRule, UserProfile } from "@/types";
 
 const ingredientByName = new Map(INGREDIENTS.map((ingredient) => [ingredient.name, ingredient]));
+
+/** Day calorie/carb totals must stay within this band of profile targets. */
+const DAY_TARGET_TOLERANCE = 0.1;
 
 const recipeSequenceByMealType: Record<MealType, string[]> = {
   breakfast: [
@@ -243,24 +248,34 @@ function pickIngredientName(
   rule: RecipeIngredientRule,
   user: UserProfile,
   allergySet: Set<string>,
-  offset: number
+  offset: number,
+  dietLock?: { vegan: boolean; vegetarian: boolean }
 ): string | null {
   const names = [rule.primary, ...(rule.alternatives ?? [])];
   const allowed = names.filter((name) => {
     const ingredient = ingredientByName.get(name);
-    return ingredient ? isIngredientAllowed(ingredient, user, allergySet) : false;
+    if (!ingredient || !isIngredientAllowed(ingredient, user, allergySet)) return false;
+    if (dietLock?.vegan && !isVeganIngredient(ingredient)) return false;
+    if (dietLock?.vegetarian && !ingredient.vegetarian) return false;
+    return true;
   });
-  if (allowed.length === 0) return rule.optional ? null : null;
+  if (allowed.length === 0) return null;
+  // Prefer the recipe primary so library tags stay aligned with the plated dish when possible.
+  if (allowed.includes(rule.primary) && offset % 3 !== 0) return rule.primary;
   return allowed[offset % allowed.length];
 }
 
 function recipeAllowedForUser(recipe: Recipe, user: UserProfile): boolean {
   const allergySet = getAllergySet(user);
+  const dietLock = { vegan: recipeVegan(recipe), vegetarian: recipeVegetarian(recipe) };
   return recipe.ingredients.every((rule) => {
     const names = [rule.primary, ...(rule.alternatives ?? [])];
     const hasAny = names.some((name) => {
       const ingredient = ingredientByName.get(name);
-      return ingredient ? isIngredientAllowed(ingredient, user, allergySet) : false;
+      if (!ingredient || !isIngredientAllowed(ingredient, user, allergySet)) return false;
+      if (dietLock.vegan && !isVeganIngredient(ingredient)) return false;
+      if (dietLock.vegetarian && !ingredient.vegetarian) return false;
+      return true;
     });
     return rule.optional || hasAny;
   });
@@ -273,16 +288,22 @@ function resolveRecipeIngredients(
   seed: number
 ): { ingredient: Ingredient; alternatives: string[] }[] {
   const allergySet = getAllergySet(user);
+  const dietLock = { vegan: recipeVegan(recipe), vegetarian: recipeVegetarian(recipe) };
   const selected: { ingredient: Ingredient; alternatives: string[] }[] = [];
   for (let i = 0; i < recipe.ingredients.length; i += 1) {
     const rule = recipe.ingredients[i];
-    const pickedName = pickIngredientName(rule, user, allergySet, seed + i * 37);
+    const pickedName = pickIngredientName(rule, user, allergySet, seed + i * 37, dietLock);
     if (!pickedName) continue;
     const ingredient = ingredientByName.get(pickedName);
     if (!ingredient) continue;
-    // All valid names from this rule — including the picked one so the user can always swap back
     const ruleNames = [rule.primary, ...(rule.alternatives ?? [])];
-    const alternatives = ruleNames.filter((name) => ingredientByName.has(name));
+    const alternatives = ruleNames.filter((name) => {
+      const option = ingredientByName.get(name);
+      if (!option) return false;
+      if (dietLock.vegan && !isVeganIngredient(option)) return false;
+      if (dietLock.vegetarian && !option.vegetarian) return false;
+      return true;
+    });
     selected.push({
       ingredient: { ...ingredient, portionGrams: getIngredientPortionGrams(ingredient, mealType) },
       alternatives
@@ -293,9 +314,16 @@ function resolveRecipeIngredients(
 
 function capGlycemicLoad(ingredients: Ingredient[]): Ingredient[] {
   let current = ingredients;
-  for (let i = 0; i < 6; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     if (glycemicLoad(current) < GL_HIGH_THRESHOLD) return current;
-    current = scaleCategoryPortions(current, ["carbs"], 0.82);
+    current = scaleCategoryPortions(current, ["carbs"], 0.8);
+    if (i >= 4) {
+      current = current.map((ingredient) => {
+        if (ingredient.category !== "carbs" || ingredient.glycemicIndex <= 55) return ingredient;
+        const grams = ingredient.portionGrams ?? 100;
+        return { ...ingredient, portionGrams: Math.max(20, Math.round(grams * 0.85)) };
+      });
+    }
   }
   return current;
 }
@@ -357,8 +385,9 @@ function buildMeal(
     fiber: sumFiber(ingredients),
     glycemicIndex: glycemicIndexAverage(ingredients),
     glycemicLoad: glycemicLoad(ingredients),
-    isVegetarian: isVegetarianMeal(ingredients),
-    isVegan: isVeganMeal(ingredients),
+    // Library tags stay identical to generated-plan tags for the same recipe.
+    isVegetarian: recipeVegetarian(recipe),
+    isVegan: recipeVegan(recipe),
     instructions
   };
 }
@@ -474,7 +503,7 @@ function generateMealPreferringLowGl(
 ): GeneratedMeal {
   const excluded = [...(options.excludedTemplateIds ?? [])];
   let lastMeal: GeneratedMeal | null = null;
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < 16; attempt += 1) {
     const recipe = selectRecipe(mealType, user, dayIndex, seed + attempt * 911, excluded, options.selection);
     const meal = {
       ...generateMealFromRecipe(recipe, mealType, user, dayIndex, seed + attempt * 911, target),
@@ -484,7 +513,10 @@ function generateMealPreferringLowGl(
     if (meal.glycemicLoad < GL_HIGH_THRESHOLD) return meal;
     excluded.push(recipe.id);
   }
-  return lastMeal as GeneratedMeal;
+  if (!lastMeal || lastMeal.glycemicLoad >= GL_HIGH_THRESHOLD) {
+    throw new Error(`Unable to generate ${mealType} with glycemic load below ${GL_HIGH_THRESHOLD}.`);
+  }
+  return lastMeal;
 }
 
 function dayTotals(day: DayPlan): { calories: number; protein: number; fat: number; carbs: number; fiber: number } {
@@ -517,7 +549,7 @@ function dayLoss(
   const fatTerm = rel(totals.fat, targets.fat) + overshoot(totals.fat, targets.fat) * 0.35;
   const carbsTerm = rel(totals.carbs, targets.carbs) + overshoot(totals.carbs, targets.carbs) * 0.45;
   const fiberTerm = rel(totals.fiber, targets.fiber);
-  return calorieTerm * 2.2 + proteinTerm * 1.9 + fatTerm * 1.1 + carbsTerm * 1.3 + fiberTerm * 1.6;
+  return calorieTerm * 2.8 + proteinTerm * 1.4 + fatTerm * 0.9 + carbsTerm * 2.6 + fiberTerm * 1.2;
 }
 
 function needsExtraSnack(
@@ -526,48 +558,121 @@ function needsExtraSnack(
 ): boolean {
   const totals = dayTotals(day);
   return (
-    totals.calories < targets.calories * 0.88 ||
+    totals.calories < targets.calories * 0.9 ||
+    totals.carbs < targets.carbs * 0.9 ||
     totals.protein < targets.protein * 0.87 ||
     totals.fiber < targets.fiber * 0.8
   );
+}
+
+function dayWithinTargetBand(
+  day: DayPlan,
+  targets: { calories: number; protein: number; fat: number; carbs: number; fiber: number }
+): boolean {
+  const totals = dayTotals(day);
+  const within = (actual: number, target: number) =>
+    actual >= target * (1 - DAY_TARGET_TOLERANCE) && actual <= target * (1 + DAY_TARGET_TOLERANCE);
+  return within(totals.calories, targets.calories) && within(totals.carbs, targets.carbs);
+}
+
+function hasUniqueRecipes(day: DayPlan): boolean {
+  const meals = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(
+    (meal): meal is GeneratedMeal => Boolean(meal) && !meal.skipped
+  );
+  const ids = meals.map((meal) => meal.templateId);
+  return new Set(ids).size === ids.length;
+}
+
+function dayMealsUnderGl(day: DayPlan): boolean {
+  return [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack]
+    .filter((meal): meal is GeneratedMeal => Boolean(meal) && !meal.skipped)
+    .every((meal) => meal.glycemicLoad < GL_HIGH_THRESHOLD);
+}
+
+function isAcceptableDay(
+  day: DayPlan,
+  targets: { calories: number; protein: number; fat: number; carbs: number; fiber: number }
+): boolean {
+  return hasUniqueRecipes(day) && dayMealsUnderGl(day) && dayWithinTargetBand(day, targets);
 }
 
 function rebalanceDayMeals(
   day: DayPlan,
   targets: { calories: number; protein: number; fat: number; carbs: number; fiber: number }
 ): DayPlan {
-  const meals = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(Boolean) as GeneratedMeal[];
-  const totalCalories = meals.reduce((acc, meal) => acc + meal.calories, 0);
-  const ratio = targets.calories / Math.max(1, totalCalories);
-  const boundedRatio = Math.max(0.9, Math.min(1.32, ratio));
-  if (Math.abs(1 - boundedRatio) < 0.04) return day;
-  const rescaleMeal = (meal: GeneratedMeal): GeneratedMeal => {
-    let adjustedIngredients = scaleCategoryPortions(
-      meal.ingredients,
-      ["protein", "carbs", "vegetables", "fats", "liquid"],
-      boundedRatio
-    );
-    adjustedIngredients = capGlycemicLoad(adjustedIngredients);
-    return {
-      ...meal,
-      ingredients: adjustedIngredients,
-      calories: sumCalories(adjustedIngredients),
-      macros: sumMacros(adjustedIngredients),
-      fiber: sumFiber(adjustedIngredients),
-      glycemicIndex: glycemicIndexAverage(adjustedIngredients),
-      glycemicLoad: glycemicLoad(adjustedIngredients),
-      isVegetarian: isVegetarianMeal(adjustedIngredients),
-      isVegan: isVeganMeal(adjustedIngredients)
+  let current = day;
+  const findRecipe = (templateId: string) => FIXED_RECIPES.find((recipe) => recipe.id === templateId);
+
+  for (let pass = 0; pass < 14; pass += 1) {
+    if (dayWithinTargetBand(current, targets)) break;
+
+    const totals = dayTotals(current);
+    const calorieRatio = targets.calories / Math.max(1, totals.calories);
+    const carbRatio = targets.carbs / Math.max(1, totals.carbs);
+
+    const rescaleMeal = (meal: GeneratedMeal, recipe: Recipe | undefined): GeneratedMeal => {
+      let adjustedIngredients = meal.ingredients;
+
+      if (Math.abs(1 - carbRatio) >= 0.04) {
+        const carbScale = Math.max(0.72, Math.min(1.4, carbRatio));
+        adjustedIngredients = scaleCategoryPortions(adjustedIngredients, ["carbs"], carbScale);
+        if (carbRatio > 1.06) {
+          adjustedIngredients = scaleCategoryPortions(
+            adjustedIngredients,
+            ["vegetables"],
+            Math.min(1.22, 1 + (carbRatio - 1) * 0.55)
+          );
+        }
+      }
+
+      const mealShare = meal.calories / Math.max(1, totals.calories);
+      const mealCalorieTarget = targets.calories * Math.max(0.08, mealShare);
+      const localCalorieRatio = mealCalorieTarget / Math.max(1, sumCalories(adjustedIngredients));
+      if (Math.abs(1 - localCalorieRatio) >= 0.04) {
+        const calScale = Math.max(0.78, Math.min(1.28, localCalorieRatio));
+        if (localCalorieRatio < 1) {
+          adjustedIngredients = scaleCategoryPortions(adjustedIngredients, ["fats", "protein"], calScale);
+        } else {
+          adjustedIngredients = scaleCategoryPortions(
+            adjustedIngredients,
+            ["protein", "carbs", "vegetables", "fats", "liquid"],
+            calScale
+          );
+        }
+      } else if (Math.abs(1 - calorieRatio) >= 0.05) {
+        adjustedIngredients = scaleCategoryPortions(
+          adjustedIngredients,
+          ["protein", "fats", "vegetables", "liquid"],
+          Math.max(0.85, Math.min(1.2, calorieRatio))
+        );
+      }
+
+      adjustedIngredients = capGlycemicLoad(adjustedIngredients);
+      return {
+        ...meal,
+        ingredients: adjustedIngredients,
+        calories: sumCalories(adjustedIngredients),
+        macros: sumMacros(adjustedIngredients),
+        fiber: sumFiber(adjustedIngredients),
+        glycemicIndex: glycemicIndexAverage(adjustedIngredients),
+        glycemicLoad: glycemicLoad(adjustedIngredients),
+        isVegetarian: recipe ? recipeVegetarian(recipe) : isVegetarianMeal(adjustedIngredients),
+        isVegan: recipe ? recipeVegan(recipe) : isVeganMeal(adjustedIngredients)
+      };
     };
-  };
-  return {
-    ...day,
-    breakfast: rescaleMeal(day.breakfast),
-    lunch: rescaleMeal(day.lunch),
-    dinner: rescaleMeal(day.dinner),
-    snack: rescaleMeal(day.snack),
-    extraSnack: day.extraSnack ? rescaleMeal(day.extraSnack) : undefined
-  };
+
+    current = {
+      ...current,
+      breakfast: rescaleMeal(current.breakfast, findRecipe(current.breakfast.templateId)),
+      lunch: rescaleMeal(current.lunch, findRecipe(current.lunch.templateId)),
+      dinner: rescaleMeal(current.dinner, findRecipe(current.dinner.templateId)),
+      snack: rescaleMeal(current.snack, findRecipe(current.snack.templateId)),
+      extraSnack: current.extraSnack
+        ? rescaleMeal(current.extraSnack, findRecipe(current.extraSnack.templateId))
+        : undefined
+    };
+  }
+  return current;
 }
 
 function generateDayPlan(
@@ -601,11 +706,12 @@ function generateDayPlan(
   };
 
   if (needsExtraSnack(dayPlan, dailyTargets)) {
+    const carbsGap = Math.max(0, dailyTargets.carbs - dayTotals(dayPlan).carbs);
     dayPlan.extraSnack = pick("snack", 41, {
       calories: dailyTargets.calories * 0.12,
       protein: dailyTargets.protein * 0.14,
       fat: dailyTargets.fat * 0.12,
-      carbs: dailyTargets.carbs * 0.1,
+      carbs: Math.max(dailyTargets.carbs * 0.12, carbsGap * 0.85),
       fiber: dailyTargets.fiber * 0.18
     });
   }
@@ -620,16 +726,41 @@ function generateOptimizedDayPlan(
   options: RecipeSelectionOptions = {}
 ): DayPlan {
   const targets = recommendedDailyTargets(user);
-  const attempts = 5;
+  const attempts = 24;
   let best = generateDayPlan(user, dayIndex, baseSeed, options);
   let bestLoss = dayLoss(best, targets);
+  let bestOk = isAcceptableDay(best, targets);
+
   for (let i = 1; i < attempts; i += 1) {
     const candidate = generateDayPlan(user, dayIndex, baseSeed + i * 9973 + dayIndex * 389, options);
+    if (!hasUniqueRecipes(candidate) || !dayMealsUnderGl(candidate)) continue;
+    const ok = dayWithinTargetBand(candidate, targets);
     const loss = dayLoss(candidate, targets);
-    if (loss < bestLoss) {
+    if (ok && !bestOk) {
       best = candidate;
       bestLoss = loss;
+      bestOk = true;
+      continue;
     }
+    if (ok === bestOk && loss < bestLoss) {
+      best = candidate;
+      bestLoss = loss;
+      bestOk = ok && dayMealsUnderGl(candidate) && hasUniqueRecipes(candidate);
+    }
+  }
+
+  if (!hasUniqueRecipes(best)) {
+    throw new Error(`Day ${dayIndex + 1} has a repeated dish.`);
+  }
+  if (!dayMealsUnderGl(best)) {
+    throw new Error(`Day ${dayIndex + 1} contains a meal with glycemic load ≥ ${GL_HIGH_THRESHOLD}.`);
+  }
+  if (!dayWithinTargetBand(best, targets)) {
+    const totals = dayTotals(best);
+    throw new Error(
+      `Day ${dayIndex + 1} outside ±10% targets (calories ${Math.round(totals.calories)}/` +
+        `${targets.calories}, carbs ${Math.round(totals.carbs)}/${targets.carbs}).`
+    );
   }
   return best;
 }
@@ -647,18 +778,43 @@ async function generateOptimizedDayPlanAsync(
   options: RecipeSelectionOptions = {}
 ): Promise<DayPlan> {
   const targets = recommendedDailyTargets(user);
-  const attempts = 5;
+  const attempts = 24;
   await yieldToMain();
   let best = generateDayPlan(user, dayIndex, baseSeed, options);
   let bestLoss = dayLoss(best, targets);
+  let bestOk = isAcceptableDay(best, targets);
+
   for (let i = 1; i < attempts; i += 1) {
     await yieldToMain();
     const candidate = generateDayPlan(user, dayIndex, baseSeed + i * 9973 + dayIndex * 389, options);
+    if (!hasUniqueRecipes(candidate) || !dayMealsUnderGl(candidate)) continue;
+    const ok = dayWithinTargetBand(candidate, targets);
     const loss = dayLoss(candidate, targets);
-    if (loss < bestLoss) {
+    if (ok && !bestOk) {
       best = candidate;
       bestLoss = loss;
+      bestOk = true;
+      continue;
     }
+    if (ok === bestOk && loss < bestLoss) {
+      best = candidate;
+      bestLoss = loss;
+      bestOk = ok && dayMealsUnderGl(candidate) && hasUniqueRecipes(candidate);
+    }
+  }
+
+  if (!hasUniqueRecipes(best)) {
+    throw new Error(`Day ${dayIndex + 1} has a repeated dish.`);
+  }
+  if (!dayMealsUnderGl(best)) {
+    throw new Error(`Day ${dayIndex + 1} contains a meal with glycemic load ≥ ${GL_HIGH_THRESHOLD}.`);
+  }
+  if (!dayWithinTargetBand(best, targets)) {
+    const totals = dayTotals(best);
+    throw new Error(
+      `Day ${dayIndex + 1} outside ±10% targets (calories ${Math.round(totals.calories)}/` +
+        `${targets.calories}, carbs ${Math.round(totals.carbs)}/${targets.carbs}).`
+    );
   }
   return best;
 }
