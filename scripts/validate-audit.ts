@@ -15,7 +15,7 @@ function assertCondition(condition: boolean, message: string) {
 
 function mealsOnDay(day: DayPlan): GeneratedMeal[] {
   return [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(
-    (meal): meal is GeneratedMeal => Boolean(meal) && !meal.skipped
+    (meal): meal is GeneratedMeal => meal != null && !meal.skipped
   );
 }
 

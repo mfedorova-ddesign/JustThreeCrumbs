@@ -577,7 +577,7 @@ function dayWithinTargetBand(
 
 function hasUniqueRecipes(day: DayPlan): boolean {
   const meals = [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack].filter(
-    (meal): meal is GeneratedMeal => Boolean(meal) && !meal.skipped
+    (meal): meal is GeneratedMeal => meal != null && !meal.skipped
   );
   const ids = meals.map((meal) => meal.templateId);
   return new Set(ids).size === ids.length;
@@ -585,7 +585,7 @@ function hasUniqueRecipes(day: DayPlan): boolean {
 
 function dayMealsUnderGl(day: DayPlan): boolean {
   return [day.breakfast, day.lunch, day.dinner, day.snack, day.extraSnack]
-    .filter((meal): meal is GeneratedMeal => Boolean(meal) && !meal.skipped)
+    .filter((meal): meal is GeneratedMeal => meal != null && !meal.skipped)
     .every((meal) => meal.glycemicLoad < GL_HIGH_THRESHOLD);
 }
 
