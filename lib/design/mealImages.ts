@@ -52,6 +52,23 @@ const RECIPE_IMAGE_OVERRIDES: Record<string, string> = {
   "recipe-caponata-chickpeas": "/images/eggplant-caponata.jpeg",
   "recipe-bacalao-pil-pil": "/images/sugerencia.jpg",
   "recipe-croatian-bruschetta": "/images/backf.jpg",
+  "recipe-vegan-savory-oats-edamame": "/images/vegan-savory-oats.jpg",
+  "recipe-vegan-hummus-mushroom-toast": "/images/vegan-hummus-mushroom-toast.jpg",
+  "recipe-vegan-hummus-avocado-toast": "/images/vegan-hummus-avocado-toast.jpg",
+  "recipe-vegan-shakshuka-tofu": "/images/vegan-shakshuka-tofu.jpg",
+  "recipe-vegan-mushroom-bean-salad": "/images/vegan-mushroom-bean-salad.jpg",
+  "recipe-vegan-bean-tvp-stew": "/images/vegan-bean-tvp-stew.jpg",
+  "recipe-vegan-lentil-tvp-soup": "/images/vegan-lentil-tvp-soup.jpg",
+  "recipe-vegan-chickpea-lentil-curry": "/images/vegan-tofu-curry-rice.jpg",
+  "recipe-vegan-larb-lettuce": "/images/vegan-larb-lettuce.jpg",
+  "recipe-vegan-tofu-spinach-pasta": "/images/vegan-tofu-spinach-pasta.jpg",
+  "recipe-vegan-black-bean-tacos": "/images/vegan-black-bean-tacos.jpg",
+  "recipe-vegan-tzatziki-crudites": "/images/vegan-tzatziki.jpg",
+  "recipe-vegan-chia-soy": "/images/vegan-chia-berry-bowl.jpg",
+  "recipe-vegan-soy-yogurt-bowl": "/images/vegan-soy-yogurt-bowl.jpg",
+  "recipe-vegan-pea-soup": "/images/vegan-pea-soup.jpg",
+  "recipe-vegan-tofu-wrap": "/images/vegan-tofu-wrap.jpg",
+  "recipe-vegan-tofu-chickpea-bowl": "/images/vegan-tofu-chickpea-bowl.jpg"
 };
 
 export function mealImageUrlForId(mealId: string, customUrl?: string): string {

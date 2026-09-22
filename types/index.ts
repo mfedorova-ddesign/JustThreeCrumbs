@@ -1,4 +1,4 @@
-export type DietType = "regular" | "vegetarian";
+export type DietType = "omnivore" | "vegetarian" | "vegan" | "pescatarian" | "seagan";
 export type Condition = "type2_diabetes";
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 export type TemplateCategory =

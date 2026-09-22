@@ -1,12 +1,13 @@
 import { generateMealPlan } from "../lib/generator/engine";
 import { recommendedDailyTargets } from "../lib/generator/targets";
 import { GL_HIGH_THRESHOLD, isVeganMeal } from "../lib/nutrition/calc";
+import { mealFitsDiet } from "../lib/nutrition/diet";
 import { FIXED_RECIPES } from "../lib/recipes/data";
 import { recipeAllergens, recipeVegan, recipeVegetarian } from "../lib/recipes/insights";
 import { DayPlan, GeneratedMeal, MealPlan, UserProfile } from "../types";
 
 const DAY_TARGET_TOLERANCE = 0.1;
-const PLANS_PER_DIET = 34;
+const PLANS_PER_DIET = 17;
 const NON_VEGAN_ALLERGENS = new Set(["dairy", "egg", "fish", "shellfish"]);
 
 function assertCondition(condition: boolean, message: string) {
@@ -68,6 +69,13 @@ function assertPlan(profile: UserProfile, plan: MealPlan) {
         `GL ${meal.glycemicLoad.toFixed(1)} >= ${GL_HIGH_THRESHOLD} for "${meal.name}"`
       );
 
+      assertCondition(
+        mealFitsDiet(meal.ingredients, profile.dietType),
+        `Diet "${profile.dietType}" violated in "${meal.name}": ${meal.ingredients
+          .map((ingredient) => ingredient.name)
+          .join(", ")}`
+      );
+
       const recipe = recipeById(meal.templateId);
       assertCondition(Boolean(recipe), `Unknown recipe template ${meal.templateId}`);
       if (!recipe) return;
@@ -111,32 +119,33 @@ function assertPlan(profile: UserProfile, plan: MealPlan) {
   });
 }
 
+const baseBody = {
+  age: 34,
+  weight: 74,
+  height: 168,
+  gender: "female" as const,
+  condition: "type2_diabetes" as const,
+  allergies: ["none"],
+  additionalPreferences: ""
+};
+
 const dietProfiles: { label: string; profile: UserProfile }[] = [
-  {
-    label: "regular",
-    profile: {
-      age: 34,
-      weight: 74,
-      height: 168,
-      gender: "female",
-      condition: "type2_diabetes",
-      dietType: "regular",
-      allergies: ["none"],
-      additionalPreferences: ""
-    }
-  },
+  { label: "omnivore", profile: { ...baseBody, dietType: "omnivore" } },
   {
     label: "vegetarian",
-    profile: {
-      age: 29,
-      weight: 61,
-      height: 170,
-      gender: "female",
-      condition: "type2_diabetes",
-      dietType: "vegetarian",
-      allergies: ["none"],
-      additionalPreferences: ""
-    }
+    profile: { ...baseBody, age: 29, weight: 61, height: 170, dietType: "vegetarian" }
+  },
+  {
+    label: "vegan",
+    profile: { ...baseBody, age: 31, weight: 64, height: 166, dietType: "vegan" }
+  },
+  {
+    label: "pescatarian",
+    profile: { ...baseBody, age: 36, weight: 70, height: 172, dietType: "pescatarian" }
+  },
+  {
+    label: "seagan",
+    profile: { ...baseBody, age: 33, weight: 66, height: 169, dietType: "seagan" }
   },
   {
     label: "allergy-restricted",
@@ -146,7 +155,7 @@ const dietProfiles: { label: string; profile: UserProfile }[] = [
       height: 172,
       gender: "male",
       condition: "type2_diabetes",
-      dietType: "regular",
+      dietType: "omnivore",
       allergies: ["Dairy", "Eggs", "Fish"],
       additionalPreferences: ""
     }
@@ -167,7 +176,9 @@ function main() {
   }
 
   assertCondition(plansChecked >= 100, `Expected at least 100 plans, got ${plansChecked}`);
-  process.stdout.write(`Audit assertions passed on ${plansChecked} generated plans across 3 diet types.\n`);
+  process.stdout.write(
+    `Audit assertions passed on ${plansChecked} generated plans across ${dietProfiles.length} diet profiles.\n`
+  );
 }
 
 main();

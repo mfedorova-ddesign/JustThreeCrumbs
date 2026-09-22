@@ -1815,7 +1815,8 @@ export const INGREDIENTS: Ingredient[] = [
     glycemicIndex: 0,
     portionGrams: 150,
     category: "protein",
-    vegetarian: false
+    vegetarian: false,
+    allergens: ["fish"]
   },
   {
     name: "sea bass",
@@ -1827,6 +1828,83 @@ export const INGREDIENTS: Ingredient[] = [
     glycemicIndex: 0,
     portionGrams: 150,
     category: "protein",
-    vegetarian: false
+    vegetarian: false,
+    allergens: ["fish"]
   },
+  {
+    name: "edamame",
+    calories: 121,
+    protein: 12,
+    fat: 5,
+    carbs: 9,
+    fiber: 5,
+    glycemicIndex: 18,
+    portionGrams: 100,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["soy"]
+  },
+  {
+    name: "soy textured protein",
+    calories: 330,
+    protein: 50,
+    fat: 1,
+    carbs: 30,
+    fiber: 15,
+    glycemicIndex: 15,
+    portionGrams: 40,
+    category: "protein",
+    vegetarian: true,
+    allergens: ["soy"]
+  },
+  {
+    name: "nutritional yeast",
+    calories: 325,
+    protein: 50,
+    fat: 4,
+    carbs: 36,
+    fiber: 20,
+    glycemicIndex: 5,
+    portionGrams: 8,
+    category: "spices",
+    vegetarian: true
+  },
+  {
+    name: "soy yogurt",
+    calories: 61,
+    protein: 5.8,
+    fat: 2.3,
+    carbs: 2.5,
+    fiber: 0.9,
+    glycemicIndex: 20,
+    portionGrams: 150,
+    category: "liquid",
+    vegetarian: true,
+    allergens: ["soy"]
+  },
+  {
+    name: "unsweetened soy milk",
+    calories: 33,
+    protein: 3.3,
+    fat: 1.8,
+    carbs: 1.2,
+    fiber: 0.5,
+    glycemicIndex: 30,
+    portionGrams: 200,
+    category: "liquid",
+    vegetarian: true,
+    allergens: ["soy"]
+  },
+  {
+    name: "whole grain tortilla",
+    calories: 260,
+    protein: 8,
+    fat: 5,
+    carbs: 45,
+    fiber: 7,
+    glycemicIndex: 30,
+    portionGrams: 55,
+    category: "carbs",
+    vegetarian: true
+  }
 ];

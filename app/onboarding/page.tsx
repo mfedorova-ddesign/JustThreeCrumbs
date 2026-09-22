@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { isProfileComplete } from "@/lib/generator/profile";
 import { useGeneratorStore } from "@/lib/generator/store";
+import { DIET_TYPE_OPTIONS } from "@/lib/nutrition/diet";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect } from "react";
 
@@ -306,46 +307,26 @@ export default function OnboardingPage() {
                     <div className="mb-3 text-[14px] font-medium leading-[1.6] text-brand-text/80">
                       Diet Type <span className="text-brand-primary">*</span>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={() => setProfile({ dietType: "regular" })}
-                        className={`rounded-xl border px-4 py-4 text-left transition focus:outline-none focus:ring-4 focus:ring-brand-primary/20 ${
-                          profile.dietType === "regular"
-                            ? "border-brand-primary bg-[#EAF5EF]"
-                            : "border-brand-border bg-white hover:bg-brand-bg"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[20px]">🥔</span>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {DIET_TYPE_OPTIONS.map((diet) => (
+                        <button
+                          key={diet.id}
+                          type="button"
+                          onClick={() => setProfile({ dietType: diet.id })}
+                          className={`rounded-xl border px-4 py-4 text-left transition focus:outline-none focus:ring-4 focus:ring-brand-primary/20 ${
+                            profile.dietType === diet.id
+                              ? "border-brand-primary bg-[#EAF5EF]"
+                              : "border-brand-border bg-white hover:bg-brand-bg"
+                          }`}
+                        >
                           <div className="text-[16px] font-medium leading-[1.6] text-brand-text">
-                            Regular
+                            {diet.label}
                           </div>
-                        </div>
-                        <div className="mt-2 text-[14px] leading-[1.6] text-brand-text/60">
-                          Includes plant foods
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setProfile({ dietType: "vegetarian" })}
-                        className={`rounded-xl border px-4 py-4 text-left transition focus:outline-none focus:ring-4 focus:ring-brand-primary/20 ${
-                          profile.dietType === "vegetarian"
-                            ? "border-brand-primary bg-[#EAF5EF]"
-                            : "border-brand-border bg-white hover:bg-brand-bg"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[20px]">🥬</span>
-                          <div className="text-[16px] font-medium leading-[1.6] text-brand-text">
-                            Vegetarian
+                          <div className="mt-2 text-[14px] leading-[1.6] text-brand-text/60">
+                            {diet.description}
                           </div>
-                        </div>
-                        <div className="mt-2 text-[14px] leading-[1.6] text-brand-text/60">
-                          Plant-based meals
-                        </div>
-                      </button>
+                        </button>
+                      ))}
                     </div>
                   </div>
 

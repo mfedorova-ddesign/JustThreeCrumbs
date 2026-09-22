@@ -5,7 +5,8 @@ import {
 } from "../lib/generator/meal-copy";
 import { recommendedDailyTargets } from "../lib/generator/targets";
 import { GL_HIGH_THRESHOLD } from "../lib/nutrition/calc";
-import { DayPlan, GeneratedMeal, UserProfile } from "../types";
+import { mealFitsDiet } from "../lib/nutrition/diet";
+import { DietType, DayPlan, GeneratedMeal, UserProfile } from "../types";
 
 function assertCondition(condition: boolean, message: string) {
   if (!condition) {
@@ -47,12 +48,12 @@ function validatePlan(profile: UserProfile, days: number, options: { checkMacros
     ) as GeneratedMeal[];
 
     meals.forEach((meal) => {
-      if (profile.dietType === "vegetarian") {
-        assertCondition(
-          meal.ingredients.every((ingredient) => ingredient.vegetarian),
-          `Non-vegetarian ingredient found in vegetarian profile: ${meal.name}`
-        );
-      }
+      assertCondition(
+        mealFitsDiet(meal.ingredients, profile.dietType),
+        `Diet "${profile.dietType}" violated in meal: ${meal.name} (${meal.ingredients
+          .map((ingredient) => ingredient.name)
+          .join(", ")})`
+      );
       meal.ingredients.forEach((ingredient) => {
         if (!ingredient.allergens?.length) return;
         ingredient.allergens.forEach((allergen) => {
@@ -94,45 +95,41 @@ function validatePlan(profile: UserProfile, days: number, options: { checkMacros
   });
 }
 
-function main() {
-  const regularProfile: UserProfile = {
+function profileFor(dietType: DietType, overrides: Partial<UserProfile> = {}): UserProfile {
+  return {
     age: 34,
     weight: 74,
     height: 168,
     condition: "type2_diabetes",
-    dietType: "regular",
+    dietType,
     allergies: ["none"],
-    additionalPreferences: ""
+    additionalPreferences: "",
+    ...overrides
   };
-  const vegetarianProfile: UserProfile = {
-    age: 29,
-    weight: 61,
-    height: 170,
-    condition: "type2_diabetes",
-    dietType: "vegetarian",
-    allergies: ["fish", "dairy"],
-    additionalPreferences: ""
-  };
-  const criticalAllergyProfile: UserProfile = {
+}
+
+function main() {
+  const diets: DietType[] = ["omnivore", "vegetarian", "vegan", "pescatarian", "seagan"];
+  for (const dietType of diets) {
+    validatePlan(profileFor(dietType), 7, { checkMacros: dietType === "omnivore" });
+  }
+
+  validatePlan(profileFor("vegetarian", { allergies: ["fish", "dairy"] }), 7, { checkMacros: false });
+
+  const criticalAllergyProfile = profileFor("omnivore", {
     age: 40,
     weight: 78,
     height: 172,
     gender: "female",
-    condition: "type2_diabetes",
-    dietType: "regular",
-    allergies: ["Dairy", "Eggs", "Fish"],
-    additionalPreferences: ""
-  };
-
-  validatePlan(regularProfile, 7);
-  validatePlan(vegetarianProfile, 7, { checkMacros: false });
+    allergies: ["Dairy", "Eggs", "Fish"]
+  });
 
   // Acceptance: ten generated weeks with Dairy + Eggs + Fish — no allergen words in titles/steps
   for (let week = 0; week < 10; week += 1) {
     validatePlan(criticalAllergyProfile, 7, { checkMacros: false });
   }
 
-  process.stdout.write("Generation validation passed (including 10 allergy weeks).\n");
+  process.stdout.write("Generation validation passed (including all diet types + 10 allergy weeks).\n");
 }
 
 main();

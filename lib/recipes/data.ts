@@ -196,7 +196,7 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("carbs", "whole grain bread", { optional: true, alternatives: ["sourdough bread"] }),
       ing("spices", "paprika", { alternatives: ["smoked paprika"] }),
       ing("spices", "cumin", { alternatives: ["coriander"] }),
-      ing("spices", "chili", { optional: true }),
+      ing("spices", "cayenne pepper", { optional: true }),
       ing("spices", "garlic"),
       ing("spices", "parsley", { optional: true, alternatives: ["cilantro"] })
     ],
@@ -290,7 +290,7 @@ export const FIXED_RECIPES: Recipe[] = [
       ing("spices", "turmeric"),
       ing("spices", "paprika"),
       ing("spices", "ginger"),
-      ing("spices", "chili", { optional: true }),
+      ing("spices", "cayenne pepper", { optional: true }),
       ing("spices", "garlic"),
       ing("spices", "garam masala"),
       ing("spices", "cilantro", { optional: true })
@@ -813,13 +813,13 @@ export const FIXED_RECIPES: Recipe[] = [
     mealTypes: ["lunch", "dinner"],
     ingredients: [
       ing("protein", "salmon", { alternatives: ["trout", "sea bass"] }),
-      ing("fats", "butter"),
-      ing("fats", "ghee"),
+      ing("fats", "butter", { alternatives: ["olive oil"] }),
+      ing("fats", "ghee", { alternatives: ["olive oil"], optional: true }),
       ing("vegetables", "spinach"),
       ing("fats", "olive oil"),
       ing("spices", "capers"),
       ing("spices", "garlic"),
-      ing("liquid", "white wine", { alternatives: ["chicken broth"] }),
+      ing("liquid", "white wine", { alternatives: ["vegetable broth", "chicken broth"] }),
       ing("liquid", "lemon juice"),
       ing("spices", "lemon zest"),
       ing("spices", "parsley", { optional: true }),
@@ -828,12 +828,12 @@ export const FIXED_RECIPES: Recipe[] = [
     constraints: { maxCarbs: 8, glycemicIndex: "low" },
     instructions: [
       "Take salmon out of the fridge 15 minutes before cooking. Pat completely dry — especially the skin. Season with salt and black pepper on all sides.",
-      "Heat a heavy-bottomed pan over high heat for 2–3 minutes. Add ghee until just smoking.",
+      "Heat a heavy-bottomed pan over high heat for 2–3 minutes. Add fat until just smoking.",
       "Place salmon skin-side down. Press gently with a spatula for the first 30 seconds to prevent curling. Cook undisturbed 4–5 minutes until skin is golden and crisp and the cook line has risen 2/3 up the fillet.",
       "Flip and cook 1.5–2 minutes for medium (slightly pink centre) or 3 minutes for fully cooked. Rest on a warm plate, tented with foil.",
-      "In the same pan over medium heat, add garlic and cook 30 seconds. Pour in white wine (or chicken broth) and reduce 1–2 minutes, scraping up any caramelised bits.",
+      "In the same pan over medium heat, add garlic and cook 30 seconds. Pour in white wine or broth and reduce 1–2 minutes, scraping up any caramelised bits.",
       "Add capers, lemon juice, and lemon zest. Stir and warm 1 minute.",
-      "Remove pan from heat. Add cold butter cubes 2–3 at a time, swirling or whisking vigorously to emulsify into a glossy sauce. Stir in chopped parsley.",
+      "Remove pan from heat. Finish the sauce with fat, swirling to emulsify into a glossy sauce. Stir in chopped parsley.",
       "In a separate pan, wilt spinach in olive oil over medium heat for 1–2 minutes until just collapsed and still bright green. Season with salt.",
       "Plate spinach, place salmon skin-side up, spoon sauce generously over the top. Serve with a lemon wedge immediately."
     ]
@@ -951,6 +951,450 @@ export const FIXED_RECIPES: Recipe[] = [
       "Transfer to the hot baking sheet. Brush generously with harissa marinade. Roast 12–15 minutes until tender in the centre (a knife should slide in with no resistance) and charred at the edges.",
       "While the cauliflower roasts, whisk tahini with lemon juice, garlic, remaining salt, and cold water a tablespoon at a time until smooth, creamy, and pourable.",
       "Spread tahini sauce on each plate. Place hot cauliflower steak on top. Drizzle with remaining harissa marinade. Scatter toasted sesame seeds, chopped parsley or cilantro, and optional pomegranate seeds. Serve immediately."
+    ]
+  },
+  {
+    id: "recipe-vegan-savory-oats-edamame",
+    name: "Savory oatmeal with mushrooms and edamame",
+    mealTypes: ["breakfast"],
+    ingredients: [
+      ing("carbs", "oats"),
+      ing("liquid", "unsweetened soy milk", { alternatives: ["unsweetened almond milk", "water"] }),
+      ing("liquid", "vegetable broth", { optional: true, alternatives: ["water"] }),
+      ing("fats", "flax seeds"),
+      ing("protein", "mushrooms"),
+      ing("vegetables", "onion"),
+      ing("protein", "edamame", { alternatives: ["tofu", "chickpeas"] }),
+      ing("fats", "olive oil"),
+      ing("spices", "nutritional yeast", { optional: true }),
+      ing("spices", "thyme"),
+      ing("spices", "garlic"),
+      ing("spices", "black pepper"),
+      ing("spices", "parsley", { optional: true })
+    ],
+    constraints: { maxCarbs: 40, glycemicIndex: "low" },
+    instructions: [
+      "Dry-fry mushrooms in a hot pan without oil or salt until water cooks off and edges brown, 6–7 minutes.",
+      "Add olive oil and onion; cook 3 minutes. Season with thyme, garlic, and black pepper at the end.",
+      "Meanwhile cook oats in soy milk (and optional broth) about 5 minutes. Stir in flax seeds and nutritional yeast.",
+      "Warm edamame with the mushrooms for the last minute.",
+      "Serve the oatmeal topped with mushrooms and edamame; finish with parsley."
+    ]
+  },
+  {
+    id: "recipe-vegan-hummus-mushroom-toast",
+    name: "Hummus toast with mushrooms and white beans",
+    mealTypes: ["breakfast", "snack"],
+    ingredients: [
+      ing("carbs", "whole grain bread", { alternatives: ["sourdough bread"] }),
+      ing("protein", "hummus"),
+      ing("protein", "mushrooms"),
+      ing("protein", "white beans"),
+      ing("vegetables", "onion", { optional: true }),
+      ing("fats", "olive oil"),
+      ing("spices", "nutritional yeast", { optional: true }),
+      ing("spices", "thyme"),
+      ing("spices", "garlic"),
+      ing("spices", "parsley", { optional: true }),
+      ing("fats", "sesame seeds", { optional: true })
+    ],
+    constraints: { maxCarbs: 35, glycemicIndex: "low" },
+    instructions: [
+      "Dry-fry mushrooms with onion until deeply browned; finish with thyme and garlic.",
+      "Warm white beans briefly with a little olive oil and salt.",
+      "Toast the bread until dry and crisp.",
+      "Spread hummus as a moisture barrier, then top with beans, mushrooms, nutritional yeast, sesame seeds, and herbs."
+    ]
+  },
+  {
+    id: "recipe-vegan-hummus-avocado-toast",
+    name: "Hummus toast with avocado and edamame",
+    mealTypes: ["breakfast", "snack"],
+    ingredients: [
+      ing("carbs", "whole grain bread", { alternatives: ["sourdough bread"] }),
+      ing("protein", "hummus"),
+      ing("fats", "avocado"),
+      ing("vegetables", "tomato"),
+      ing("protein", "edamame", { alternatives: ["chickpeas", "tofu"] }),
+      ing("liquid", "lemon juice"),
+      ing("spices", "black pepper"),
+      ing("spices", "cayenne pepper", { optional: true })
+    ],
+    constraints: { maxCarbs: 35, glycemicIndex: "low" },
+    instructions: [
+      "Boil edamame for about 3 minutes and salt lightly.",
+      "Toast the bread and spread hummus.",
+      "Mash avocado with lemon juice and salt; spread over hummus.",
+      "Top with tomato, edamame, pepper, and optional chili flakes."
+    ]
+  },
+  {
+    id: "recipe-vegan-shakshuka-tofu",
+    name: "Vegan shakshuka with tofu and white beans",
+    mealTypes: ["breakfast", "lunch"],
+    ingredients: [
+      ing("protein", "tofu", { alternatives: ["tempeh", "chickpeas"] }),
+      ing("protein", "white beans"),
+      ing("vegetables", "onion"),
+      ing("spices", "garlic"),
+      ing("vegetables", "bell pepper"),
+      ing("vegetables", "tomato"),
+      ing("liquid", "tomato paste"),
+      ing("fats", "olive oil"),
+      ing("fats", "avocado", { optional: true }),
+      ing("carbs", "whole grain bread", { optional: true }),
+      ing("spices", "cumin"),
+      ing("spices", "smoked paprika"),
+      ing("spices", "coriander"),
+      ing("spices", "cinnamon", { optional: true }),
+      ing("spices", "cayenne pepper", { optional: true }),
+      ing("spices", "cilantro", { alternatives: ["parsley"], optional: true })
+    ],
+    constraints: { maxCarbs: 45, glycemicIndex: "low" },
+    instructions: [
+      "Bake or pan-sear tofu until firm and golden before it goes into the sauce.",
+      "Sauté onion and bell pepper in olive oil until soft, 8 minutes.",
+      "Bloom cumin, smoked paprika, coriander, garlic, and optional chili/cinnamon in the oil for 30 seconds.",
+      "Cook tomato paste 1–2 minutes, add tomatoes, and simmer until thick, about 10 minutes.",
+      "Stir in white beans, nestle the tofu, warm 2 minutes, and finish with herbs. Serve with optional toast and avocado."
+    ]
+  },
+  {
+    id: "recipe-vegan-mushroom-bean-salad",
+    name: "Mushroom salad with white beans and edamame",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "white beans"),
+      ing("protein", "edamame", { alternatives: ["green peas", "chickpeas"] }),
+      ing("protein", "mushrooms"),
+      ing("vegetables", "onion"),
+      ing("vegetables", "cucumber", { label: "pickled cucumber / cornichons" }),
+      ing("vegetables", "green peas", { optional: true }),
+      ing("fats", "olive oil"),
+      ing("liquid", "soy yogurt", { alternatives: ["coconut yogurt"] }),
+      ing("spices", "mustard"),
+      ing("spices", "smoked paprika"),
+      ing("spices", "dill", { optional: true }),
+      ing("spices", "black pepper")
+    ],
+    constraints: { maxCarbs: 40, glycemicIndex: "low" },
+    instructions: [
+      "Brown mushrooms with onion until golden; cool completely so they do not wilt the dressing.",
+      "Briefly blanch peas if using.",
+      "Whisk soy yogurt with mustard, smoked paprika, pepper, and a spoon of pickle brine.",
+      "Toss beans, edamame, mushrooms, cucumber, and dressing; rest 15 minutes before serving."
+    ]
+  },
+  {
+    id: "recipe-vegan-bean-tvp-stew",
+    name: "White bean stew with soy textured protein",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "white beans"),
+      ing("protein", "red beans", { optional: true }),
+      ing("protein", "soy textured protein", { alternatives: ["tempeh", "lentils"] }),
+      ing("vegetables", "onion"),
+      ing("spices", "garlic"),
+      ing("vegetables", "bell pepper"),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "celery"),
+      ing("vegetables", "tomato"),
+      ing("liquid", "tomato paste"),
+      ing("fats", "olive oil"),
+      ing("fats", "pumpkin seeds", { optional: true }),
+      ing("liquid", "vegetable broth", { alternatives: ["water"] }),
+      ing("spices", "smoked paprika"),
+      ing("spices", "cumin"),
+      ing("spices", "coriander"),
+      ing("spices", "oregano"),
+      ing("spices", "bay leaf", { optional: true }),
+      ing("liquid", "lemon juice"),
+      ing("spices", "parsley", { optional: true })
+    ],
+    constraints: { maxCarbs: 50, glycemicIndex: "low" },
+    instructions: [
+      "Soak textured soy protein in hot water 10 minutes, squeeze dry, and dry-fry until golden at the edges.",
+      "Sauté onion, carrot, celery, and pepper in olive oil about 8 minutes.",
+      "Bloom spices and garlic 30 seconds; cook tomato paste 1–2 minutes.",
+      "Add tomatoes, broth, bay leaf, and the browned protein; simmer 15 minutes.",
+      "Add beans for the last 5 minutes. Finish off-heat with lemon juice, parsley, and pumpkin seeds."
+    ]
+  },
+  {
+    id: "recipe-vegan-lentil-tvp-soup",
+    name: "Green lentil soup with soy textured protein",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "lentils"),
+      ing("protein", "soy textured protein", { alternatives: ["tempeh", "chickpeas"] }),
+      ing("vegetables", "onion"),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "celery"),
+      ing("spices", "garlic"),
+      ing("liquid", "tomato paste"),
+      ing("fats", "olive oil"),
+      ing("liquid", "vegetable broth", { alternatives: ["water"] }),
+      ing("spices", "cumin"),
+      ing("spices", "smoked paprika"),
+      ing("spices", "bay leaf", { optional: true }),
+      ing("liquid", "lemon juice"),
+      ing("spices", "parsley", { optional: true }),
+      ing("spices", "black pepper")
+    ],
+    constraints: { maxCarbs: 50, glycemicIndex: "low" },
+    instructions: [
+      "Soak and squeeze textured soy protein, then brown it separately until smoky and crisp at the edges.",
+      "Sauté onion, carrot, and celery in olive oil; bloom garlic and spices 30 seconds.",
+      "Cook tomato paste briefly, add lentils and broth, and simmer until lentils are tender.",
+      "Stir in the browned protein near the end. Finish with lemon juice, pepper, and parsley."
+    ]
+  },
+  {
+    id: "recipe-vegan-chickpea-lentil-curry",
+    name: "Vegetable curry with chickpeas and lentils",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "chickpeas"),
+      ing("protein", "lentils", { optional: true }),
+      ing("vegetables", "cauliflower", { alternatives: ["broccoli", "zucchini"] }),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "onion"),
+      ing("spices", "garlic"),
+      ing("spices", "ginger"),
+      ing("fats", "olive oil"),
+      ing("liquid", "tomato paste"),
+      ing("liquid", "light coconut milk", { alternatives: ["vegetable broth"] }),
+      ing("spices", "curry powder"),
+      ing("spices", "cumin"),
+      ing("spices", "coriander"),
+      ing("spices", "turmeric"),
+      ing("spices", "garam masala"),
+      ing("spices", "cilantro", { optional: true })
+    ],
+    constraints: { maxCarbs: 45, glycemicIndex: "low" },
+    instructions: [
+      "Bloom cumin, coriander, turmeric, and curry powder in hot oil for 30 seconds.",
+      "Add onion, garlic, and ginger; cook until soft.",
+      "Stir in vegetables and tomato paste, then chickpeas, optional lentils, and coconut milk.",
+      "Simmer until tender, finish with garam masala and cilantro."
+    ]
+  },
+  {
+    id: "recipe-vegan-larb-lettuce",
+    name: "Soy textured protein larb in lettuce leaves",
+    mealTypes: ["lunch", "dinner", "snack"],
+    ingredients: [
+      ing("protein", "soy textured protein", { alternatives: ["tempeh", "tofu"] }),
+      ing("protein", "edamame", { alternatives: ["green peas"] }),
+      ing("vegetables", "shallot", { alternatives: ["onion"] }),
+      ing("spices", "mint"),
+      ing("spices", "cilantro"),
+      ing("liquid", "lemon juice", { label: "lime juice" }),
+      ing("spices", "soy sauce"),
+      ing("fats", "olive oil"),
+      ing("vegetables", "romaine", { alternatives: ["lettuce"] }),
+      ing("spices", "cayenne pepper", { optional: true }),
+      ing("fats", "sesame seeds", { optional: true, label: "toasted rice crumbs or sesame" })
+    ],
+    constraints: { maxCarbs: 35, glycemicIndex: "low" },
+    instructions: [
+      "Soak textured soy protein, squeeze dry, and fry in oil until the edges are crisp.",
+      "Whisk lime juice with soy sauce, chili, and a tiny pinch of sweetener — the dressing should taste boldly sour.",
+      "Toss warm protein with edamame, raw sliced shallot, and the dressing.",
+      "Fold in mint and cilantro at the end; serve spooned into romaine leaves."
+    ]
+  },
+  {
+    id: "recipe-vegan-tofu-spinach-pasta",
+    name: "Lentil pasta with tofu ricotta and spinach",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("carbs", "quinoa", { label: "lentil pasta (cooked portion)" }),
+      ing("protein", "tofu", { label: "silken tofu" }),
+      ing("vegetables", "spinach"),
+      ing("spices", "nutritional yeast"),
+      ing("spices", "garlic"),
+      ing("fats", "olive oil"),
+      ing("liquid", "lemon juice"),
+      ing("spices", "lemon zest", { optional: true }),
+      ing("spices", "cayenne pepper", { optional: true }),
+      ing("spices", "nutmeg", { optional: true }),
+      ing("spices", "black pepper")
+    ],
+    constraints: { maxCarbs: 45, glycemicIndex: "low" },
+    instructions: [
+      "Mash or blend silken tofu with nutritional yeast, lemon zest, salt, and nutmeg — do not heat this ricotta.",
+      "Cook pasta just shy of package time; reserve a ladle of cooking water.",
+      "Warm garlic and chili in olive oil 30 seconds, wilt spinach 2 minutes.",
+      "Off the heat, toss pasta with spinach, a splash of cooking water, and tofu ricotta.",
+      "Finish with lemon juice and plenty of black pepper."
+    ]
+  },
+  {
+    id: "recipe-vegan-black-bean-tacos",
+    name: "Black bean tacos with soy textured protein",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("carbs", "whole grain tortilla", { alternatives: ["whole grain bread"] }),
+      ing("protein", "black beans"),
+      ing("protein", "soy textured protein", { alternatives: ["tempeh", "lentils"] }),
+      ing("liquid", "soy yogurt", { label: "tzatziki / soy yogurt sauce", alternatives: ["hummus"] }),
+      ing("vegetables", "tomato"),
+      ing("vegetables", "onion"),
+      ing("vegetables", "lettuce"),
+      ing("liquid", "lemon juice", { label: "lime juice" }),
+      ing("fats", "olive oil"),
+      ing("spices", "cumin"),
+      ing("spices", "smoked paprika"),
+      ing("spices", "oregano"),
+      ing("spices", "cayenne pepper", { optional: true }),
+      ing("spices", "cilantro", { optional: true })
+    ],
+    constraints: { maxCarbs: 50, glycemicIndex: "low" },
+    instructions: [
+      "Soak and brown textured soy protein with cumin, smoked paprika, oregano, and chili.",
+      "Warm black beans; mash half of them so the filling holds together.",
+      "Warm tortillas. Assemble with yogurt sauce, lettuce, beans, protein, tomato, onion, lime, and cilantro."
+    ]
+  },
+  {
+    id: "recipe-vegan-tzatziki-crudites",
+    name: "Soy yogurt tzatziki with vegetable sticks",
+    mealTypes: ["snack"],
+    ingredients: [
+      ing("liquid", "soy yogurt", { alternatives: ["coconut yogurt"] }),
+      ing("vegetables", "cucumber"),
+      ing("spices", "garlic"),
+      ing("liquid", "lemon juice"),
+      ing("fats", "olive oil"),
+      ing("spices", "dill"),
+      ing("spices", "black pepper"),
+      ing("vegetables", "carrot", { optional: true }),
+      ing("vegetables", "bell pepper", { optional: true }),
+      ing("vegetables", "celery", { optional: true })
+    ],
+    constraints: { maxCarbs: 20, glycemicIndex: "low" },
+    instructions: [
+      "Grate cucumber and squeeze out excess liquid.",
+      "Stir into soy yogurt with garlic, lemon juice, olive oil, dill, and pepper.",
+      "Serve with carrot, pepper, and celery sticks."
+    ]
+  },
+  {
+    id: "recipe-vegan-chia-soy",
+    name: "Chia pudding with soy yogurt and berries",
+    mealTypes: ["breakfast", "snack"],
+    ingredients: [
+      ing("liquid", "soy yogurt", { alternatives: ["coconut yogurt", "unsweetened soy milk"] }),
+      ing("carbs", "chia seeds"),
+      ing("vegetables", "berries"),
+      ing("fats", "almond butter", { optional: true, alternatives: ["almonds"] }),
+      ing("spices", "cinnamon"),
+      ing("spices", "vanilla", { optional: true })
+    ],
+    constraints: { maxCarbs: 35, glycemicIndex: "low" },
+    instructions: [
+      "Mix chia seeds with soy yogurt (or a splash of soy milk) and spices until thick.",
+      "Chill until set.",
+      "Top with berries and optional nut butter."
+    ]
+  },
+  {
+    id: "recipe-vegan-soy-yogurt-bowl",
+    name: "Soy yogurt bowl with berries and almonds",
+    mealTypes: ["breakfast", "snack"],
+    ingredients: [
+      ing("liquid", "soy yogurt"),
+      ing("vegetables", "berries"),
+      ing("fats", "almonds"),
+      ing("spices", "sugar-free jam", { optional: true }),
+      ing("spices", "cinnamon", { optional: true }),
+      ing("spices", "lemon zest", { optional: true })
+    ],
+    constraints: { maxCarbs: 25, glycemicIndex: "low" },
+    instructions: [
+      "Stir a pinch of salt and optional lemon zest into the soy yogurt.",
+      "Top with berries, almonds, cinnamon, and optional sugar-free jam just before eating."
+    ]
+  },
+  {
+    id: "recipe-vegan-pea-soup",
+    name: "Vegan green pea soup",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "green peas"),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "onion"),
+      ing("vegetables", "celery", { optional: true }),
+      ing("vegetables", "potato", { optional: true }),
+      ing("spices", "garlic"),
+      ing("fats", "olive oil"),
+      ing("liquid", "vegetable broth", { alternatives: ["water"] }),
+      ing("spices", "thyme"),
+      ing("spices", "bay leaf", { optional: true }),
+      ing("spices", "black pepper"),
+      ing("liquid", "lemon juice", { optional: true }),
+      ing("spices", "parsley", { optional: true })
+    ],
+    constraints: { maxCarbs: 40, glycemicIndex: "low" },
+    instructions: [
+      "Sauté onion, carrot, and optional celery in olive oil until soft.",
+      "Add garlic, thyme, and bay leaf for 30 seconds.",
+      "Add peas, optional potato, and broth; simmer until everything is tender.",
+      "Blend part of the soup for body, leaving some chunks. Finish with lemon, pepper, and parsley."
+    ]
+  },
+  {
+    id: "recipe-vegan-tofu-wrap",
+    name: "Tofu wrap with vegetables and soy yogurt sauce",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("carbs", "whole grain tortilla", { alternatives: ["whole grain bread"] }),
+      ing("protein", "tofu", { alternatives: ["tempeh", "chickpeas"] }),
+      ing("vegetables", "bell pepper"),
+      ing("vegetables", "cucumber"),
+      ing("vegetables", "onion"),
+      ing("vegetables", "lettuce", { optional: true }),
+      ing("liquid", "soy yogurt", { alternatives: ["hummus"] }),
+      ing("fats", "olive oil"),
+      ing("spices", "smoked paprika"),
+      ing("spices", "cumin"),
+      ing("spices", "garlic"),
+      ing("liquid", "lemon juice"),
+      ing("spices", "dill", { alternatives: ["parsley"], optional: true })
+    ],
+    constraints: { maxCarbs: 45, glycemicIndex: "low" },
+    instructions: [
+      "Cube and pan-sear tofu with smoked paprika, cumin, and garlic until golden.",
+      "Stir soy yogurt with lemon, dill, and salt for a quick sauce.",
+      "Warm the tortilla; fill with tofu, pepper, cucumber, onion, lettuce, and sauce."
+    ]
+  },
+  {
+    id: "recipe-vegan-tofu-chickpea-bowl",
+    name: "Tofu chickpea bowl with roasted vegetables",
+    mealTypes: ["lunch", "dinner"],
+    ingredients: [
+      ing("protein", "tofu"),
+      ing("protein", "chickpeas"),
+      ing("carbs", "quinoa", { alternatives: ["buckwheat", "brown rice"] }),
+      ing("vegetables", "broccoli"),
+      ing("vegetables", "carrot"),
+      ing("vegetables", "sweet potato", { optional: true }),
+      ing("vegetables", "bell pepper"),
+      ing("fats", "olive oil"),
+      ing("liquid", "lemon juice"),
+      ing("fats", "tahini", { optional: true }),
+      ing("spices", "cumin"),
+      ing("spices", "smoked paprika"),
+      ing("spices", "parsley", { optional: true }),
+      ing("spices", "black pepper")
+    ],
+    constraints: { maxCarbs: 50, glycemicIndex: "low" },
+    instructions: [
+      "Cook quinoa. Roast or steam broccoli, carrot, optional sweet potato, and pepper with olive oil and spices.",
+      "Pan-sear tofu until crisp; warm chickpeas with cumin and smoked paprika.",
+      "Assemble the bowl and dress with lemon juice and optional tahini; finish with parsley."
     ]
   }
 ];

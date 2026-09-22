@@ -7,6 +7,7 @@ import { FIXED_RECIPES } from "@/lib/recipes/data";
 import { Condition, MealPlan, Recipe, UserProfile } from "@/types";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { normalizeDietType } from "@/lib/nutrition/diet";
 
 type GeneratorState = {
   _hasHydrated: boolean;
@@ -39,7 +40,7 @@ const defaultProfile: UserProfile = {
   height: 0,
   gender: undefined,
   condition: "type2_diabetes",
-  dietType: "regular",
+  dietType: "omnivore",
   allergies: [],
   additionalPreferences: ""
 };
@@ -66,7 +67,10 @@ export const useGeneratorStore = create<GeneratorState>()(
         set((state) => ({
           profile: {
             ...state.profile,
-            ...profile
+            ...profile,
+            ...(profile.dietType != null
+              ? { dietType: normalizeDietType(profile.dietType) }
+              : {})
           }
         })),
       setPlanDays: (days) => set({ planDays: days }),
@@ -156,6 +160,16 @@ export const useGeneratorStore = create<GeneratorState>()(
       }),
       onRehydrateStorage: () => (state, error) => {
         try {
+          if (!error && state?.profile) {
+            const dietType = normalizeDietType(state.profile.dietType as string);
+            if (dietType !== state.profile.dietType) {
+              queueMicrotask(() => {
+                useGeneratorStore.setState({
+                  profile: { ...useGeneratorStore.getState().profile, dietType }
+                });
+              });
+            }
+          }
           if (!error) {
             const plan = state?.latestPlan ?? readLatestPlanFromStorage();
             if (plan) {

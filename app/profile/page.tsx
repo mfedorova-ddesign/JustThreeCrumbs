@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { isProfileComplete } from "@/lib/generator/profile";
 import { useGeneratorStore } from "@/lib/generator/store";
 import { useStoreHydration } from "@/lib/generator/useStoreHydration";
+import { DIET_TYPE_OPTIONS } from "@/lib/nutrition/diet";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
 
@@ -56,7 +57,7 @@ export default function ProfilePage() {
       weight: 68,
       height: 168,
       condition: "type2_diabetes",
-      dietType: "regular",
+      dietType: "omnivore",
       allergies: ["None"],
       additionalPreferences: "No spicy food in the evening."
     });
@@ -65,7 +66,7 @@ export default function ProfilePage() {
 
   const applyRandomTestProfile = () => {
     const genders = ["female", "male", "other"] as const;
-    const dietTypes = ["regular", "vegetarian"] as const;
+    const dietTypes = DIET_TYPE_OPTIONS.map((option) => option.id);
     const nonNoneAllergies = ALLERGY_CHIPS.filter((chip) => chip !== "None");
 
     const selectedAllergies =
@@ -212,20 +213,19 @@ export default function ProfilePage() {
           <div className="mt-5">
             <div className="mb-2 text-[14px] font-medium text-brand-text/80">Diet Type *</div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {(["regular", "vegetarian"] as const).map((diet) => (
+              {DIET_TYPE_OPTIONS.map((diet) => (
                 <button
-                  key={diet}
+                  key={diet.id}
                   type="button"
-                  onClick={() => setProfile({ dietType: diet })}
+                  onClick={() => setProfile({ dietType: diet.id })}
                   className={`rounded-xl border px-4 py-3 text-left ${
-                    profile.dietType === diet
+                    profile.dietType === diet.id
                       ? "border-brand-primary bg-[#EAF5EF]"
                       : "border-brand-border bg-white"
                   }`}
                 >
-                  <div className="text-[15px] font-medium text-brand-text">
-                    {diet === "regular" ? "Regular" : "Vegetarian"}
-                  </div>
+                  <div className="text-[15px] font-medium text-brand-text">{diet.label}</div>
+                  <div className="mt-1 text-[13px] text-brand-text/60">{diet.description}</div>
                 </button>
               ))}
             </div>

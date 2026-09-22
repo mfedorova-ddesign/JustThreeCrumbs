@@ -12,8 +12,9 @@ import {
   sumFiber,
   sumMacros
 } from "@/lib/nutrition/calc";
+import { ingredientFitsDiet, normalizeDietType, recipeFitsDietType } from "@/lib/nutrition/diet";
 import { FIXED_RECIPES } from "@/lib/recipes/data";
-import { recipeVegan, recipeVegetarian } from "@/lib/recipes/insights";
+import { recipeVegan, recipeVegetarian, resolveRecipeBaseIngredients } from "@/lib/recipes/insights";
 import { DayPlan, GeneratedMeal, Ingredient, MealPlan, MealType, Recipe, RecipeIngredientRule, UserProfile } from "@/types";
 
 const ingredientByName = new Map(INGREDIENTS.map((ingredient) => [ingredient.name, ingredient]));
@@ -23,6 +24,12 @@ const DAY_TARGET_TOLERANCE = 0.1;
 
 const recipeSequenceByMealType: Record<MealType, string[]> = {
   breakfast: [
+    "recipe-vegan-savory-oats-edamame",
+    "recipe-vegan-shakshuka-tofu",
+    "recipe-vegan-hummus-mushroom-toast",
+    "recipe-vegan-hummus-avocado-toast",
+    "recipe-vegan-chia-soy",
+    "recipe-vegan-soy-yogurt-bowl",
     "recipe-shakshuka-toast",
     "recipe-eggs-benedict-avocado",
     "recipe-omelet-goat-cheese",
@@ -32,6 +39,17 @@ const recipeSequenceByMealType: Record<MealType, string[]> = {
     "recipe-protein-salad-plate"
   ],
   lunch: [
+    "recipe-vegan-bean-tvp-stew",
+    "recipe-vegan-lentil-tvp-soup",
+    "recipe-vegan-chickpea-lentil-curry",
+    "recipe-vegan-larb-lettuce",
+    "recipe-vegan-mushroom-bean-salad",
+    "recipe-vegan-tofu-spinach-pasta",
+    "recipe-vegan-black-bean-tacos",
+    "recipe-vegan-pea-soup",
+    "recipe-vegan-tofu-wrap",
+    "recipe-vegan-tofu-chickpea-bowl",
+    "recipe-vegan-shakshuka-tofu",
     "recipe-green-curry",
     "recipe-legume-soup",
     "recipe-broccoli-cheddar-soup",
@@ -49,6 +67,16 @@ const recipeSequenceByMealType: Record<MealType, string[]> = {
     "recipe-borscht-style"
   ],
   dinner: [
+    "recipe-vegan-bean-tvp-stew",
+    "recipe-vegan-lentil-tvp-soup",
+    "recipe-vegan-chickpea-lentil-curry",
+    "recipe-vegan-mushroom-bean-salad",
+    "recipe-vegan-tofu-spinach-pasta",
+    "recipe-vegan-black-bean-tacos",
+    "recipe-vegan-larb-lettuce",
+    "recipe-vegan-pea-soup",
+    "recipe-vegan-tofu-wrap",
+    "recipe-vegan-tofu-chickpea-bowl",
     "recipe-ribeye-herb-butter",
     "recipe-salmon-caper-sauce",
     "recipe-caesar-salad-keto",
@@ -66,6 +94,12 @@ const recipeSequenceByMealType: Record<MealType, string[]> = {
     "recipe-protein-salad-plate"
   ],
   snack: [
+    "recipe-vegan-tzatziki-crudites",
+    "recipe-vegan-hummus-mushroom-toast",
+    "recipe-vegan-hummus-avocado-toast",
+    "recipe-vegan-chia-soy",
+    "recipe-vegan-soy-yogurt-bowl",
+    "recipe-vegan-larb-lettuce",
     "recipe-snack-tuna-cup",
     "recipe-snack-egg-cucumber",
     "recipe-snack-hummus-veggies",
@@ -116,7 +150,7 @@ function getAllergySet(user: UserProfile): Set<string> {
 }
 
 function isIngredientAllowed(ingredient: Ingredient, user: UserProfile, allergySet: Set<string>): boolean {
-  if (user.dietType === "vegetarian" && !ingredient.vegetarian) return false;
+  if (!ingredientFitsDiet(ingredient, user.dietType)) return false;
   if (!ingredient.allergens?.length) return true;
   return !ingredient.allergens.some((allergen) => allergySet.has(allergen.toLowerCase()));
 }
@@ -159,7 +193,19 @@ function getIngredientPortionGrams(ingredient: Ingredient, mealType: MealType): 
     apple: mealType === "snack" ? 70 : 90,
     corn: mealType === "snack" ? 50 : 70,
     "dark chocolate": mealType === "snack" ? 18 : 22,
-    almonds: mealType === "snack" ? 22 : 30
+    almonds: mealType === "snack" ? 22 : 30,
+    edamame: mealType === "snack" ? 70 : 90,
+    "soy textured protein": 35,
+    "soy yogurt": mealType === "snack" ? 120 : 150,
+    "unsweetened soy milk": mealType === "snack" ? 120 : 180,
+    "whole grain tortilla": mealType === "snack" ? 40 : 50,
+    "nutritional yeast": 6,
+    chickpeas: mealType === "snack" ? 70 : 100,
+    lentils: mealType === "snack" ? 70 : 100,
+    "black beans": mealType === "snack" ? 70 : 100,
+    "white beans": mealType === "snack" ? 70 : 100,
+    "red beans": mealType === "snack" ? 70 : 100,
+    "green peas": mealType === "snack" ? 70 : 100
   };
   return byName[ingredient.name] ?? byCategory[ingredient.category];
 }
@@ -249,14 +295,15 @@ function pickIngredientName(
   user: UserProfile,
   allergySet: Set<string>,
   offset: number,
-  dietLock?: { vegan: boolean; vegetarian: boolean }
+  recipeLock: { vegan: boolean; vegetarian: boolean }
 ): string | null {
   const names = [rule.primary, ...(rule.alternatives ?? [])];
   const allowed = names.filter((name) => {
     const ingredient = ingredientByName.get(name);
     if (!ingredient || !isIngredientAllowed(ingredient, user, allergySet)) return false;
-    if (dietLock?.vegan && !isVeganIngredient(ingredient)) return false;
-    if (dietLock?.vegetarian && !ingredient.vegetarian) return false;
+    // Keep plated dish aligned with library vegan/vegetarian badges.
+    if (recipeLock.vegan && !isVeganIngredient(ingredient)) return false;
+    if (recipeLock.vegetarian && !ingredient.vegetarian) return false;
     return true;
   });
   if (allowed.length === 0) return null;
@@ -267,18 +314,20 @@ function pickIngredientName(
 
 function recipeAllowedForUser(recipe: Recipe, user: UserProfile): boolean {
   const allergySet = getAllergySet(user);
-  const dietLock = { vegan: recipeVegan(recipe), vegetarian: recipeVegetarian(recipe) };
-  return recipe.ingredients.every((rule) => {
+  const recipeLock = { vegan: recipeVegan(recipe), vegetarian: recipeVegetarian(recipe) };
+  const canPlate = recipe.ingredients.every((rule) => {
     const names = [rule.primary, ...(rule.alternatives ?? [])];
     const hasAny = names.some((name) => {
       const ingredient = ingredientByName.get(name);
       if (!ingredient || !isIngredientAllowed(ingredient, user, allergySet)) return false;
-      if (dietLock.vegan && !isVeganIngredient(ingredient)) return false;
-      if (dietLock.vegetarian && !ingredient.vegetarian) return false;
+      if (recipeLock.vegan && !isVeganIngredient(ingredient)) return false;
+      if (recipeLock.vegetarian && !ingredient.vegetarian) return false;
       return true;
     });
     return rule.optional || hasAny;
   });
+  if (!canPlate) return false;
+  return recipeFitsDietType(user.dietType, resolveRecipeBaseIngredients(recipe));
 }
 
 function resolveRecipeIngredients(
@@ -288,20 +337,20 @@ function resolveRecipeIngredients(
   seed: number
 ): { ingredient: Ingredient; alternatives: string[] }[] {
   const allergySet = getAllergySet(user);
-  const dietLock = { vegan: recipeVegan(recipe), vegetarian: recipeVegetarian(recipe) };
+  const recipeLock = { vegan: recipeVegan(recipe), vegetarian: recipeVegetarian(recipe) };
   const selected: { ingredient: Ingredient; alternatives: string[] }[] = [];
   for (let i = 0; i < recipe.ingredients.length; i += 1) {
     const rule = recipe.ingredients[i];
-    const pickedName = pickIngredientName(rule, user, allergySet, seed + i * 37, dietLock);
+    const pickedName = pickIngredientName(rule, user, allergySet, seed + i * 37, recipeLock);
     if (!pickedName) continue;
     const ingredient = ingredientByName.get(pickedName);
     if (!ingredient) continue;
     const ruleNames = [rule.primary, ...(rule.alternatives ?? [])];
     const alternatives = ruleNames.filter((name) => {
       const option = ingredientByName.get(name);
-      if (!option) return false;
-      if (dietLock.vegan && !isVeganIngredient(option)) return false;
-      if (dietLock.vegetarian && !option.vegetarian) return false;
+      if (!option || !isIngredientAllowed(option, user, allergySet)) return false;
+      if (recipeLock.vegan && !isVeganIngredient(option)) return false;
+      if (recipeLock.vegetarian && !option.vegetarian) return false;
       return true;
     });
     selected.push({
@@ -614,8 +663,17 @@ function rebalanceDayMeals(
       let adjustedIngredients = meal.ingredients;
 
       if (Math.abs(1 - carbRatio) >= 0.04) {
-        const carbScale = Math.max(0.72, Math.min(1.4, carbRatio));
+        const carbScale = Math.max(0.65, Math.min(1.4, carbRatio));
         adjustedIngredients = scaleCategoryPortions(adjustedIngredients, ["carbs"], carbScale);
+        // Beans/lentils/tofu live under protein; starchy veg under vegetables — shrink them when carbs overshoot.
+        if (carbRatio < 0.97) {
+          const legumeScale = Math.max(0.75, Math.min(1, 1 - (1 - carbRatio) * 0.7));
+          adjustedIngredients = scaleCategoryPortions(
+            adjustedIngredients,
+            ["protein", "vegetables", "liquid"],
+            legumeScale
+          );
+        }
         if (carbRatio > 1.06) {
           adjustedIngredients = scaleCategoryPortions(
             adjustedIngredients,
@@ -726,7 +784,7 @@ function generateOptimizedDayPlan(
   options: RecipeSelectionOptions = {}
 ): DayPlan {
   const targets = recommendedDailyTargets(user);
-  const attempts = 24;
+  const attempts = 36;
   let best = generateDayPlan(user, dayIndex, baseSeed, options);
   let bestLoss = dayLoss(best, targets);
   let bestOk = isAcceptableDay(best, targets);
@@ -778,7 +836,7 @@ async function generateOptimizedDayPlanAsync(
   options: RecipeSelectionOptions = {}
 ): Promise<DayPlan> {
   const targets = recommendedDailyTargets(user);
-  const attempts = 24;
+  const attempts = 36;
   await yieldToMain();
   let best = generateDayPlan(user, dayIndex, baseSeed, options);
   let bestLoss = dayLoss(best, targets);
@@ -824,31 +882,35 @@ export async function generateMealPlanAsync(
   days: number,
   options: RecipeSelectionOptions = {}
 ): Promise<MealPlan> {
+  const normalizedUser = { ...user, dietType: normalizeDietType(user.dietType) };
   const normalizedDays = [1, 3, 7].includes(days) ? days : 1;
   const planSeed = Math.floor(Math.random() * 1_000_000);
   const dayPlans: DayPlan[] = [];
   for (let dayIndex = 0; dayIndex < normalizedDays; dayIndex += 1) {
     await yieldToMain();
-    dayPlans.push(await generateOptimizedDayPlanAsync(user, dayIndex, planSeed + dayIndex * 1237, options));
+    dayPlans.push(
+      await generateOptimizedDayPlanAsync(normalizedUser, dayIndex, planSeed + dayIndex * 1237, options)
+    );
   }
   return {
     id: `plan-${Date.now()}`,
     createdAt: new Date().toISOString(),
-    userProfile: user,
+    userProfile: normalizedUser,
     days: dayPlans
   };
 }
 
 export function generateMealPlan(user: UserProfile, days: number, options: RecipeSelectionOptions = {}): MealPlan {
+  const normalizedUser = { ...user, dietType: normalizeDietType(user.dietType) };
   const normalizedDays = [1, 3, 7].includes(days) ? days : 1;
   const planSeed = Math.floor(Math.random() * 1_000_000);
   const dayPlans = Array.from({ length: normalizedDays }, (_, dayIndex) =>
-    generateOptimizedDayPlan(user, dayIndex, planSeed + dayIndex * 1237, options)
+    generateOptimizedDayPlan(normalizedUser, dayIndex, planSeed + dayIndex * 1237, options)
   );
   return {
     id: `plan-${Date.now()}`,
     createdAt: new Date().toISOString(),
-    userProfile: user,
+    userProfile: normalizedUser,
     days: dayPlans
   };
 }
